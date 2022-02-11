@@ -7,9 +7,9 @@ namespace UATL.Mail.Models
 {
     public class IdentityService : IIdentityService
     {
-        public async Task<Account?> GetCurrentAccount(IIdentity? _identity)
+        public async Task<Account?> GetCurrentAccount(HttpContext httpContext)
         {
-            var identity = _identity as ClaimsIdentity;
+            var identity = httpContext.User.Identity as ClaimsIdentity;
 
             if (identity != null)
             { 
@@ -20,6 +20,8 @@ namespace UATL.Mail.Models
                 }
                 catch
                 {
+                    await httpContext.Response.WriteAsync("Unauthorized Access / User claim expired / User Account doesn't exist!");
+                    await httpContext.Response.CompleteAsync();
                 }
             }
             return null;

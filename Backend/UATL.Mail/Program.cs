@@ -16,7 +16,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using Serilog.AspNetCore;
-
+using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,8 +97,14 @@ builder.Services
     .AddScoped<ITokenService, TokenService>();
 
 builder.Services
-    .AddScoped<SakonyConsoleMiddleware>();
+    .AddScoped<SakonyConsoleMiddleware>()
+    .AddScoped<MailAttachementVerificationMiddleware>();
 
+builder.Services.Configure<FormOptions>(x =>
+{
+    x.ValueLengthLimit = int.MaxValue;
+    x.MultipartBodyLengthLimit = int.MaxValue; // In case of multipart
+});
 
 //---------------------------------------------------------------//
 var app = builder.Build();
@@ -117,6 +123,8 @@ app.UseHttpLogging();
 app.UseAuthorization();
 
 app.MapControllers();
-app.UseMiddleware<SakonyConsoleMiddleware>();
+app
+    .UseMiddleware<SakonyConsoleMiddleware>()
+    .UseMiddleware<MailAttachementVerificationMiddleware>();
 
 app.Run();

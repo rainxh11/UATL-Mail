@@ -57,6 +57,34 @@ namespace UATL.Mail.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [Authorize(Roles = $"{AccountRole.Admin}")]
+        [HttpPost]
+        [Route("")]
+        public async Task<IActionResult> CreateAccount([FromBody] CreateAccountModel model)
+        {
+            try
+            {
+                if (await DB.Find<Account>().Match(x => x.UserName == model.UserName).ExecuteAnyAsync())
+                {
+                    return BadRequest($"Account with username '{model.UserName}' already exists!");
+                }
+                var currentAccount = await _identityService.GetCurrentAccount(HttpContext);
+
+
+                var account = new Account(model.Name, model.UserName, model.Password);
+                account.Role = model.Role;
+                account.CreatedBy = currentAccount.ToBaseAccount();
+
+                await account.InsertAsync();
+                account = await DB.Find<Account>().MatchID(account.ID).ExecuteSingleAsync();
+
+                return Ok(new ResultResponse<Account, string>(account, "Account Created Successfully!"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         [AllowAnonymous]
         [HttpGet]
@@ -137,7 +165,7 @@ namespace UATL.Mail.Controllers
         {
             try
             {
-                var account = await _identityService.GetCurrentAccount(HttpContext.User.Identity);
+                var account = await _identityService.GetCurrentAccount(HttpContext);
                 if(account is null)
                 {
                     return NotFound("Token Invalid or Account not found.");

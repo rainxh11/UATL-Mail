@@ -14,10 +14,10 @@ namespace UATL.Mail.Models.Models
         public DateTime CreatedOn { get; set; }
         public DateTime ModifiedOn { get; set; }
         [BsonRequired]
-        public Account From { get; set; }
+        public AccountBase From { get; set; }
         public string Subject { get; set; }
         public string Body { get; set; } = string.Empty;
-        public List<Attachement> Attachements { get; set; }
+        public List<Attachement> Attachements { get; set; } = new List<Attachement>();
         
     }
     public enum MailType
@@ -43,7 +43,7 @@ namespace UATL.Mail.Models.Models
         public Mail ResponseTo { get; set; }
 
         public DateTime SentOn { get; set; }
-        public Account To { get; set; }
+        public AccountBase To { get; set; }
         bool IsEncrypted { get; set; } = false;
     }
 
@@ -53,7 +53,7 @@ namespace UATL.Mail.Models.Models
         public DateTime ModifiedOn { get; set; }
         public string Name { get; set; }
         public string ContentType { get; set; }
-        public Account UploadedBy { get; set; }
+        public AccountBase UploadedBy { get; set; }
         public bool Compare(string md5, long fileSize)
         {
             return MD5 == md5 && FileSize == fileSize;

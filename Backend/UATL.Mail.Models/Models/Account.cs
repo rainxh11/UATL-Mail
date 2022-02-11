@@ -6,28 +6,40 @@ using System.Text.Json.Serialization;
 using MongoDB.Entities;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using Mapster;
 
 namespace UATL.Mail.Models
 {
 
-    public class Account :  Entity, ICreatedOn, IModifiedOn
+    public class AccountBase : Entity
     {
         [BsonRequired]
         public string Name { get; set; }
 
         [BsonRequired]
         public string UserName { get; set; }
+    }
+    public class Account :  AccountBase, ICreatedOn, IModifiedOn
+    {
         [BsonRequired]
+        [JsonIgnore]
         public string PasswordHash { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.Now;
         public DateTime ModifiedOn { get; set; }
         public DateTime LastLogin { get; set; }
         public DateTime PasswordUpdatedOn { get; set; }
+        [IgnoreDefault]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public AccountBase CreatedBy { get; set; }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public AccountType Role { get; set; } = AccountType.Admin;
+        public AccountType Role { get; set; } = AccountType.User;
         public bool Enabled { get; set; } = true;
 
+        public AccountBase ToBaseAccount()
+        {
+            return this.Adapt<AccountBase>();
+        }
         public Account()
         {
 

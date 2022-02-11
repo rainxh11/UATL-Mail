@@ -2,6 +2,7 @@
 using MongoDB.Entities;
 using MongoDB.Driver;
 using UATL.Mail.Models.Models;
+using MongoDB;
 
 namespace UATL.Mail.Helpers
 {
@@ -28,6 +29,12 @@ namespace UATL.Mail.Helpers
                 .Key(b => b.UserName, KeyType.Text)
                 .Key(b => b.ID, KeyType.Text)
                 .CreateAsync();
+
+            await DB.Index<Account>()
+                .Key(b => b.UserName, KeyType.Ascending)
+                .Option(x => x.Unique = true)
+                .CreateAsync();
+
 
             await Task.WhenAll(draftIndex, accountIndex);
         }

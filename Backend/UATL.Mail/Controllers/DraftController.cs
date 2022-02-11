@@ -17,7 +17,7 @@ namespace UATL.Mail.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class DraftController : Controller
+    public class DraftController : ControllerBase
     {
         public static string FirstCharToUpper(string input)
         {
@@ -51,7 +51,7 @@ namespace UATL.Mail.Controllers
             {
                 sort = FirstCharToUpper(sort.Replace("-", "").Trim());
 
-                var account = await _identityService.GetCurrentAccount(HttpContext.User.Identity);
+                var account = await _identityService.GetCurrentAccount(HttpContext);
 
                 var drafts = await DB.PagedSearch<Draft>()
                     .Match(draft => draft.From.ID == account.ID)
@@ -68,6 +68,25 @@ namespace UATL.Mail.Controllers
             }
         }
         //---------------------------------------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [HttpGet]
+        [Route("{id}")]
+        public async Task<IActionResult> GetDraft(string id)
+        {
+            try
+            {
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+
+                var draft = await DB.Find<Draft>().Match(x => x.From.ID == account.ID).OneAsync(id);
+
+                return Ok(draft); ;
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        //---------------------------------------------------------------------------------------------------------------------------------------------//
 
         [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
@@ -78,7 +97,7 @@ namespace UATL.Mail.Controllers
             {
                 sort = FirstCharToUpper(sort.Replace("-", "").Trim());
 
-                var account = await _identityService.GetCurrentAccount(HttpContext.User.Identity);
+                var account = await _identityService.GetCurrentAccount(HttpContext);
 
                 var pipeline = DB.FluentTextSearch<Draft>(Search.Full, search).Match(draft => draft.From.ID == account.ID);
 
@@ -100,22 +119,79 @@ namespace UATL.Mail.Controllers
         [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpPost]
         [Route("")]
-        public async Task<IActionResult> AddDraft([FromBody] DraftRequest draftRequest)
+        public async Task<IActionResult> AddDraft([FromBody] DraftRequest draftRequest, CancellationToken ct)
         {
+            var transaction = DB.Transaction();
             try
             {
-                var account = await _identityService.GetCurrentAccount(HttpContext.User.Identity);
-
+                var account = await _identityService.GetCurrentAccount(HttpContext);
                 var draft = draftRequest.Adapt<Draft>();
-                draft.From = account;
+                draft.From = account.ToBaseAccount();
 
-                await draft.InsertAsync();
-                var result = await DB.Find<Draft>().OneAsync(draft.ID);
+                await draft.InsertAsync(transaction.Session, ct);
+                var result = await DB.Find<Draft>(transaction.Session).OneAsync(draft.ID, ct);
+
+                await transaction.CommitAsync(ct);
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
+                await transaction.AbortAsync();
+                return BadRequest(ex.Message);
+            }
+        }
+        //---------------------------------------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [HttpPost]
+        [Route("{id}/attachement")]
+        public async Task<IActionResult> UploadAttachements(string id, [FromForm] IFormFileCollection files, CancellationToken ct)
+        {
+            var transaction = DB.Transaction();
+            try
+            {
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+                var draft = await DB.Find<Draft>().Match(x => x.From.ID == account.ID).OneAsync(id);
+
+                var attachements = new List<Attachement>();
+                foreach (var file in HttpContext.Request.Form.Files)
+                {
+                    var hash = Helpers.HashHelper.CalculateFileFormMd5(file);
+                    var query = DB.Find<Attachement>().Match(x => x.MD5 == hash && x.FileSize == file.Length);
+                    var exist = await query.ExecuteAnyAsync();
+                    if (exist)
+                    {
+                        var attachement = await query.ExecuteFirstAsync();
+                        draft.Attachements.Add(attachement);
+                    }
+                    else
+                    {
+                        var attachement = new Attachement()
+                        {
+                            MD5 = hash,
+                            UploadedBy = account.ToBaseAccount(),
+                            ContentType = file.ContentType,
+                            Name = file.FileName,
+                        };
+                        await attachement.SaveAsync(transaction.Session);
+                        using (var stream = file.OpenReadStream())
+                        {
+                            await attachement.Data.UploadAsync(stream, cancellation: ct, session: transaction.Session);
+                        }
+                        var uploaded = await DB.Find<Attachement>(transaction.Session).OneAsync(attachement.ID);
+                        draft.Attachements.Add(uploaded);
+                    }
+                }
+                await draft.SaveAsync(transaction.Session);
+
+                await transaction.CommitAsync();
+                var result = await DB.Find<Draft>().OneAsync(draft.ID);
+
+                return Ok(new ResultResponse<string, Draft>($"Uploaded {HttpContext.Request.Form.Files.Count} files.", draft));
+            }
+            catch (Exception ex)
+            {
+                await transaction.AbortAsync();
                 return BadRequest(ex.Message);
             }
         }
@@ -127,7 +203,7 @@ namespace UATL.Mail.Controllers
         {
             try
             {
-                var account = await _identityService.GetCurrentAccount(HttpContext.User.Identity);
+                var account = await _identityService.GetCurrentAccount(HttpContext);
                 var draft = await DB.Find<Draft>().OneAsync(id);
 
                 draft.Body = draftRequest.Body;
@@ -150,7 +226,7 @@ namespace UATL.Mail.Controllers
         {
             try
             {
-                var account = await _identityService.GetCurrentAccount(HttpContext.User.Identity);
+                var account = await _identityService.GetCurrentAccount(HttpContext);
 
                 var result = await DB.DeleteAsync<Draft>(x => x.From.ID == account.ID && x.ID == id);
 
@@ -176,7 +252,7 @@ namespace UATL.Mail.Controllers
         {
             try
             {
-                var account = await _identityService.GetCurrentAccount(HttpContext.User.Identity);
+                var account = await _identityService.GetCurrentAccount(HttpContext);
 
                 var result = await DB.DeleteAsync<Draft>(x => x.From.ID == account.ID && ids.Contains(x.ID));
 

@@ -5,6 +5,6 @@ namespace UATL.Mail.Models
 {
     public interface IIdentityService
     {
-        Task<Account?> GetCurrentAccount(IIdentity? _identity);
+        Task<Account?> GetCurrentAccount(HttpContext httpContext);
     }
 }
