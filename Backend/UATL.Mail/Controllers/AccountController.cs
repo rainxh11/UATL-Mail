@@ -16,7 +16,7 @@ namespace UATL.Mail.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AccountController : Controller
     {
         private readonly ILogger<AccountController> _logger;
         private IConfiguration _config;

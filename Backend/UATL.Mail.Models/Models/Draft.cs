@@ -1,7 +1,11 @@
-﻿using MongoDB.Entities;
+﻿using MongoDB.Driver;
+using MongoDB.Entities;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
+using BsonRequired = MongoDB.Bson.Serialization.Attributes.BsonRequiredAttribute;
+using BsonIgnore = MongoDB.Bson.Serialization.Attributes.BsonIgnoreAttribute;
 
 namespace UATL.Mail.Models.Models
 {
@@ -9,16 +13,11 @@ namespace UATL.Mail.Models.Models
     {
         public DateTime CreatedOn { get; set; }
         public DateTime ModifiedOn { get; set; }
-
-        public One<Account> From { get; set; }
+        [BsonRequired]
+        public Account From { get; set; }
         public string Subject { get; set; }
-        public string Body { get; set; }
-        [OwnerSide]
-        public Many<Attachement> Attachements { get; set;}
-        public Draft()
-        {
-            this.InitManyToMany(() => Attachements, att => att.Drafts);
-        }
+        public string Body { get; set; } = string.Empty;
+        public List<Attachement> Attachements { get; set; }
         
     }
     public enum MailType
@@ -38,30 +37,28 @@ namespace UATL.Mail.Models.Models
     public class Mail : Draft
     {
         [IgnoreDefault]
+        [AsObjectId]
         public string GroupId { get; set; } = null;
         [IgnoreDefault]
-        public One<Mail> ResponseTo { get; set; }
+        public Mail ResponseTo { get; set; }
 
         public DateTime SentOn { get; set; }
-        public One<Account> To { get; set; }
-        public Mail()
-        {
-            this.InitManyToMany(() => Attachements, att => att.Mails);
-        }
+        public Account To { get; set; }
+        bool IsEncrypted { get; set; } = false;
     }
 
     public class Attachement : FileEntity, ICreatedOn, IModifiedOn
     {
-        public Attachement()
-        {
-            this.InitManyToMany(() => Drafts, draft => draft.Attachements);
-            this.InitManyToMany(() => Mails, mail => mail.Attachements);
-        }
-        public Many<Draft> Drafts { get; set; }
-        public Many<Mail> Mails { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime ModifiedOn { get; set; }
         public string Name { get; set; }
-        public One<Account> UploadedBy { get; set; }
+        public string ContentType { get; set; }
+        public Account UploadedBy { get; set; }
+        public bool Compare(string md5, long fileSize)
+        {
+            return MD5 == md5 && FileSize == fileSize;
+        }
+        bool IsEncrypted { get; set; } = false;
+
     }
 }
