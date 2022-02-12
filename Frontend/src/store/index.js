@@ -3,7 +3,8 @@ import Vuex from 'vuex'
 
 // Global vuex
 import AppModule from './app'
-
+import authModule from './auth'
+import mailModule from '@/app/email/store'
 Vue.use(Vuex)
 
 /**
@@ -11,7 +12,9 @@ Vue.use(Vuex)
  */
 const store = new Vuex.Store({
   modules: {
-    app: AppModule
+    app: AppModule,
+    auth: authModule,
+    'email-app': mailModule
   }
 })
 

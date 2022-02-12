@@ -1,13 +1,13 @@
 export default {
   // current currency
-  currency: {
-    label: 'USD',
+  currency:  {
+    label: 'DZD',
     decimalDigits: 2,
     decimalSeparator: '.',
     thousandsSeparator: ',',
-    currencySymbol: '$',
-    currencySymbolNumberOfSpaces: 0,
-    currencySymbolPosition: 'left'
+    currencySymbol: 'DA',
+    currencySymbolNumberOfSpaces: 1,
+    currencySymbolPosition: 'right'
   },
 
   // availabled currencies for user selection
@@ -25,6 +25,15 @@ export default {
     decimalSeparator: '.',
     thousandsSeparator: ',',
     currencySymbol: '€',
+    currencySymbolNumberOfSpaces: 1,
+    currencySymbolPosition: 'right'
+  },
+  {
+    label: 'DZD',
+    decimalDigits: 2,
+    decimalSeparator: '.',
+    thousandsSeparator: ',',
+    currencySymbol: 'DA',
     currencySymbolNumberOfSpaces: 1,
     currencySymbolPosition: 'right'
   }]

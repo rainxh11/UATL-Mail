@@ -30,7 +30,6 @@
 
 <script>
 import NavMenuItem from './NavMenuItem'
-
 /*
 |---------------------------------------------------------------------
 | Navigation Menu Component

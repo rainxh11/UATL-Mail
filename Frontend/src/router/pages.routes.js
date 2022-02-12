@@ -13,9 +13,9 @@ export default [{
     layout: 'auth'
   }
 }, {
-  path: '/auth/verify-email',
+  path: '/auth/verify-setting',
   name: 'auth-verify-email',
-  component: () => import(/* webpackChunkName: "auth-verify-email" */ '@/pages/auth/VerifyEmailPage.vue'),
+  component: () => import(/* webpackChunkName: "auth-verify-setting" */ '@/pages/auth/VerifyEmailPage.vue'),
   meta: {
     layout: 'auth'
   }

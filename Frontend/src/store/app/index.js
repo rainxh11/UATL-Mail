@@ -1,6 +1,7 @@
 import configs from '../../configs'
 import actions from './actions'
 import mutations from './mutations'
+import getters from './getters'
 
 const { product, time, theme, currencies  } = configs
 
@@ -10,7 +11,6 @@ const { currency, availableCurrencies } = currencies
 // state initial values
 const state = {
   product,
-
   time,
 
   // currency
@@ -31,12 +31,17 @@ const state = {
     color: 'black',
     message: '',
     timeout: 3000
+  },
+  notification : {
+    waitingDelivery : 1 ,
+    unfinishedStudy : 1
   }
 }
 
 export default {
   namespaced: true,
   state,
+  getters,
   actions,
   mutations
 }

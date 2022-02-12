@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="checkMyRole()">
     <v-list-item
       v-if="!menuItem.items"
       :input-value="menuItem.value"
@@ -70,6 +70,15 @@ export default {
       type: Boolean,
       default: false
     }
+  },
+  methods: {
+    checkMyRole() {
+      if (this.menuItem.role)
+        return this.menuItem.role.includes(this.$store.getters['auth/getUserInfo'].role) // Verify each item in Nav list with role of user to show up
+
+      return false
+    }
+
   }
 }
 </script>

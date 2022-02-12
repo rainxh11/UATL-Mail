@@ -1,8 +1,8 @@
 <template>
-  <div>
+  <div >
     <v-card class="text-center pa-1">
-      <v-card-title class="justify-center display-1 mb-2">Welcome</v-card-title>
-      <v-card-subtitle>Sign in to your account</v-card-subtitle>
+      <v-card-title class="justify-center display-1 mb-2">{{ this.$t('signin.welcome') }}</v-card-title>
+      <v-card-subtitle>{{ this.$t('signin.signinSubheader') }}</v-card-subtitle>
 
       <!-- sign in form -->
       <v-card-text>
@@ -12,7 +12,7 @@
             :rules="[rules.required]"
             :validate-on-blur="false"
             :error="error"
-            :label="$t('login.email')"
+            :label="$t('login.username')"
             name="email"
             outlined
             @keyup.enter="submit"
@@ -40,47 +40,23 @@
             block
             x-large
             color="primary"
+            class="text-uppercase text-lg-h6"
             @click="submit"
-          >{{ $t('login.button') }}</v-btn>
-
-          <div class="caption font-weight-bold text-uppercase my-3">{{ $t('login.orsign') }}</div>
-
-          <!-- external providers list -->
-          <v-btn
-            v-for="provider in providers"
-            :key="provider.id"
-            :loading="provider.isLoading"
-            :disabled="isSignInDisabled"
-            class="mb-2 primary lighten-2 primary--text text--darken-3"
-            block
-            x-large
-            to="/"
           >
-            <v-icon small left>mdi-{{ provider.id }}</v-icon>
-            {{ provider.label }}
-          </v-btn>
-
-          <div v-if="errorProvider" class="error--text">{{ errorProviderMessages }}</div>
-
-          <div class="mt-5">
-            <router-link to="/auth/forgot-password">
-              {{ $t('login.forgot') }}
-            </router-link>
-          </div>
+            <v-icon class="pa-1">mdi-login-variant</v-icon>
+            {{ $t('login.button') }} </v-btn>
         </v-form>
       </v-card-text>
     </v-card>
-
-    <div class="text-center mt-6">
-      {{ $t('login.noaccount') }}
-      <router-link to="/auth/signup" class="font-weight-bold">
-        {{ $t('login.create') }}
-      </router-link>
-    </div>
   </div>
+
 </template>
 
 <script>
+
+import { signIn } from '@/api/auth'
+import { mapActions, mapGetters, mapMutations } from 'vuex'
+import Vuecookie from 'vue-cookies'
 /*
 |---------------------------------------------------------------------
 | Sign In Page Component
@@ -111,16 +87,6 @@ export default {
       // show password field
       showPassword: false,
 
-      providers: [{
-        id: 'google',
-        label: 'Google',
-        isLoading: false
-      }, {
-        id: 'facebook',
-        label: 'Facebook',
-        isLoading: false
-      }],
-
       // input rules
       rules: {
         required: (value) => (value && Boolean(value)) || 'Required'
@@ -128,6 +94,9 @@ export default {
     }
   },
   methods: {
+    ...mapMutations('auth',['setToken','setIsAuth']),
+    ...mapActions('app',['showSuccess','showError']),
+    ...mapActions('auth',['retriveToken']),
     submit() {
       if (this.$refs.form.validate()) {
         this.isLoading = true
@@ -136,15 +105,27 @@ export default {
       }
     },
     signIn(email, password) {
-      this.$router.push('/')
+      signIn(email, password).then((res) => {
+        if (res.data.status === 'success') {
+          this.retriveToken({ token : res.data.token, userInfo: res.data.data.user })
+          Vuecookie.set('T', res.data.token)
+          this.showSuccess('Success')
+          this.$router.push('/')
+        }
+
+        // eslint-disable-next-line handle-callback-err
+      }).catch( (err) => {
+        this.showError(err)
+        this.error = true
+        this.errorMessages = err.toString()
+        this.isLoading = false
+        this.isSignInDisabled = false
+      })
     },
-    signInProvider(provider) {},
     resetErrors() {
       this.error = false
       this.errorMessages = ''
 
-      this.errorProvider = false
-      this.errorProviderMessages = ''
     }
   }
 }

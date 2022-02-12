@@ -1,7 +1,6 @@
 export default {
-  // apps quickmenu
   apps: [{
-    icon: 'mdi-email-outline',
+    icon: 'mdi-setting-outline',
     text: 'Profile',
     key: 'menu.profile',
     subtitle: 'Hey!',

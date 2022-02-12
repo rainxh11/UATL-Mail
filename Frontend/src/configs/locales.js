@@ -1,16 +1,8 @@
 import en from '../translations/en'
-import es from '../translations/es'
-import pt from '../translations/pt'
-import de from '../translations/de'
 import fr from '../translations/fr'
 import ar from '../translations/ar'
-import ko from '../translations/ko'
-import ru from '../translations/ru'
-import zh from '../translations/zh'
-import ja from '../translations/ja'
-import pl from '../translations/pl'
 
-const supported = ['en', 'es', 'pt', 'de', 'fr', 'ar', 'ko', 'ru', 'zh', 'ja', 'pl']
+const supported = ['en', 'fr', 'ar']
 let locale = 'en'
 
 try {
@@ -35,22 +27,7 @@ export default {
     flag: 'us',
     label: 'English',
     messages: en
-  }, {
-    code: 'es',
-    flag: 'es',
-    label: 'Español',
-    messages: es
-  }, {
-    code: 'pt',
-    flag: 'pt',
-    label: 'Português',
-    messages: pt
-  }, {
-    code: 'de',
-    flag: 'de',
-    label: 'Deutsche',
-    messages: de
-  }, {
+  },  {
     code: 'fr',
     flag: 'fr',
     label: 'Français',
@@ -60,30 +37,5 @@ export default {
     flag: 'sa',
     label: 'العربية',
     messages: ar
-  }, {
-    code: 'ko',
-    flag: 'kr',
-    label: '한국어',
-    messages: ko
-  }, {
-    code: 'ru',
-    flag: 'ru',
-    label: 'русский',
-    messages: ru
-  }, {
-    code: 'zh',
-    flag: 'cn',
-    label: '中文',
-    messages: zh
-  }, {
-    code: 'ja',
-    flag: 'jp',
-    label: '日本語',
-    messages: ja
-  }, {
-    code: 'pl',
-    flag: 'pl',
-    label: 'Polskie',
-    messages: pl
   }]
 }

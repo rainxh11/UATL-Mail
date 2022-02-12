@@ -2,7 +2,7 @@ import Vue from 'vue'
 import store from '../store'
 
 Vue.filter('formatCurrency', formatCurrency)
-
+Vue.use(formatCurrency)
 /**
  * Returns the currency formatted accordingly
  */

@@ -34,7 +34,7 @@ export default {
     send: 'Send',
     subject: 'Subject',
     labels: 'Labels',
-    emptyList: 'Empty email list',
+    emptyList: 'Empty setting list',
     inbox: 'Inbox',
     sent: 'Sent',
     drafts: 'Drafts',
@@ -78,12 +78,12 @@ export default {
     button: 'Set new password and Sign in',
     error: 'The action link is invalid',
     verifylink: 'Verifying link...',
-    verifyemail: 'Verifying email address...',
+    verifyemail: 'Verifying setting address...',
     emailverified: 'Email verified! Redirecting...'
   },
   forgot: {
     title: 'Forgot Password?',
-    subtitle: 'Enter your account email address and we will send you a link to reset your password.',
+    subtitle: 'Enter your account setting address and we will send you a link to reset your password.',
     email: 'Email',
     button: 'Request Password Reset',
     backtosign: 'Back to Sign In'
@@ -91,13 +91,14 @@ export default {
   login: {
     title: 'Sign In',
     email: 'Email',
+    username: 'Username',
     password: 'Password',
     button: 'Sign In',
     orsign: 'Or sign in with',
     forgot: 'Forgot password?',
     noaccount: 'Don\'t have an account?',
     create: 'Create one here',
-    error: 'The email / password combination is invalid'
+    error: 'The setting / password combination is invalid'
   },
   register: {
     title: 'Create Account',

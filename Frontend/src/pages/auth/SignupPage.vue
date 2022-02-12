@@ -26,7 +26,7 @@
             :validate-on-blur="false"
             :error="errorEmail"
             :error-messages="errorEmailMessage"
-            :label="$t('register.email')"
+            :label="$t('register.setting')"
             name="email"
             outlined
             @keyup.enter="submit"

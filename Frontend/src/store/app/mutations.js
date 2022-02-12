@@ -25,6 +25,17 @@ export default {
       timeout: 3000
     }
   },
+  /**
+   * Notification
+   */
+
+  setNotificationUnStudy(state, notification) {
+    state.notification.unfinishedStudy =  notification
+  },
+
+  setNotificationWaDelivery(state, notification) {
+    state.notification.waitingDelivery =  notification
+  },
 
   /**
    * Theme and Layout
@@ -50,6 +61,9 @@ export default {
     state.time.zone = zone
   },
   setTimeFormat: (state, format) => {
+    state.time.format = format
+  },
+  setLang: (state, format) => {
     state.time.format = format
   },
   setCurrency: (state, currency) => {

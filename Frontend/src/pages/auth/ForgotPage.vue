@@ -15,7 +15,7 @@
             :validate-on-blur="false"
             :error="error"
             :error-messages="errorMessages"
-            :label="$t('forgot.email')"
+            :label="$t('forgot.setting')"
             name="email"
             outlined
             @keyup.enter="submit"
@@ -47,7 +47,7 @@
 | Forgot Page Component
 |---------------------------------------------------------------------
 |
-| Template to send email to remember/replace password
+| Template to send setting to remember/replace password
 |
 */
 export default {
@@ -72,9 +72,6 @@ export default {
   },
   methods: {
     submit(e) {
-      if (this.$refs.form.validate()) {
-        console.log('submit')
-      }
     },
     resetEmail(email, password) {
     },

@@ -6,7 +6,6 @@
         <router-view />
       </transition>
     </component>
-
     <v-snackbar v-model="toast.show" :timeout="toast.timeout" :color="toast.color" bottom>
       {{ toast.message }}
       <v-btn v-if="toast.timeout === 0" color="white" text @click="toast.show = false">{{ $t('common.close') }}</v-btn>
@@ -15,7 +14,8 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import { mapState, mapGetters, mapActions } from 'vuex'
+import { signIn } from '@/api/auth'
 
 import config from './configs'
 
@@ -42,18 +42,34 @@ export default {
     authLayout,
     errorLayout
   },
+  data() {
+    return {
+
+    }
+  },
   computed: {
     ...mapState('app', ['toast']),
+    ...mapGetters('app', ['']),
     isRouterLoaded: function() {
-      if (this.$route.name !== null) return true
+      return this.$route.name !== null
 
-      return false
     },
     currentLayout: function() {
       const layout = this.$route.meta.layout || 'default'
 
       return layout + 'Layout'
     }
+  },
+  created() {
+    this.$i18n.locale = 'fr'
+    this.$vuetify.lang.current = 'fr'
+
+  },
+  mounted() {
+
+  },
+  methods: {
+    ...mapActions('auth', ['getToken'])
   },
   head: {
     link: [

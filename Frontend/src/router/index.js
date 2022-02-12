@@ -1,24 +1,25 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+// vuex
+import store from '@/store'
+
+// Vue Cookies
+import Vuecookie from 'vue-cookies'
 
 // Routes
-import PagesRoutes from './pages.routes'
-import UsersRoutes from './users.routes'
-import LandingRoutes from './landing.routes'
+import Routes from './app.routes'
+import Pages from './pages.routes'
+// Api
+import { getMyInfo } from '@/api/auth'
 
 Vue.use(Router)
 
 export const routes = [{
   path: '/',
-  redirect: '/dashboard/analytics'
-}, {
-  path: '/dashboard/analytics',
-  name: 'dashboard-analytics',
-  component: () => import(/* webpackChunkName: "dashboard" */ '@/pages/dashboard/DashboardPage.vue')
+  redirect: '/mailbox'
 },
-...PagesRoutes,
-...UsersRoutes,
-...LandingRoutes,
+...Pages,
+...Routes,
 {
   path: '/blank',
   name: 'blank',
@@ -48,8 +49,49 @@ const router = new Router({
  * Before each route update
  */
 router.beforeEach((to, from, next) => {
+  if ( store.getters['auth/getIsAuth']) {
+    return routerCheck(to ,next)
+  } else {
+    const token = Vuecookie.get('T') || '' //Get Token
+
+    if (token !== '') {
+      getMyInfo(token).then( (res) => {
+        store.dispatch('auth/retriveToken', { token, userInfo: res.data.data })
+          .then((r) => {
+            return routerCheck(to ,next)
+          })
+      }).catch( () => {
+        Vuecookie.delete('T')
+        next('auth-signin')
+      })
+    } else {
+      if (to.name === 'auth-signin') {
+        return next()
+      } else {
+        return next({ name : 'auth-signin' })
+      }
+    }
+  }
+
   return next()
 })
+
+// eslint-disable-next-line consistent-return
+const routerCheck = (to ,next) => {
+  switch (store.getters['auth/getUserInfo'].role) {
+  case 'admin':
+    return next()
+  case 'user':
+    if (to.path.startsWith('/mailbox')) {
+      return next()
+    } else {
+      return next({
+        path : '/clients'
+      })
+    }
+
+  }
+}
 
 /**
  * After each route update

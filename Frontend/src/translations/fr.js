@@ -1,15 +1,143 @@
 export default {
+  'charts': {
+    'payments': 'Examens Payée',
+    'debts': 'Examens Dettes',
+    'nonPayments': 'Examens Non Payée',
+    'currencyTitle': 'DA (Dinar Algérien)',
+    'incomeOf': 'Recette de ',
+    'amount': {
+      'discount': 'Remises',
+      'convention': 'Remises de Conventions',
+      'payment': 'Paiments d\'Examens',
+      'debt': 'Dettes Non-Payée',
+      'debtPaid': 'Paiments de Dettes',
+      'notPaid': 'Examens Non-Payée'
+    },
+    'title': {
+      'paymentsPeriod': 'Paiments dans une Période',
+      'dailyPaymentsAmount': 'Paiments Quotidiens (Montant)',
+      'dailyPayments': 'Paiments Quotidiens',
+      'dailyExpenses': 'Dépenses & Charges Quotidiens',
+      'income': 'Recette',
+      'monthlyIncome': 'Revenu Mensuel'
+    }
+  },
+  'tableClient': {
+    'firstName': 'Prénom',
+    'familyName': 'Nom',
+    'BirthDate': 'Date De Naissance',
+    'createdAt': 'Creé Le',
+    'createdBy': 'Creé Par',
+    'updatedAt': 'Dernière Modification',
+    'phoneNumber': 'N° de Téléphone',
+    'debtAmount': 'Dette Non Payée Total',
+    'lastDebtCreatedBy':'Dérniere Dette Crée par',
+    'lastDebtCreatedAt':'Dérniere Dette Crée le'
+  },
+  'confirmation': {
+    'title': 'Confirmation',
+    'delete': 'Voulez vous supprimer \'#\' ?',
+    'update': 'Voulez vous modifier \'#\' ?'
+  },
+  'paymentStatus': {
+    'notPaid': 'Non Payé',
+    'debt': 'Dette',
+    'paid': 'Payé'
+  },
+  'toast': {
+    'userDeleteSuccess': 'Suppression de compte effectué avec succès',
+    'userCreationSuccess': 'Création de compte effectué avec succès',
+    'userUpdateSuccess': 'Modification de compte effectué avec succès'
+  },
+  'signin': {
+    'header': 'Centre d\'Imagerie Médicale',
+    'welcome': 'Bienvenue',
+    'signinSubheader': 'Connectez-vous à votre compte'
+  },
+  'tableStudies': {
+    'normalPayment': 'Paiment Normal',
+    'debtPayment': 'Paiment Dette',
+    'initialPayment': 'Paiment Initial',
+    'discountPermission': 'Pérmission de Remise',
+    'getPermission': 'Avoir Permission',
+    'debtRules': {
+      'maximum': 'Peut pas exiger le montant totale'
+    }
+  },
   'common': {
+    'years': ' Ans',
+    'months': ' Mois',
+    'days': ' Jours',
+    'new': 'Nouveau',
+    'noConvention': 'Non Convention',
+    'password': 'Mot de passe',
+    'profile': 'Profile',
+    'copied': 'Copié',
+    'copy': 'Copier',
+    'ok': 'OK',
+    'success': 'Succès',
     'add': 'Ajouter',
     'cancel': 'Annuler',
     'description': 'La description',
-    'delete': 'Effacer',
     'title': 'Titre',
-    'save': 'sauver',
+    'save': 'Sauvegarder',
     'faq': 'FAQ',
     'contact': 'Nous contacter',
     'tos': 'Conditions d\'utilisation',
-    'policy': 'Politique de confidentialité'
+    'policy': 'Politique de confidentialité',
+    'enabled': 'Activé',
+    'disabled': 'Désactivé',
+    'edit': 'Modifier',
+    'delete': 'Supprimer',
+    'price': 'Tarrife',
+    'prices': 'Tarrifes',
+    'status': 'Etat',
+    'search': 'Recherche',
+    'createdAt': 'Creé Le',
+    'createdBy': 'Creé Par',
+    'total': 'Totale',
+    'correct': 'Correcte',
+    'incorrect': 'Incorrecte',
+    'client': 'Client',
+    'payment': 'Paiment',
+    'discount': 'Remise de Prix',
+    'checkout': 'Payer',
+    'debt': 'Dette',
+    'totalPrice': 'Montant Totale',
+    'tasks': 'Tâches',
+    'confirm': 'Confirmer'
+  },
+  'expenseType': {
+    'productPurchase': 'Achat de Produits/Matériels',
+    'employeeSalary': 'Salaire d\'Employé',
+    'taxPayment': 'Paiement d\'Impôt',
+    'clientRefund': 'Remboursement Client',
+    'moneyWithdraw': 'Retrait d\'Argent',
+    'billPayment': 'Paiement de Factures ',
+    'rentPayment': 'Paiement du Loyer ',
+    'missingOrStolen': 'Objet/Argent Manquant ou Volé ',
+    'damagedItem': 'Article Endommagé ',
+    'otherExpense': 'Autres Dépenses'
+  },
+  'stock': {
+    'addExpense': 'Ajouter une Dépense',
+    'expenseType': 'Type de Dépense',
+    'addProduct': 'Ajouter Produit',
+    'editProduct': 'Modifier Produit',
+    'productEnabled': 'Produit Activée',
+    'comment': 'Extra Details',
+    'amount': 'Montant',
+    'sellingPrice': 'Prix de Vente',
+    'buyingPrice': 'Prix d\'Achat',
+    'quantity': 'Quantité',
+    'editQuantity': 'Modifier Quantité',
+    'addQuantity': 'Ajouter Quantité',
+    'productName': 'Nom de Produit',
+    'productStat': 'Etat de Produit',
+    'expenseDialog': {
+      'addTitle': 'Nouveau Dépense',
+      'editTitle': 'Modifier Dépense'
+    }
   },
   'board': {
     'titlePlaceholder': 'Entrez un titre pour cette carte',
@@ -30,7 +158,7 @@ export default {
     'message': 'Message'
   },
   'email': {
-    'compose': 'Écrire un email',
+    'compose': 'Écrire un setting',
     'send': 'Envoyer',
     'subject': 'Matière',
     'labels': 'Étiquettes',
@@ -43,6 +171,124 @@ export default {
     'work': 'Travail',
     'invoice': 'Facture d\'achat'
   },
+  'profile': {
+    'lastChanged': 'Dernière modification',
+    'myProfile': 'Mon Profile',
+    'infos': 'Informations',
+    'system': 'Systém',
+    'printerIp': 'Imprimante Ip',
+    'security': 'Sécurité',
+    'passwordChanged': 'Mot de passe modifié avec succès',
+    'currentPasswordLabel': 'Mot de passe actuelle',
+    'incorrectPassword': 'Mot de passe Incorrecte',
+    'correctPassword': 'Mote de passe Correcte',
+    'changePassword': 'Changer le mot de passe',
+    'verifyPassword': 'Vérifier',
+    'newPasswordLabel': 'Nouveau Mot de passe'
+  },
+  'clientPage': {
+    'rules': {
+      'birthDate': 'Date de naissance spécifiée plus récente que la date d\'aujourd\'hui!'
+    },
+    'tabHeaders': {
+      'history': 'Historique',
+      'infos': 'Informations',
+      'studies': 'Examens',
+      'payments': 'Paiments & Dettes'
+    },
+    'studyTab': {
+      'studiesCount': 'Nombre d\'études',
+      'modality': 'Modalité (Groupe)',
+      'examType': 'Type d\'examen',
+      'examStatus': 'État de l\'examen',
+      'showComplete': 'Afficher examens complét'
+    },
+    'debtTab': {
+      'modality': 'Modalité (Groupe)',
+      'examType': 'Examen',
+      'paymentStatus': 'Etat de Paiment',
+      'createdBy': 'Crée par',
+      'createdAt': 'Crée le',
+      'totalDebt': 'Dette Totale',
+      'status': 'etat'
+    },
+    'client': 'Client',
+    'clients': 'Clients',
+    'firstName': 'Prénom',
+    'familyName': 'Nom',
+    'age': 'Age',
+    'gender': 'Sexe',
+    'accessionNumber': 'Numéro d\'Accession',
+    'clientCreatedAt': 'Date d\'Ajout',
+    'birthDate': 'Date de Naissance',
+    'phoneNumber': 'N° de Téléphone'
+  },
+  'setting': {
+    'General': 'Paramètres Générale',
+    'settingMenuHeader': 'Paramètres',
+    'permissionPageLabel': 'Autorisation à Distance',
+    'examlist': 'Examens & Modalities',
+    'reportList': 'Référentiel de Rapports',
+    'userList': 'Comptes d\'Utilisateurs',
+    'disabledUsers': 'Comptes Désactivée',
+    'examList': {
+      'prices': 'Tarrifes',
+      'pricesConvention': 'Tarrifes des Conventions',
+      'normalPrice': 'Tarrife des Clients Particulier',
+      'examName': 'Nom d\'Examen',
+      'modalityName': 'Nom de Modalité',
+      'exam': 'Examen',
+      'exams': 'Examens',
+      'modality': 'Modalité (Groupe)',
+      'modalities': 'Modalities (Groupes)',
+      'convention': 'Convention',
+      'conventions': 'Conventions',
+      'priceTotal': 'Tarrife Totale HT',
+      'priceClient': 'Tarrife de Bénéficiaire',
+      'priceCompany': 'Tarrife de Convention',
+      'percentageIndividual': '(%) Payant par le bénéficiaire',
+      'percentageCompany': '(%) Payant par l\'entreprise',
+      'conventionStatus': 'Etat de Convention',
+      'conventionEnabled': 'Convention Activée',
+      'newPrice': 'Nouveau Tarrife',
+      'newPriceConvention': 'Nouveau Tarrife de Convention',
+      'nonConvention': 'NON CONVENTION'
+    },
+    'userDialog': {
+      'passwordMatchError': 'Le mot de passe est différent',
+      'minimum': '# Caractères minimum',
+      'required': 'Champ obligatoire',
+      'dialogTitle': 'Nouveau Compte',
+      'dialogTitleEdit': 'Modification de Compte',
+      'idLabel': 'ID de compte',
+      'nameLabel': 'Nom et Prénom',
+      'usernameLabel': 'Nom d\'Utilisateur',
+      'roleLabel': 'Rôle',
+      'passwordLabel': 'Mot de Passe',
+      'confirmPasswordLabel': 'Confimer',
+      'spaceRequired':'Ajouter un espace entre le Nom & Prénom!'
+    },
+    'roles': {
+      'user': 'Utilisateur',
+      'admin': 'Administrateur'
+    },
+    'userListHeaders': {
+      'name': 'Nom et Prénom',
+      'username': 'Nom d\'Utilisateur',
+      'role': 'Rôle',
+      'active': 'Etat de Compte'
+    },
+    'permissionPage': {
+      'secret': 'Code Secret',
+      'name': 'Nom',
+      'duration': 'Durée maximale (Minutes)',
+      'add': 'Nouveau Authenticator',
+      'phoneAppHint': 'Scanner avec l\'Application: Google Authenticator',
+      'verify': 'Vérifier',
+      'token': 'Code Jeton',
+      'getToken': 'Obtenir le code du jeton'
+    }
+  },
   'todo': {
     'addTask': 'Ajouter une tâche',
     'tasks': 'Tâches',
@@ -50,16 +296,40 @@ export default {
     'labels': 'Étiquettes'
   },
   'dashboard': {
+    'exams': 'Examens',
+    'monetaryIndex': 'Indice Monetaire',
     'activity': 'Activité',
     'weeklySales': 'Ventes hebdomadaires',
     'sales': 'Ventes',
     'recentOrders': 'Dernières commandes',
     'sources': 'Sources de trafic',
-    'lastweek': 'vs la semaine dernière',
+    'lastweek': 'la semaine dernière',
     'orders': 'Ordres',
-    'customers': 'Les clients',
+    'customers': 'Clients',
     'tickets': 'Billets d\'assistance',
-    'viewReport': 'Voir le rapport'
+    'viewReport': 'Voir le rapport',
+    'statNormal': 'Normal',
+    'statCustom': 'Personalisé',
+    'selectedPeriod': 'Période Séléctionnée',
+    'todayIncome': 'Recette d\'Aujourd\'hui',
+    'weeklyIncome': 'Recette de Semaine',
+    'yesterday': 'Hier',
+    'userPerformance': 'Performance de Personelles',
+    'topExams': 'Top Examens',
+    'legends': {
+      'paidStudy': 'Examens Payée',
+      'notPaidStudy': 'Examens Non-Payée',
+      'debtStudy': 'Examens Dette'
+    },
+    'user': {
+      'user': 'Utilisateur',
+      'paidAmount': 'Examens Payée',
+      'paidDebtAmount': 'Dettes Payée',
+      'debtAmount': 'Examens Dette Non-Payée',
+      'debtClientCount':'Examens Avec Dettes',
+      'discountAmount': 'Remises (Examens & Dettes)',
+      'conventionAmount': 'Examens Conventionnée'
+    }
   },
   'usermenu': {
     'profile': 'Profil',
@@ -91,6 +361,7 @@ export default {
   'login': {
     'title': 'Se connecter',
     'email': 'Email',
+    'username': 'Nom d\'utilasateur',
     'password': 'Mot de passe',
     'button': 'Se connecter',
     'orsign': 'Ou connectez-vous avec',
@@ -148,7 +419,7 @@ export default {
   },
   'menu': {
     'search': 'Recherche (appuyez sur \'ctrl + /\' pour faire la mise au point)',
-    'dashboard': 'Tableau de bord',
+    'dashboard': 'Tableau de Bord',
     'logout': 'Se déconnecter',
     'profile': 'Profil',
     'blank': 'Page blanche',
@@ -185,7 +456,21 @@ export default {
     'feedback': 'Retour d\'information',
     'support': 'Soutien',
     'landingPage': 'Page de destination',
-    'pricingPage': 'Page de tarification'
+    'pricingPage': 'Page de tarification',
+    'clientsPage': 'Tableaux des clients',
+    'clientPage': 'Clients',
+    'studyPage': 'Tâches Récentes',
+    'historyStudy': 'Historique des Tâches',
+    'settings': 'Paramètres',
+    'clientManagment': 'Gestion des clients',
+    'studyManagment': 'Gestion des Taches',
+    'expenses': 'Achats & Dépenses',
+    'stockManagement': 'Gestion de Stock',
+    'inventoryManagement': 'Gestion d\'Inventaire',
+    'clientDebtPage': 'Dettes',
+    'radioManagement':'Gestion de l\'imagerie radio',
+    'archivePage':'Archive d\'Imagerie',
+    'reports':'Gestion des Rapports'
   },
   '$vuetify': {
     'badge': 'Badge',
@@ -250,5 +535,12 @@ export default {
         'currentPage': 'Page actuelle, page {0}'
       }
     }
+  },
+  'statusStudy': {
+    'new': 'Nouveau',
+    'inProgress': 'En cours',
+    'complete': 'Complet',
+    'delivered': 'Remis',
+    'canceled': 'Annulé'
   }
 }

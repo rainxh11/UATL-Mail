@@ -21,7 +21,7 @@
 | Verify Email Page Component
 |---------------------------------------------------------------------
 |
-| Template to wait for the verification on the user email
+| Template to wait for the verification on the user setting
 |
 */
 

@@ -31,7 +31,7 @@ export default {
         title: 'Dedicated Support',
         description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Esse expedita fugit quam aliquam. Autem assumenda'
       }, {
-        icon: 'mdi-email-open-multiple-outline',
+        icon: 'mdi-setting-open-multiple-outline',
         title: 'Email Integration',
         description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Esse expedita fugit quam aliquam. Autem assumenda'
       }, {
