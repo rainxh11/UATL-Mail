@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using UATL.Mail.Models.Models;
+using UATL.MailSystem.Models.Models;
 
-namespace UATL.Mail.Models.EqualityComparer
+namespace UATL.MailSystem.Models.EqualityComparer
 {
     public class AttachementEqualityComparer : IEqualityComparer<Attachement>
     {

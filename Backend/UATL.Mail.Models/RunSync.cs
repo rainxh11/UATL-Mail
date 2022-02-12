@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace UATL.Mail
+namespace UATL.MailSystem
 {
 
     public static class Run

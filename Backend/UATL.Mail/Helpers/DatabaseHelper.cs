@@ -1,10 +1,10 @@
-﻿using UATL.Mail.Models;
+﻿using UATL.MailSystem.Models;
 using MongoDB.Entities;
 using MongoDB.Driver;
-using UATL.Mail.Models.Models;
+using UATL.MailSystem.Models.Models;
 using MongoDB;
 
-namespace UATL.Mail.Helpers
+namespace UATL.MailSystem.Helpers
 {
     public class DatabaseHelper
     {

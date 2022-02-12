@@ -2,9 +2,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using UATL.Mail.Models;
+using UATL.MailSystem.Models;
 
-namespace UATL.Mail.Models
+namespace UATL.MailSystem.Models
 {
     public class TokenService : ITokenService
     {

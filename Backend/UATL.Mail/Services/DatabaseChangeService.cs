@@ -6,7 +6,7 @@ using System.Reactive.Concurrency;
 using System.Reactive.Threading;
 using System.Reactive.Disposables;
 
-namespace UATL.Mail.Services
+namespace UATL.MailSystem.Services
 {
     public class DatabaseChangeService : IHostedService
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace UATL.Mail.Models.Request
+namespace UATL.MailSystem.Models.Request
 {
     public class AccountUpdateModel
     {

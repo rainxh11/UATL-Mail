@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace UATL.Mail.Models.Filters
+namespace UATL.MailSystem.Models.Filters
 {
     public class ValidationFilter : IActionFilter
     {

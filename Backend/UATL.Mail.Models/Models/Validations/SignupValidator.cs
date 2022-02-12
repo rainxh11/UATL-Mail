@@ -1,11 +1,11 @@
-﻿using UATL.Mail.Models.Request;
+﻿using UATL.MailSystem.Models.Request;
 using FluentValidation;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace UATL.Mail.Models.Validations
+namespace UATL.MailSystem.Models.Validations
 {
     public class SignupValidator : AbstractValidator<SignupModel>
     {

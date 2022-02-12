@@ -1,4 +1,4 @@
-﻿namespace UATL.Mail.Models.Response
+﻿namespace UATL.MailSystem.Models.Response
 {
     public interface IResultResponse<TData,T>
     {

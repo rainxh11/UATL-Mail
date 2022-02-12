@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http.Features;
 
-namespace UATL.Mail
+namespace UATL.MailSystem
 {
     public class MailAttachementVerificationMiddleware : IMiddleware
     {

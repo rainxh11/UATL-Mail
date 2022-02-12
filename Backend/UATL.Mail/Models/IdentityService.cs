@@ -1,9 +1,9 @@
-﻿using UATL.Mail.Models;
+﻿using UATL.MailSystem.Models;
 using System.Security.Claims;
 using System.Security.Principal;
 using MongoDB.Entities;
 
-namespace UATL.Mail.Models
+namespace UATL.MailSystem.Models
 {
     public class IdentityService : IIdentityService
     {

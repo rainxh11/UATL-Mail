@@ -5,7 +5,7 @@ using Console = Colorful.Console;
 using System.Net;
 using Serilog;
 
-namespace UATL.Mail
+namespace UATL.MailSystem
 {
     public class ConsoleFormatter
     {

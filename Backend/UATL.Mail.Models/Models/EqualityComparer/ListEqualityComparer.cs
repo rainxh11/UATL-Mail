@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json;
 
-namespace UATL.Mail.Models.EqualityComparer
+namespace UATL.MailSystem.Models.EqualityComparer
 {
     public class ListEqualityComparer<T> : IEqualityComparer<T>
     {

@@ -1,7 +1,7 @@
-﻿using UATL.Mail.Models;
+﻿using UATL.MailSystem.Models;
 using System.Security.Principal;
 
-namespace UATL.Mail.Models
+namespace UATL.MailSystem.Models
 {
     public interface IIdentityService
     {

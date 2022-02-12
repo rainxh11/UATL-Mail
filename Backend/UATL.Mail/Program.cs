@@ -1,5 +1,5 @@
-using UATL.Mail.Models.Request;
-using UATL.Mail.Models.Validations;
+using UATL.MailSystem.Models.Request;
+using UATL.MailSystem.Models.Validations;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -7,18 +7,22 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Configuration;
-using UATL.Mail.Services;
-using UATL.Mail.Helpers;
+using UATL.MailSystem.Services;
+using UATL.MailSystem.Helpers;
 using Microsoft.OpenApi.Models;
-using UATL.Mail.Models;
-using UATL.Mail;
+using UATL.MailSystem.Models;
+using UATL.MailSystem;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using Serilog.AspNetCore;
 using Microsoft.AspNetCore.Http.Features;
+using Newtonsoft.Json;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -50,7 +54,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddControllers(/*options => options.Filters.Add(new ValidationFilter())*/);
+builder.Services.AddControllers(/*options => options.Filters.Add(new ValidationFilter())*/).AddNewtonsoftJson(o =>
+{
+    o.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+    o.SerializerSettings.DefaultValueHandling = DefaultValueHandling.Ignore;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(setup =>
 {
@@ -83,6 +91,7 @@ builder.Services.AddSwaggerGen(setup =>
         , Array.Empty<string>() }
     });
 });
+builder.Services.AddSwaggerGenNewtonsoftSupport();
 
 builder.Services
     .AddFluentValidation(fv => fv

@@ -3,11 +3,12 @@ using MongoDB.Entities;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json.Serialization;
 using BsonRequired = MongoDB.Bson.Serialization.Attributes.BsonRequiredAttribute;
 using BsonIgnore = MongoDB.Bson.Serialization.Attributes.BsonIgnoreAttribute;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
-namespace UATL.Mail.Models.Models
+namespace UATL.MailSystem.Models.Models
 {
     public class Draft : Entity, ICreatedOn, IModifiedOn
     {
@@ -19,12 +20,6 @@ namespace UATL.Mail.Models.Models
         public string Body { get; set; } = string.Empty;
         public List<Attachement> Attachements { get; set; } = new List<Attachement>();
         
-    }
-    public enum MailType
-    {
-        Sent,
-        Received,
-        Scheduled
     }
     public enum MailTag
     {
@@ -40,11 +35,17 @@ namespace UATL.Mail.Models.Models
         [AsObjectId]
         public string GroupId { get; set; } = null;
         [IgnoreDefault]
-        public Mail ResponseTo { get; set; }
+        [AsObjectId]
+        public string ResponseTo { get; set; }
 
+        [IgnoreDefault]
         public DateTime SentOn { get; set; }
         public AccountBase To { get; set; }
         bool IsEncrypted { get; set; } = false;
+
+        [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
+        [IgnoreDefault]
+        public List<MailTag> Tags { get; set; } = new List<MailTag>();
     }
 
     public class Attachement : FileEntity, ICreatedOn, IModifiedOn

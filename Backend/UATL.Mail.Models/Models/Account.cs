@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Text;
 using System.ComponentModel;
-using System.Text.Json.Serialization;
 using MongoDB.Entities;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Mapster;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
-namespace UATL.Mail.Models
+namespace UATL.MailSystem.Models
 {
 
     public class AccountBase : Entity
@@ -29,10 +30,9 @@ namespace UATL.Mail.Models
         public DateTime LastLogin { get; set; }
         public DateTime PasswordUpdatedOn { get; set; }
         [IgnoreDefault]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public AccountBase CreatedBy { get; set; }
 
-        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [JsonConverter(typeof(StringEnumConverter))]
         public AccountType Role { get; set; } = AccountType.User;
         public bool Enabled { get; set; } = true;
 

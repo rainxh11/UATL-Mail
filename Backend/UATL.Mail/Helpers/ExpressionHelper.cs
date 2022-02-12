@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace UATL.Mail.Helpers
+namespace UATL.MailSystem.Helpers
 {
     public class ExpressionHelper
     {

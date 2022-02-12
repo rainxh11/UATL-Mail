@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using UATL.Mail.Models.Request;
-using UATL.Mail.Models;
+using UATL.MailSystem.Models.Request;
+using UATL.MailSystem.Models;
 using Microsoft.AspNetCore.Authorization;
-using UATL.Mail.Models.Response;
+using UATL.MailSystem.Models.Response;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
@@ -12,7 +12,7 @@ using System.Linq.Expressions;
 using MongoDB.Bson;
 using MongoDB.Entities;
 
-namespace UATL.Mail.Controllers
+namespace UATL.MailSystem.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]

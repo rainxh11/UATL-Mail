@@ -2,22 +2,24 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Entities;
-using UATL.Mail.Models;
-using UATL.Mail.Models.Models;
-using UATL.Mail.Models.Response;
+using UATL.MailSystem.Models;
+using UATL.MailSystem.Models.Models;
+using UATL.MailSystem.Models.Response;
 using System.Linq.Dynamic;
 using System.Linq.Dynamic.Core;
-using UATL.Mail.Models.Models.Request;
+using UATL.MailSystem.Models.Models.Request;
 using Mapster.Adapters;
 using Mapster;
 using MongoDB.Driver;
 using System.Linq.Expressions;
+using MongoDB.Bson;
+using System.Linq;
 
-namespace UATL.Mail.Controllers
+namespace UATL.MailSystem.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class DraftController : ControllerBase
+    public class DraftController : Controller
     {
         public static string FirstCharToUpper(string input)
         {
@@ -78,6 +80,7 @@ namespace UATL.Mail.Controllers
                 var account = await _identityService.GetCurrentAccount(HttpContext);
 
                 var draft = await DB.Find<Draft>().Match(x => x.From.ID == account.ID).OneAsync(id);
+                if (draft == null) return NotFound();
 
                 return Ok(draft); ;
             }
@@ -152,6 +155,7 @@ namespace UATL.Mail.Controllers
             {
                 var account = await _identityService.GetCurrentAccount(HttpContext);
                 var draft = await DB.Find<Draft>().Match(x => x.From.ID == account.ID).OneAsync(id);
+                if (draft == null) return NotFound();
 
                 var attachements = new List<Attachement>();
                 foreach (var file in HttpContext.Request.Form.Files)
@@ -197,6 +201,46 @@ namespace UATL.Mail.Controllers
         }
         //---------------------------------------------------------------------------------------------------------------------------------------------//
         [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [HttpPost]
+        [Route("{id}/send")]
+        public async Task<IActionResult> SendDraft(string id, [FromBody] SendDraftRequest sendModel, CancellationToken ct, bool keepDraft = false)
+        {
+            var transaction = DB.Transaction();
+            try
+            {
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+                var draft = await DB.Find<Draft>(transaction.Session).Match(x => x.From.ID == account.ID).OneAsync(id);
+                if (draft == null) return NotFound();
+
+                var groupId = sendModel.Recipients.Count() == 1 ? ObjectId.GenerateNewId().ToString() : null;
+                var mails = new List<Mail>();
+
+                foreach(var recipient in sendModel.Recipients.Where(x => x != account.ID))
+                {
+                    var mail = draft.Adapt<Mail>();
+                    var to = await DB.Find<Account>(transaction.Session).OneAsync(recipient);
+                    mail.To = to.ToBaseAccount();
+                    mail.Tags = sendModel.Tags;
+                    mails.Add(mail);
+                }
+                var result = await DB.InsertAsync<Mail>(mails, transaction.Session, ct);
+
+                if (!result.IsAcknowledged)
+                {
+                    return BadRequest();
+                }
+                await transaction.CommitAsync(ct);
+
+                return Ok(new MessageResponse<string>($"Sent {result.InsertedCount} Mail.")); ;
+            }
+            catch (Exception ex)
+            {
+                await transaction.AbortAsync();
+                return BadRequest(ex.Message);
+            }
+        }
+        //---------------------------------------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpPatch]
         [Route("{id}")]
         public async Task<IActionResult> UpdateDraft(string id, [FromBody] DraftRequest draftRequest)
@@ -205,6 +249,7 @@ namespace UATL.Mail.Controllers
             {
                 var account = await _identityService.GetCurrentAccount(HttpContext);
                 var draft = await DB.Find<Draft>().OneAsync(id);
+                if (draft == null) return NotFound();
 
                 draft.Body = draftRequest.Body;
                 draft.Subject = draftRequest.Subject;
@@ -232,7 +277,7 @@ namespace UATL.Mail.Controllers
 
                 if (!result.IsAcknowledged)
                 {
-                    return Unauthorized();
+                    return BadRequest();
                 }
                 else
                 {
@@ -258,7 +303,7 @@ namespace UATL.Mail.Controllers
 
                 if (!result.IsAcknowledged)
                 {
-                    return Unauthorized();
+                    return BadRequest();
                 }
                 else
                 {

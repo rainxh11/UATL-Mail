@@ -1,4 +1,4 @@
-﻿namespace UATL.Mail.Models
+﻿namespace UATL.MailSystem.Models
 {
     public class AccountRole
     {

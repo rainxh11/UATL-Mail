@@ -4,7 +4,7 @@ using System.Text;
 using Invio.Hashing;
 using System.Text.Json;
 
-namespace UATL.Mail.Models.EqualityComparer
+namespace UATL.MailSystem.Models.EqualityComparer
 {
 
     public class AccountsEqualityComparer : IEqualityComparer<List<Account>>

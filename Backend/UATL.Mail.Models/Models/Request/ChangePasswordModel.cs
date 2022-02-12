@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace UATL.Mail.Models.Request
+namespace UATL.MailSystem.Models.Request
 {
     public class ChangePasswordModel
     {

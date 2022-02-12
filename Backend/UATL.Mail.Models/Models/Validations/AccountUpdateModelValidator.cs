@@ -1,8 +1,8 @@
-﻿using UATL.Mail.Models.Request;
+﻿using UATL.MailSystem.Models.Request;
 using FluentValidation;
 using MongoDB.Bson;
 
-namespace UATL.Mail.Models.Validations
+namespace UATL.MailSystem.Models.Validations
 {
     public class AccountUpdateModelValidator : AbstractValidator<AccountUpdateModel>
     {

@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 using Mapster;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace UATL.Mail.Models.Request
+namespace UATL.MailSystem.Models.Request
 {
     public class SignupModel
     {

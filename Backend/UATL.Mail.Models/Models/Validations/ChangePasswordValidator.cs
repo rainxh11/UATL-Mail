@@ -1,7 +1,7 @@
-﻿using UATL.Mail.Models.Request;
+﻿using UATL.MailSystem.Models.Request;
 using FluentValidation;
 
-namespace UATL.Mail.Models.Validations
+namespace UATL.MailSystem.Models.Validations
 {
     public class ChangePasswordValidator : AbstractValidator<ChangePasswordModel>
     {
