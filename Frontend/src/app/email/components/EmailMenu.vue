@@ -6,7 +6,10 @@
       color="primary"
       class="mb-3"
       @click="showCompose = true"
-    >{{ $t('email.compose') }}</v-btn>
+    >
+      <v-icon class="pa-2">fa-regular fa-plus</v-icon>
+      {{ $t('email.compose') }}
+    </v-btn>
 
     <v-list dense nav class="mt-2 pa-0">
       <v-list-item
@@ -91,12 +94,12 @@ export default {
       showCompose: false,
       menu: [{
         label: 'email.inbox',
-        icon: 'bx bxs-inbox',
+        icon: 'fa-regular fa-inbox-in',
         link: '/mailbox/inbox',
         count: 3
       }, {
         label: 'email.sent',
-        icon: 'bx-send',
+        icon: 'fa-regular fa-inbox-out',
         link: '/mailbox/sent'
       }, {
         label: 'email.drafts',
@@ -104,23 +107,23 @@ export default {
         link: '/mailbox/drafts'
       }, {
         label: 'email.starred',
-        icon: 'mdi-star-outline',
+        icon: 'fa-regular fa-star',
         link: '/mailbox/starred',
         count: 1
       }, {
         label: 'email.trash',
-        icon: 'mdi-delete-outline',
+        icon: 'fa-regular fa-trash',
         link: '/mailbox/trash'
       }],
       labels: [{
         label: 'email.work',
         color: 'primary',
-        icon: 'mdi-label-outline',
+        icon: 'fa-regular fa-tag',
         link: '/mailbox/inbox#work'
       }, {
         label: 'email.invoice',
         color: 'green',
-        icon: 'mdi-label-outline',
+        icon: 'fa-regular fa-tag',
         link: '/mailbox/inbox#invoice'
       }]
     }

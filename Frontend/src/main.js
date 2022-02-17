@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import VueRx from 'vue-rx'
 import App from './App.vue'
-import { firstTimeAdmin } from './api/auth'
 import VueIframe from 'vue-iframes'
 
 // VUEX - https://vuex.vuejs.org/
@@ -32,6 +31,7 @@ import './filters/lowercase'
 import './filters/uppercase'
 import './filters/formatCurrency'
 import './filters/formatDate'
+import './filters/formatMisc'
 
 // STYLES
 // Main Theme SCSS
@@ -50,6 +50,10 @@ Vue.use(Vue2Editor)
 import VueCookies from 'vue-cookies'
 Vue.use(VueCookies)
 
+// Enumerable
+import { AsEnumerable } from 'linq-es5'
+Vue.prototype.$enumerable = AsEnumerable
+
 // V-mask As a plugin
 import VueMask from 'v-mask'
 import { VueMaskFilter } from 'v-mask'
@@ -58,28 +62,7 @@ Vue.use(VueMask)
 // mask only as a filter
 Vue.filter('VMask', VueMaskFilter)
 
-// socket IO
-import VueSocketIOExt from 'vue-socket.io-extended'
-import { io } from 'socket.io-client'
-
-const risReportServer = process.env.VUE_APP_REPORT_SERVER || 'http://127.0.0.1:5000/api/risreport/'
-const documentServer = process.env.VUE_APP_DOCUMENT_SERVER || 'http://127.0.0.1:5000/api/documenteditor/'
-const documentServerPrintDicom = process.env.VUE_APP_DOCUMENT_SERVER_PRINTDICOM || 'http://127.0.0.1:5000/api/documenteditor/printdicom/'
-const dicomServer = process.env.VUE_APP_DICOM_SERVER || 'http://127.0.0.1:9100'
-const orthancViewer = process.env.VUE_APP_ORTHANC_VIEWER || 'http://127.0.0.1:81/'
-const dicomWebSocket = process.env.VUE_APP_DICOM_SERVER_WEBSOCKET || 'ws://127.0.0.1:9101/dicomserverwebsocket/studies/'
-
-Vue.prototype.$risReportServer = risReportServer
-Vue.prototype.$documentServer =  documentServer
-Vue.prototype.$documentServerPrintDicom = documentServerPrintDicom
-Vue.prototype.$dicomServer = dicomServer
-Vue.prototype.$orthancViewer =  orthancViewer
-Vue.prototype.$dicomWebSocket = dicomWebSocket
-
-const apiHost = process.env.VUE_APP_API || '127.0.0.1:8000'
-const socket = io(apiHost)
-
-Vue.use(VueSocketIOExt, socket)
+const apiHost = process.env.VUE_APP_API || '127.0.0.1:5000'
 
 // Set this to false to prevent the production tip on Vue startup.
 Vue.config.productionTip = false
@@ -107,12 +90,6 @@ if (shouldSW) {
 
   })
 }
-
-firstTimeAdmin().then((res) => {
-
-}).catch(() => {
-
-})
 
 import VueNativeNotification from 'vue-native-notification'
 import datejs from 'datejs'

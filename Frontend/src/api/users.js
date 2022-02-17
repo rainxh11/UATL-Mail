@@ -10,58 +10,40 @@ function headerAuth(token) {
 }
 
 // GET Api for { User }
-const getAllUser = async (token, filter) => {
-  if (filter === undefined) {
-    return await axios.get('/users?active=true' , headerAuth(token) )
-  }
-  else {
-    return await axios.get('/users' + filter, headerAuth(token) )
-  }
-}
-const createUser = async (user ,token) => {
-  /*const userExist = await axios.get('/users?name=' + user.name, headerAuth(token) )
-  if(userExist.results === 0) {
+const getAllUser = async (query) =>  {
+  query ??= '?page=1&limit=-1&sort=CreatedOn&desc=true'
 
-  }*/
-  return await axios.post('/users', user, headerAuth(token) )
+  return await axios.get('/account' + query)
+}
+
+const createUser = async (user ,token) => {
+  return await axios.post('/account', user, headerAuth(token) )
 }
 const deleteUser = async (id, token) => {
-  return await axios.delete('/users/' + id, headerAuth(token) )
+  return await axios.delete('/account/' + id, headerAuth(token) )
 }
 const updateUser = async (id, userInfo, token) => {
-  return await axios.patch('/users/' + id, userInfo, headerAuth(token) )
+  return await axios.patch('/account/' + id, userInfo, headerAuth(token) )
 }
 
 const updateMe = async (userInfo, token) => {
-  return await axios.patch('/users/updateMe', userInfo, headerAuth(token) )
+  return await axios.patch('/account/me', userInfo, headerAuth(token) )
 }
 
 const getOneUser = async (id, token) => {
-  return await axios.get('/users/' + id, headerAuth(token) )
+  return await axios.get('/account/' + id, headerAuth(token) )
 }
 
 const checkMyPassword = async (currentPassword, token) => {
-  /* // currentPassword
-  {
-    "currentPassword" : "12345678"
-  }
-   */
-  return await axios.post('/users/checkMyPassword', currentPassword, headerAuth(token) )
+  return await axios.post('/account/me/checkpassword', currentPassword, headerAuth(token) )
 }
 
 const updateMyPassword = async (passwordModel, token) => {
-  /* // passwordModel
-{
-    "password" : "newpassword",
-    "passwordConfirm" : "newpassword",
-    "passwordCurrent" : "12345678"
-}
- */
-  return await axios.patch('/users/updateMyPassword', passwordModel, headerAuth(token) )
+  return await axios.patch('/account/me/updatepassword', passwordModel, headerAuth(token) )
 }
 
 const getCurrentUser = async (token) => {
-  return await axios.get('/users/me' , headerAuth(token))
+  return await axios.get('/account/me' , headerAuth(token))
 }
 
 export {

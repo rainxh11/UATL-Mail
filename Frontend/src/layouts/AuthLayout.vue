@@ -4,7 +4,7 @@
     <v-col >
 
       <div class="pa-md-2 flex-grow-1 flex-grow-1 align-center d-flex flex-column">
-        <img style="width: 40%; alignment: center" src="/images/logo/header.svg" />
+        <img style="width: 20%; alignment: center" src="/images/logo/header.svg" />
 
         <div class="layout-content  w-full pa-3">
           <slot></slot>

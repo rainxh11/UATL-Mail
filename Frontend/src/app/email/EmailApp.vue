@@ -7,7 +7,7 @@
       floating
       class="elevation-1 rounded flex-shrink-0"
       :class="[$vuetify.rtl ? 'ml-3' : 'mr-3']"
-      width="240"
+      width="300"
     >
       <email-menu class="pa-2"></email-menu>
     </v-navigation-drawer>

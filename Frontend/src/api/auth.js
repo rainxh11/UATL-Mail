@@ -9,22 +9,22 @@ function headerAuth(token) {
   }
 }
 
-// GET Api for { Authentification }
-const signIn = async (email, password) => {
-  return await axios.post('/users/login', { email, password }) }
+const signIn = async (username, password) => {
+  return await axios.post('/account/login', {
+    username: username,
+    password: password
+  })
+}
 
 const signOut = async (user) => {
-  return await axios.post('/users/logout',  user ) }
+  return await axios.post('/account/logout',  user ) }
 
 const getMyInfo = async (token) => {
-  return await axios.get('/users/me', headerAuth(token) )  }
+  return await axios.get('/account/me', headerAuth(token) )  }
 
-const signUp = async (name, email, password) => {
-  return await axios.post('/users/signup', { name:name, email: email, password: password, passwordConfirm: password }) }
-
-const firstTimeAdmin = async () => {
-  return await axios.post('/users/firsttimeAdmin') }
+const signUp = async (name, username, password, confirmPassword) => {
+  return await axios.post('/account/signup', { name:name, username: username, password: password, passwordConfirm: confirmPassword }) }
 
 export {
-  signIn, getMyInfo, signUp, firstTimeAdmin, signOut
+  signIn, getMyInfo, signUp, signOut
 }

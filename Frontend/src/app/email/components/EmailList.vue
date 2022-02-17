@@ -17,7 +17,7 @@
         </v-list>
       </v-menu>
 
-      <v-btn v-show="selected.length === 0" icon :loading="isLoading" @click="$emit('refresh')">
+      <v-btn v-show="selected.length === 0" icon :loading="isLoading" @click="$emit('refresh', { page: 1, pageSize: pageSize }); page = 1;">
         <v-icon>mdi-refresh</v-icon>
       </v-btn>
 
@@ -34,45 +34,46 @@
       </div>
 
       <v-spacer></v-spacer>
-
-      <div class="caption mr-1">1 - 20 of 428</div>
-      <v-btn icon disabled>
-        <v-icon>mdi-chevron-left</v-icon>
-      </v-btn>
-      <v-btn icon>
-        <v-icon>mdi-chevron-right</v-icon>
-      </v-btn>
+      <v-pagination
+        v-model="page"
+        :length="pageCount"
+        :total-visible="maxPages"
+        @input="$emit('refresh', { page: page, pageSize: pageSize })"
+      ></v-pagination>
     </div>
 
     <v-divider></v-divider>
-
     <v-list class="py-0">
       <template v-for="(item, index) in emails">
         <v-list-item
-          :key="item.title"
+          :key="item.Subject"
           :class="{
             'grey lighten-5': item.read && !$vuetify.theme.dark,
-            'v-list-item--active primary--text': selected.indexOf(item.id) !== -1
+            'v-list-item--active primary--text': selected.indexOf(item.ID) !== -1
           }"
           link
         >
           <v-list-item-action class="d-flex flex-row align-center">
-            <v-checkbox v-model="selected" :value="item.id"></v-checkbox>
+            <v-checkbox v-model="selected" :value="item.ID"></v-checkbox>
 
-            <v-btn icon class="ml-1" @click="item.starred = !item.starred">
-              <v-icon v-if="!item.starred" color="grey lighten-1">
-                bx-star
+            <v-btn icon class="ml-1" @click="item.Starred = !item.Starred">
+              <v-icon v-if="!item.Starred" color="grey lighten-1">
+                fa-regular fa-star
               </v-icon>
-              <v-icon v-else color="yellow darken-1">
-                bx bxs-star
+              <v-icon v-else color="yellow darken-2">
+                fa-solid fa-star
               </v-icon>
             </v-btn>
+            <v-icon v-if="type === 'sent'" small color="info">fa-solid fa-inbox-out</v-icon>
+            <v-icon v-if="type === 'draft'" small>fa-solid fa-pencil</v-icon>
           </v-list-item-action>
 
           <v-list-item-content @click="$router.push(`/mailbox/inbox/${item.id}`)">
-            <v-list-item-title v-text="item.subject"></v-list-item-title>
-            <v-list-item-subtitle class="font-weight-bold" v-text="item.title"></v-list-item-subtitle>
-            <v-list-item-subtitle v-text="item.content"></v-list-item-subtitle>
+            <v-list-item-title v-text="item.Subject"></v-list-item-title>
+            <v-list-item-subtitle v-show="type === 'draft'" class="font-weight-bold">
+              {{ getTitle(item) }}
+            </v-list-item-subtitle>
+            <v-list-item-subtitle v-text="item.Body"></v-list-item-subtitle>
             <v-list-item-subtitle>
               <v-chip
                 v-for="label in item.labels"
@@ -88,7 +89,11 @@
           </v-list-item-content>
 
           <v-list-item-action>
-            <v-list-item-action-text v-text="item.time"></v-list-item-action-text>
+            <v-list-item-action-text>
+              <span class="text--primary text-lg-body-2">
+                {{ item.CreatedOn | formatTimeAgo }}
+              </span>
+            </v-list-item-action-text>
           </v-list-item-action>
         </v-list-item>
 
@@ -105,6 +110,7 @@
     <v-overlay :value="isLoading" absolute>
       <v-progress-circular indeterminate size="32"></v-progress-circular>
     </v-overlay>
+
   </v-card>
 </template>
 
@@ -117,6 +123,9 @@
 | List to display emails
 |
 */
+import { searchDrafts } from '@/api/drafts'
+import { mapGetters } from 'vuex'
+
 export default {
   props: {
     emails: {
@@ -130,10 +139,34 @@ export default {
     isLoading: {
       type: Boolean,
       default: false
+    },
+    maxPages:{
+      type: Number,
+      default: 10
+    },
+    pageCount:{
+      type: Number,
+      default: 1
+    },
+    type: {
+      type: String,
+      default: 'received'
+    },
+    pageSizes: {
+      type: Array,
+      default: () => [
+        10,
+        20,
+        50,
+        100
+      ]
     }
   },
   data() {
     return {
+      value:null,
+      page: 1,
+      pageSize: 10,
       selectAll: false,
       selectAlmostAll: false,
       selected: [],
@@ -149,10 +182,16 @@ export default {
       }, {
         title: 'Starred',
         key: 'starred'
-      }]
+      }],
+      search: null
     }
   },
+  computed: {
+  },
   watch: {
+    search (val) {
+
+    },
     selected(val) {
       // check selectAll intermediate state
       this.$nextTick(() => {
@@ -161,17 +200,14 @@ export default {
             this.selectAll = false
             this.selectAlmostAll = false
           } else {
-            if (this.emails.length === val.length) {
-              this.selectAlmostAll = false
-            } else {
-              this.selectAlmostAll = true
-            }
+            this.selectAlmostAll = this.emails.length !== val.length
           }
         }
       })
     }
   },
   methods: {
+    ...mapGetters('auth', ['getToken', 'getUserInfo']),
     onMenuSelection(key) {
       switch (key) {
       case 'all':
@@ -199,6 +235,17 @@ export default {
       const label = this.labels.find((l) => l.id === id)
 
       return label ? label.title : ''
+    },
+    getTitle(item) {
+      switch (this.type) {
+      default:
+      case 'draft':
+        return ''
+      case 'sent':
+        return `-> ${item.To.Name}`
+      case 'received':
+        return `${item.From.Name}`
+      }
     }
   }
 }

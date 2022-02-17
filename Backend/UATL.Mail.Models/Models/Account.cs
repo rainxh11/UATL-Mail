@@ -32,8 +32,12 @@ namespace UATL.MailSystem.Models
         [IgnoreDefault]
         public AccountBase CreatedBy { get; set; }
 
-        [JsonConverter(typeof(StringEnumConverter))]
+        //[JsonConverter(typeof(StringEnumConverter))]
+        [JsonIgnore]
         public AccountType Role { get; set; } = AccountType.User;
+
+        [JsonProperty("Role")]
+        public string RoleName { get => Role.ToString(); }
         public bool Enabled { get; set; } = true;
 
         public AccountBase ToBaseAccount()

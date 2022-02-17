@@ -23,7 +23,7 @@ export default {
   methods: {
     checkMyRole(v) {
       if (v.role)
-        return v.role.includes(this.$store.getters['auth/getUserInfo'].role) // Verify each item in Nav list with role of user to show up
+        return v.role.includes(this.$store.getters['auth/getUserInfo'].Role) // Verify each item in Nav list with role of user to show up
 
       return false
     }

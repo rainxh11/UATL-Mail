@@ -18,15 +18,13 @@
       <template v-slot:prepend>
         <v-toolbar class="pa-1" max-height="100" color="transparent" @click="$router.push('/')">
           <v-img
-            :src="getLogo()"
+            src="/images/logo/uatl.svg"
             class="mb-1"
             max-height="64"
             max-width="64"
           ></v-img>
-
-          <p class="text-h5  font-weight-bold text-uppercase" style="color: #0096c7">
+          <p class="text-h6  font-weight-bold text-uppercase px-2" >
             {{ product.name }}</p>
-
         </v-toolbar>
       </template>
 
@@ -82,12 +80,12 @@
               </template>
 
               <v-card>
-                <v-color-picker v-model="color" mode="hexa" :swatches="swatches" show-swatches></v-color-picker>
+                <v-color-picker v-model="color" mode="hexa" show-swatches></v-color-picker>
               </v-card>
             </v-menu>
 
             <v-btn icon @click="dark = !dark">
-              <v-icon>{{ this.getDarkModeIcon() }}</v-icon>
+              <v-icon>{{ getDarkModeIcon() }}</v-icon>
             </v-btn>
             <v-spacer class="d-none d-lg-block"></v-spacer>
             <!-- search input desktop -->
@@ -103,52 +101,6 @@
             <!--            ></v-text-field>-->
 
             <v-spacer class="d-block"></v-spacer>
-            <v-badge
-              :color="(notification.waitingDelivery !== 0) ? 'red' : 'grey'"
-              overlap
-              bordered
-              :content="notification.waitingDelivery"
-              offset-x="12"
-              offset-y="15"
-              class="mr-2"
-            >
-              <v-btn
-                :disabled="notification.waitingDelivery === 0"
-                fab
-                small
-                color="primary black--text"
-                @click="popup('/studies/table?type=complete')"
-              >
-
-                <v-icon color="white" >
-                  mdi-hand
-                </v-icon>
-              </v-btn>
-            </v-badge>
-
-            <v-badge
-              :color="(notification.unfinishedStudy !== 0) ? 'red' : 'grey'"
-              overlap
-              bordered
-              :content="notification.unfinishedStudy"
-              offset-x="12"
-              offset-y="15"
-              class="mr-2"
-            >
-              <v-btn
-                :disabled="notification.unfinishedStudy === 0"
-                fab
-                small
-                color="primary black--text"
-                @click="popup('/studies/table?type=new')"
-              >
-
-                <v-icon color="white" >
-                  mdi-bell
-                </v-icon>
-              </v-btn>
-            </v-badge>
-
             <toolbar-user />
           </div>
         </div>
@@ -181,7 +133,6 @@ import ToolbarUser from '../components/toolbar/ToolbarUser'
 import ToolbarApps from '../components/toolbar/ToolbarApps'
 
 import ToolbarNotifications from '../components/toolbar/ToolbarNotifications'
-import { getOneStudy } from '@/api/study'
 import Vuecookie from 'vue-cookies'
 
 export default {
@@ -192,6 +143,7 @@ export default {
   },
   data() {
     return {
+      menu: null,
       theme: 0,
       drawer: null,
       showSearch: false,
@@ -199,6 +151,9 @@ export default {
       dark: false,
       navigation: config.navigation
     }
+  },
+  computed: {
+    ...mapState('app', ['product', 'isContentBoxed', 'menuTheme', 'toolbarTheme', 'isToolbarDetached', 'notification'])
   },
   watch: {
     dark() {
@@ -211,51 +166,24 @@ export default {
       this.$storage.set('themecolor',val)
     }
   },
-  computed: {
-    ...mapState('app', ['product', 'isContentBoxed', 'menuTheme', 'toolbarTheme', 'isToolbarDetached', 'notification'])
-  },
   mounted() {
     this.loadConfig()
 
-    this.$socket.client.connect()
-    this.$socket.client.on('newStudy' , (it) => {
-      getOneStudy(it.id , this.getToken()).then( (res) => {
+    /*  this.$socket.client.on('newStudy' , (it) => {
 
-        if (this.getUserInfo().email !== res.data.data.createdBy.email)
-        {
-          this.showBrowserNotification('Nouveau Examen', `Client: ${res.data.data.client.fullName}\n${res.data.data.examType}`, res.data.data)
-        }
-      }).catch( () => {
-
-      })
-      this.notificationUpdate()
     })
     this.$socket.client.on('deleteStudy' , (it) => {
       this.notificationUpdate()
     })
     this.$socket.client.on('updateStudy' , (it) => {
-      if (it.fieldsUpdated !== undefined) {
-        if (it.fieldsUpdated.statusStudy === 'complete') {
-          // eslint-disable-next-line no-empty
-          if (this.getUserInfo().role === 'user') {
-            getOneStudy(it.id , this.getToken()).then( (res) => {
-              this.showBrowserNotification('Examen Fini', `Client: ${res.data.data.client.fullName}`, res.data.data)
-            }).catch( (err) => {
-              this.showError(err)
-            })
-          }
-          this.notificationUpdate()
-        } else if (it.fieldsUpdated.statusStudy === 'delivered') {
-          this.notificationUpdate()
-        }
-      }
+
     })
     this.notificationUpdate()
-    //setInterval(() => this.notificationUpdate(), 10000)
+    //setInterval(() => this.notificationUpdate(), 10000)*/
 
   },
   beforeDestroy() {
-    this.$socket.client.disconnect()
+    // this.$socket.client.disconnect()
   },
   methods: {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
@@ -309,15 +237,7 @@ export default {
         this.$router.push(v)
         //window.open(route.href, '_blank')
       }
-    },
-    getLogo() {
-      if (this.$vuetify.theme.dark) {
-        return '/images/logo/espoir_white.svg'
-      } else {
-        return '/images/logo/espoir.svg'
-      }
     }
-
   }
 }
 </script>

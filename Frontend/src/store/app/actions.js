@@ -1,6 +1,4 @@
-import { getAllClient } from '@/api/client'
 import stateAuth from '@/store/auth'
-import { getAllStudy } from '@/api/study'
 
 const showToast = ({ state, commit }, message) => {
   if (state.toast.show) commit('hideToast')
@@ -15,24 +13,7 @@ const showToast = ({ state, commit }, message) => {
 }
 
 const notificationUpdate = async ({ state, commit }) => {
-  const not = {
-    unStudy : 0,
-    WaDelivery : 0
-  }
 
-  await getAllStudy( stateAuth['state'].token, '?statusStudy=new&statusStudy=inProgress').then((res) => {
-    not.unStudy = res.data.results
-
-  })
-
-  await getAllStudy( stateAuth['state'].token, '?statusStudy=complete').then((res) => {
-    not.WaDelivery = res.data.results
-  })
-  setTimeout(() => {
-
-    commit('setNotificationUnStudy', not.unStudy)
-    commit('setNotificationWaDelivery', not.WaDelivery)
-  })
 }
 
 const showError = (state, commit) => {

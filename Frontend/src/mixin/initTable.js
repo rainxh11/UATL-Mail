@@ -19,11 +19,11 @@ export const roles = {
       userRoles : [
         {
           roleName : this.$t('setting.roles.admin'),
-          role : 'admin'
+          role : 'Admin'
         },
         {
           roleName : this.$t('setting.roles.user'),
-          role : 'user'
+          role : 'User'
         }]
     }
   }

@@ -1,48 +1,8 @@
 export default {
-  'charts': {
-    'payments': 'Examens Payée',
-    'debts': 'Examens Dettes',
-    'nonPayments': 'Examens Non Payée',
-    'currencyTitle': 'DA (Dinar Algérien)',
-    'incomeOf': 'Recette de ',
-    'amount': {
-      'discount': 'Remises',
-      'convention': 'Remises de Conventions',
-      'payment': 'Paiments d\'Examens',
-      'debt': 'Dettes Non-Payée',
-      'debtPaid': 'Paiments de Dettes',
-      'notPaid': 'Examens Non-Payée'
-    },
-    'title': {
-      'paymentsPeriod': 'Paiments dans une Période',
-      'dailyPaymentsAmount': 'Paiments Quotidiens (Montant)',
-      'dailyPayments': 'Paiments Quotidiens',
-      'dailyExpenses': 'Dépenses & Charges Quotidiens',
-      'income': 'Recette',
-      'monthlyIncome': 'Revenu Mensuel'
-    }
-  },
-  'tableClient': {
-    'firstName': 'Prénom',
-    'familyName': 'Nom',
-    'BirthDate': 'Date De Naissance',
-    'createdAt': 'Creé Le',
-    'createdBy': 'Creé Par',
-    'updatedAt': 'Dernière Modification',
-    'phoneNumber': 'N° de Téléphone',
-    'debtAmount': 'Dette Non Payée Total',
-    'lastDebtCreatedBy':'Dérniere Dette Crée par',
-    'lastDebtCreatedAt':'Dérniere Dette Crée le'
-  },
   'confirmation': {
     'title': 'Confirmation',
     'delete': 'Voulez vous supprimer \'#\' ?',
     'update': 'Voulez vous modifier \'#\' ?'
-  },
-  'paymentStatus': {
-    'notPaid': 'Non Payé',
-    'debt': 'Dette',
-    'paid': 'Payé'
   },
   'toast': {
     'userDeleteSuccess': 'Suppression de compte effectué avec succès',
@@ -53,16 +13,6 @@ export default {
     'header': 'Centre d\'Imagerie Médicale',
     'welcome': 'Bienvenue',
     'signinSubheader': 'Connectez-vous à votre compte'
-  },
-  'tableStudies': {
-    'normalPayment': 'Paiment Normal',
-    'debtPayment': 'Paiment Dette',
-    'initialPayment': 'Paiment Initial',
-    'discountPermission': 'Pérmission de Remise',
-    'getPermission': 'Avoir Permission',
-    'debtRules': {
-      'maximum': 'Peut pas exiger le montant totale'
-    }
   },
   'common': {
     'years': ' Ans',
@@ -107,50 +57,6 @@ export default {
     'tasks': 'Tâches',
     'confirm': 'Confirmer'
   },
-  'expenseType': {
-    'productPurchase': 'Achat de Produits/Matériels',
-    'employeeSalary': 'Salaire d\'Employé',
-    'taxPayment': 'Paiement d\'Impôt',
-    'clientRefund': 'Remboursement Client',
-    'moneyWithdraw': 'Retrait d\'Argent',
-    'billPayment': 'Paiement de Factures ',
-    'rentPayment': 'Paiement du Loyer ',
-    'missingOrStolen': 'Objet/Argent Manquant ou Volé ',
-    'damagedItem': 'Article Endommagé ',
-    'otherExpense': 'Autres Dépenses'
-  },
-  'stock': {
-    'addExpense': 'Ajouter une Dépense',
-    'expenseType': 'Type de Dépense',
-    'addProduct': 'Ajouter Produit',
-    'editProduct': 'Modifier Produit',
-    'productEnabled': 'Produit Activée',
-    'comment': 'Extra Details',
-    'amount': 'Montant',
-    'sellingPrice': 'Prix de Vente',
-    'buyingPrice': 'Prix d\'Achat',
-    'quantity': 'Quantité',
-    'editQuantity': 'Modifier Quantité',
-    'addQuantity': 'Ajouter Quantité',
-    'productName': 'Nom de Produit',
-    'productStat': 'Etat de Produit',
-    'expenseDialog': {
-      'addTitle': 'Nouveau Dépense',
-      'editTitle': 'Modifier Dépense'
-    }
-  },
-  'board': {
-    'titlePlaceholder': 'Entrez un titre pour cette carte',
-    'deleteDescription': 'Voulez-vous vraiment supprimer cette carte?',
-    'editCard': 'Modifier la carte',
-    'deleteCard': 'Supprimer la carte',
-    'state': {
-      'TODO': 'FAIRE',
-      'INPROGRESS': 'EN COURS',
-      'TESTING': 'ESSAI',
-      'DONE': 'TERMINÉ'
-    }
-  },
   'chat': {
     'online': 'Utilisateurs en ligne ({count})',
     'addChannel': 'Ajouter une chaîne',
@@ -158,7 +64,7 @@ export default {
     'message': 'Message'
   },
   'email': {
-    'compose': 'Écrire un setting',
+    'compose': 'Composer un courrier',
     'send': 'Envoyer',
     'subject': 'Matière',
     'labels': 'Étiquettes',
@@ -169,7 +75,9 @@ export default {
     'starred': 'Favoris',
     'trash': 'Poubelle',
     'work': 'Travail',
-    'invoice': 'Facture d\'achat'
+    'invoice': 'Facture d\'achat',
+    'saveDraft': 'Sauvegarder un Brouillon',
+    'uploadHint':'Déposez vos fichiers ici ou cliquez pour les sélectionner.'
   },
   'profile': {
     'lastChanged': 'Dernière modification',
@@ -185,43 +93,6 @@ export default {
     'changePassword': 'Changer le mot de passe',
     'verifyPassword': 'Vérifier',
     'newPasswordLabel': 'Nouveau Mot de passe'
-  },
-  'clientPage': {
-    'rules': {
-      'birthDate': 'Date de naissance spécifiée plus récente que la date d\'aujourd\'hui!'
-    },
-    'tabHeaders': {
-      'history': 'Historique',
-      'infos': 'Informations',
-      'studies': 'Examens',
-      'payments': 'Paiments & Dettes'
-    },
-    'studyTab': {
-      'studiesCount': 'Nombre d\'études',
-      'modality': 'Modalité (Groupe)',
-      'examType': 'Type d\'examen',
-      'examStatus': 'État de l\'examen',
-      'showComplete': 'Afficher examens complét'
-    },
-    'debtTab': {
-      'modality': 'Modalité (Groupe)',
-      'examType': 'Examen',
-      'paymentStatus': 'Etat de Paiment',
-      'createdBy': 'Crée par',
-      'createdAt': 'Crée le',
-      'totalDebt': 'Dette Totale',
-      'status': 'etat'
-    },
-    'client': 'Client',
-    'clients': 'Clients',
-    'firstName': 'Prénom',
-    'familyName': 'Nom',
-    'age': 'Age',
-    'gender': 'Sexe',
-    'accessionNumber': 'Numéro d\'Accession',
-    'clientCreatedAt': 'Date d\'Ajout',
-    'birthDate': 'Date de Naissance',
-    'phoneNumber': 'N° de Téléphone'
   },
   'setting': {
     'General': 'Paramètres Générale',
@@ -295,42 +166,6 @@ export default {
     'completed': 'Terminé',
     'labels': 'Étiquettes'
   },
-  'dashboard': {
-    'exams': 'Examens',
-    'monetaryIndex': 'Indice Monetaire',
-    'activity': 'Activité',
-    'weeklySales': 'Ventes hebdomadaires',
-    'sales': 'Ventes',
-    'recentOrders': 'Dernières commandes',
-    'sources': 'Sources de trafic',
-    'lastweek': 'la semaine dernière',
-    'orders': 'Ordres',
-    'customers': 'Clients',
-    'tickets': 'Billets d\'assistance',
-    'viewReport': 'Voir le rapport',
-    'statNormal': 'Normal',
-    'statCustom': 'Personalisé',
-    'selectedPeriod': 'Période Séléctionnée',
-    'todayIncome': 'Recette d\'Aujourd\'hui',
-    'weeklyIncome': 'Recette de Semaine',
-    'yesterday': 'Hier',
-    'userPerformance': 'Performance de Personelles',
-    'topExams': 'Top Examens',
-    'legends': {
-      'paidStudy': 'Examens Payée',
-      'notPaidStudy': 'Examens Non-Payée',
-      'debtStudy': 'Examens Dette'
-    },
-    'user': {
-      'user': 'Utilisateur',
-      'paidAmount': 'Examens Payée',
-      'paidDebtAmount': 'Dettes Payée',
-      'debtAmount': 'Examens Dette Non-Payée',
-      'debtClientCount':'Examens Avec Dettes',
-      'discountAmount': 'Remises (Examens & Dettes)',
-      'conventionAmount': 'Examens Conventionnée'
-    }
-  },
   'usermenu': {
     'profile': 'Profil',
     'signin': 'Se connecter',
@@ -381,43 +216,8 @@ export default {
     'account': 'Vous avez déjà un compte?',
     'signin': 'Se connecter'
   },
-  'utility': {
-    'maintenance': 'En maintenance'
-  },
-  'faq': {
-    'call': 'Vous avez d\'autres questions? Veuillez contacter'
-  },
-  'ecommerce': {
-    'products': 'Des produits',
-    'filters': 'Filtres',
-    'collections': 'Les collections',
-    'priceRange': 'Échelle des prix',
-    'customerReviews': 'Avis des clients',
-    'up': 'et jusqu\'à',
-    'brand': 'Marque',
-    'search': 'Rechercher un produit',
-    'results': 'Résultats ({0} sur {1})',
-    'orders': 'Ordres',
-    'shipping': 'livraison',
-    'freeShipping': 'Livraison gratuite',
-    'inStock': 'En stock',
-    'quantity': 'Quantité',
-    'addToCart': 'Ajouter au chariot',
-    'buyNow': 'Acheter maintenant',
-    'price': 'Prix',
-    'about': 'À propos de cet article',
-    'description': 'La description',
-    'reviews': 'Commentaires',
-    'details': 'détails du produit',
-    'cart': 'Chariot',
-    'summary': 'Récapitulatif de la commande',
-    'total': 'Total',
-    'discount': 'Remise',
-    'subtotal': 'Total',
-    'continue': 'Continuer vos achats',
-    'checkout': 'Check-out'
-  },
   'menu': {
+    'mailbox':'Boite des courriers',
     'search': 'Recherche (appuyez sur \'ctrl + /\' pour faire la mise au point)',
     'dashboard': 'Tableau de Bord',
     'logout': 'Se déconnecter',

@@ -42,7 +42,7 @@ namespace UATL.MailSystem
             var method = context.Request.Method;
 
             sw.Start();
-            await next(context);
+            await next(context).ConfigureAwait(false);
             sw.Stop();
             var response = context.Response;
 

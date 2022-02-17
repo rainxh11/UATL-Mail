@@ -16,7 +16,7 @@ namespace UATL.MailSystem.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class AccountController : Controller
+    public class AccountController : ControllerBase
     {
         private readonly ILogger<AccountController> _logger;
         private IConfiguration _config;
@@ -89,13 +89,18 @@ namespace UATL.MailSystem.Controllers
         [AllowAnonymous]
         [HttpGet]
         [Route("")]
-        public async Task<IActionResult> GetAccounts()
+        public async Task<IActionResult> GetAccounts(int page = 1, int limit = 10, string? sort = "CreatedOn", bool desc = true)
         {
             try
             {
-                var accounts = await DB.Find<Account>().ExecuteAsync();
+                var accounts = await DB.PagedSearch<Account>()
+                    .Sort(s => desc ? s.Descending(sort) : s.Ascending(sort))
+                    .PageNumber(page)
+                    .PageSize(limit < 0 ? int.MaxValue : limit)
+                    .ExecuteAsync();
 
-                return Ok(new ResultResponse<List<Account>,int>(accounts.ToList(), accounts.Count()));
+
+                return Ok(new ResultResponse<IEnumerable<Account>,long>(accounts.Results, accounts.TotalCount));
 
             }
             catch (Exception ex)
@@ -151,7 +156,7 @@ namespace UATL.MailSystem.Controllers
                 account.LastLogin = DateTime.Now;
                 await account.SaveAsync();
 
-                var token = _tokenService.BuildToken(_config, account);
+                var token = await _tokenService.BuildToken(_config, account);
                 return Ok(new ResultResponse<Account, string>(account, token));
             }
             return NotFound("User not found!");
@@ -172,7 +177,7 @@ namespace UATL.MailSystem.Controllers
                 }
                 else
                 {
-                    return Ok(account);
+                    return Ok(new ResultResponse<Account,string>(account, "Success"));
                 }
             }
             catch (Exception ex)
@@ -184,11 +189,12 @@ namespace UATL.MailSystem.Controllers
         [Authorize(Roles = $"{AccountRole.Admin}")]
         [HttpPatch]
         [Route("{id}")]
-        public async Task<IActionResult> UpdateAccount(string id, [FromBody] AccountUpdateModel model)
+        public async Task<IActionResult> UpdateAccount(string id, [FromBody] AccountUpdateModel model, CancellationToken ct)
         {
+            var transaction = DB.Transaction();
             try
             {
-                var account = await DB.Find<Account>().MatchID(id).ExecuteSingleAsync();
+                var account = await DB.Find<Account>(transaction.Session).OneAsync(id, ct);
                 if(account == null)
                 {
                     return NotFound();
@@ -199,19 +205,20 @@ namespace UATL.MailSystem.Controllers
                 account.Role = model.Role ?? account.Role;
                 account.ModifiedOn = DateTime.Now;
 
-                var update = await DB.Update<Account>().ModifyWith(account).ExecuteAsync();
-                if (update.IsAcknowledged)
-                {
-                    var updated = await DB.Find<Account>().MatchID(id).ExecuteSingleAsync();
-                    return Ok(new ResultResponse<Account, string>(updated, "Account Updated"));
-                }
-                else
+                var update = await DB.Update<Account>(transaction.Session).MatchID(account.ID).ModifyWith(account).ExecuteAsync(ct);
+                await transaction.CommitAsync(ct);
+
+                if (!update.IsAcknowledged)
                 {
                     return BadRequest();
                 }
+                var updated = await DB.Find<Account>().OneAsync(id, ct);
+
+                return Ok(new ResultResponse<Account, string>(updated, "Account Updated"));
             }
             catch(Exception ex)
             {
+                await transaction.AbortAsync();
                 return BadRequest(ex.Message);
             }
         }

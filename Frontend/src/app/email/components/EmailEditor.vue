@@ -161,12 +161,21 @@
     <editor-content class="editor__content pa-3 py-4" :editor="editor" />
 
     <v-divider></v-divider>
+    <Upload :dialog.sync="uploadDialog" @filesUploaded="processUpload($event)"/>
 
     <div class="d-flex align-center pa-2">
       <v-btn color="primary">
+        <v-icon small class="pa-1">fa-solid fa-paper-plane-top</v-icon>
         {{ $t('email.send') }}
       </v-btn>
-      <v-file-input hide-input class="pa-0 mx-1"></v-file-input>
+      <v-btn icon class="pa-0 mx-1" @click="uploadDialog = true">
+        <v-icon>fa-solid fa-paperclip</v-icon>
+      </v-btn>
+      <v-spacer/>
+      <v-btn color="info">
+        <v-icon small class="pa-1">fa-solid fa-save</v-icon>
+        {{ $t('email.saveDraft') }}
+      </v-btn>
     </div>
   </div>
 </template>
@@ -193,6 +202,7 @@ import {
   Underline,
   History
 } from 'tiptap-extensions'
+import Upload from '@/app/email/components/FileDragDrop'
 
 /*
 |---------------------------------------------------------------------
@@ -204,12 +214,14 @@ import {
 */
 export default {
   components: {
+    Upload,
     EditorContent,
     EditorMenuBar,
     EmailInput
   },
   data() {
     return {
+      uploadDialog: false,
       toAddresses: [{
         text: 'Ruben Breitenberg',
         email: 'ruben@notarealemailaddress.com',
@@ -261,6 +273,11 @@ export default {
   },
   beforeDestroy() {
     this.editor.destroy()
+  },
+  methods:{
+    processUpload(val) {
+      console.log(val)
+    }
   }
 }
 </script>

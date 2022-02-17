@@ -85,8 +85,7 @@ export default {
     getUniqueAvatar() {
       const userInfo = this.getUserInfo()
 
-      this.avatar = 'https://robohash.org/' + userInfo.email
-
+      this.avatar = 'https://robohash.org/' + userInfo.UserName
     }
   }
 }

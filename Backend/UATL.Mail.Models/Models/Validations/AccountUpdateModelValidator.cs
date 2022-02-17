@@ -8,8 +8,8 @@ namespace UATL.MailSystem.Models.Validations
     {
         public AccountUpdateModelValidator()
         {
-            RuleFor(x => x.Id)
-                .Must(x => ObjectId.TryParse(x, out _)).WithMessage("Id must be a valid Bson ObjectID");
+            /*RuleFor(x => x.Id)
+                .Must(x => ObjectId.TryParse(x, out _)).WithMessage("Id must be a valid Bson ObjectID");*/
 
             RuleFor(x => x.Name)
                 .MinimumLength(3).WithMessage("Account Name Minimum lenght is 3 characters!")

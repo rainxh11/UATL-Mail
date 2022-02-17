@@ -14,12 +14,14 @@ using MongoDB.Driver;
 using System.Linq.Expressions;
 using MongoDB.Bson;
 using System.Linq;
+using UATL.Mail.Models.Bindings;
+using FluentValidation.AspNetCore;
 
 namespace UATL.MailSystem.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class DraftController : Controller
+    public class DraftController : ControllerBase
     {
         public static string FirstCharToUpper(string input)
         {
@@ -59,12 +61,12 @@ namespace UATL.MailSystem.Controllers
                     .Match(draft => draft.From.ID == account.ID)
                     .Sort(s => desc ? s.Descending(sort) : s.Ascending(sort))
                     .PageNumber(page)
-                    .PageSize(limit)
+                    .PageSize(limit < 0 ? int.MaxValue : limit)
                     .ExecuteAsync();
 
-                return Ok(new ResultResponse<IEnumerable<Draft>, long>(drafts.Results, drafts.TotalCount));;
+                return Ok(new PagedResultResponse<IEnumerable<Draft>>(drafts.Results, drafts.TotalCount, drafts.PageCount, limit, page));
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -108,10 +110,10 @@ namespace UATL.MailSystem.Controllers
                     .WithFluent(pipeline)
                     .Sort(s => desc ? s.Descending(sort) : s.Ascending(sort))
                     .PageNumber(page)
-                    .PageSize(limit)
+                    .PageSize(limit < 0 ? int.MaxValue : limit)
                     .ExecuteAsync();
 
-                return Ok(new ResultResponse<IEnumerable<Draft>, long>(drafts.Results, drafts.TotalCount)); ;
+                return Ok(new PagedResultResponse<IEnumerable<Draft>>(drafts.Results, drafts.TotalCount, drafts.PageCount, limit, page));
             }
             catch (Exception ex)
             {
@@ -122,21 +124,54 @@ namespace UATL.MailSystem.Controllers
         [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpPost]
         [Route("")]
-        public async Task<IActionResult> AddDraft([FromBody] DraftRequest draftRequest, CancellationToken ct)
+        public async Task<IActionResult> AddDraftWithFiles([ModelBinder(BinderType = typeof(JsonModelBinder))] DraftRequest? value, IList<IFormFile> files, CancellationToken ct)
         {
             var transaction = DB.Transaction();
             try
             {
                 var account = await _identityService.GetCurrentAccount(HttpContext);
-                var draft = draftRequest.Adapt<Draft>();
+                var draft = value.Adapt<Draft>();
                 draft.From = account.ToBaseAccount();
 
                 await draft.InsertAsync(transaction.Session, ct);
-                var result = await DB.Find<Draft>(transaction.Session).OneAsync(draft.ID, ct);
+                draft = await DB.Find<Draft>(transaction.Session).Match(x => x.From.ID == account.ID).OneAsync(draft.ID, ct);
+                if (draft == null) return NotFound();
 
-                await transaction.CommitAsync(ct);
+                var attachements = new List<Attachement>();
+                foreach (var file in files)
+                {
+                    var hash = Helpers.HashHelper.CalculateFileFormMd5(file);
+                    var query = DB.Find<Attachement>(transaction.Session).Match(x => x.MD5 == hash && x.FileSize == file.Length);
+                    var exist = await query.ExecuteAnyAsync(ct);
+                    if (exist)
+                    {
+                        var attachement = await query.ExecuteFirstAsync(ct);
+                        draft.Attachements.Add(attachement);
+                    }
+                    else
+                    {
+                        var attachement = new Attachement()
+                        {
+                            MD5 = hash,
+                            UploadedBy = account.ToBaseAccount(),
+                            ContentType = file.ContentType,
+                            Name = file.FileName,
+                        };
+                        await attachement.SaveAsync(transaction.Session);
+                        using (var stream = file.OpenReadStream())
+                        {
+                            await attachement.Data.UploadAsync(stream, cancellation: ct, session: transaction.Session);
+                        }
+                        var uploaded = await DB.Find<Attachement>(transaction.Session).OneAsync(attachement.ID);
+                        draft.Attachements.Add(uploaded);
+                    }
+                }
+                await draft.SaveAsync(transaction.Session);
 
-                return Ok(result);
+                await transaction.CommitAsync();
+                var result = await DB.Find<Draft>().OneAsync(draft.ID);
+
+                return Ok(new ResultResponse<string, Draft>($"Created Draft with {files.Count} attachements uploaded.", draft));
             }
             catch (Exception ex)
             {
@@ -158,7 +193,7 @@ namespace UATL.MailSystem.Controllers
                 if (draft == null) return NotFound();
 
                 var attachements = new List<Attachement>();
-                foreach (var file in HttpContext.Request.Form.Files)
+                foreach (var file in files)
                 {
                     var hash = Helpers.HashHelper.CalculateFileFormMd5(file);
                     var query = DB.Find<Attachement>().Match(x => x.MD5 == hash && x.FileSize == file.Length);
@@ -191,7 +226,7 @@ namespace UATL.MailSystem.Controllers
                 await transaction.CommitAsync();
                 var result = await DB.Find<Draft>().OneAsync(draft.ID);
 
-                return Ok(new ResultResponse<string, Draft>($"Uploaded {HttpContext.Request.Form.Files.Count} files.", draft));
+                return Ok(new ResultResponse<string, Draft>($"Uploaded {files.Count} files.", draft));
             }
             catch (Exception ex)
             {
@@ -213,17 +248,17 @@ namespace UATL.MailSystem.Controllers
                 if (draft == null) return NotFound();
 
                 var groupId = sendModel.Recipients.Count() == 1 ? ObjectId.GenerateNewId().ToString() : null;
-                var mails = new List<Mail>();
+                var mails = new List<MailModel>();
 
                 foreach(var recipient in sendModel.Recipients.Where(x => x != account.ID))
                 {
-                    var mail = draft.Adapt<Mail>();
+                    var mail = draft.Adapt<MailModel>();
                     var to = await DB.Find<Account>(transaction.Session).OneAsync(recipient);
                     mail.To = to.ToBaseAccount();
                     mail.Tags = sendModel.Tags;
                     mails.Add(mail);
                 }
-                var result = await DB.InsertAsync<Mail>(mails, transaction.Session, ct);
+                var result = await DB.InsertAsync<MailModel>(mails, transaction.Session, ct);
 
                 if (!result.IsAcknowledged)
                 {

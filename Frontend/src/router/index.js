@@ -54,9 +54,9 @@ router.beforeEach((to, from, next) => {
   } else {
     const token = Vuecookie.get('T') || '' //Get Token
 
-    if (token !== '') {
+    if (token) {
       getMyInfo(token).then( (res) => {
-        store.dispatch('auth/retriveToken', { token, userInfo: res.data.data })
+        store.dispatch('auth/retrieveToken', { token, userInfo: res.data.Data })
           .then((r) => {
             return routerCheck(to ,next)
           })
@@ -78,10 +78,10 @@ router.beforeEach((to, from, next) => {
 
 // eslint-disable-next-line consistent-return
 const routerCheck = (to ,next) => {
-  switch (store.getters['auth/getUserInfo'].role) {
-  case 'admin':
+  switch (store.getters['auth/getUserInfo'].Role) {
+  case 'Admin':
     return next()
-  case 'user':
+  case 'User':
     if (to.path.startsWith('/mailbox')) {
       return next()
     } else {

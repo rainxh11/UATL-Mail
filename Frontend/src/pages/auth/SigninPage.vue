@@ -96,7 +96,7 @@ export default {
   methods: {
     ...mapMutations('auth',['setToken','setIsAuth']),
     ...mapActions('app',['showSuccess','showError']),
-    ...mapActions('auth',['retriveToken']),
+    ...mapActions('auth',['retrieveToken']),
     submit() {
       if (this.$refs.form.validate()) {
         this.isLoading = true
@@ -106,19 +106,18 @@ export default {
     },
     signIn(email, password) {
       signIn(email, password).then((res) => {
-        if (res.data.status === 'success') {
-          this.retriveToken({ token : res.data.token, userInfo: res.data.data.user })
-          Vuecookie.set('T', res.data.token)
-          this.showSuccess('Success')
-          this.$router.push('/')
-        }
+        this.isLoading = false
+        console.log(res.data.Data)
+        this.retrieveToken({ token : res.data.Results, userInfo: res.data.Data })
+        Vuecookie.set('T', res.data.Results)
+        this.showSuccess('Success')
+        this.$router.push('/')
 
-        // eslint-disable-next-line handle-callback-err
       }).catch( (err) => {
+        this.isLoading = false
         this.showError(err)
         this.error = true
         this.errorMessages = err.toString()
-        this.isLoading = false
         this.isSignInDisabled = false
       })
     },

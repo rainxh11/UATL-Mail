@@ -7,8 +7,8 @@ namespace UATL.MailSystem.Models.Request
 {
     public class AccountUpdateModel
     {
-        public string Id { get; set; }
 #nullable enable
+        public string? Id { get; set; }
         public string? Name { get; set; }
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public AccountType? Role { get; set; }

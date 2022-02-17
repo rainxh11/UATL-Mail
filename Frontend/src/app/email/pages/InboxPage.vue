@@ -1,5 +1,5 @@
 <template>
-  <email-list :is-loading="isLoading" :emails="inbox" :labels="labels" @refresh="onRefresh" />
+  <email-list :is-loading.sync="isLoading" :emails="inbox" :labels="labels" @refresh="onRefresh" />
 </template>
 
 <script>
@@ -9,6 +9,11 @@ import EmailList from '../components/EmailList'
 export default {
   components: {
     EmailList
+  },
+  data() {
+    return {
+      mails:[]
+    }
   },
   computed: {
     ...mapState('email-app', ['inbox', 'isLoading', 'labels'])
@@ -23,7 +28,9 @@ export default {
   },
   methods: {
     ...mapActions('email-app', ['getInbox']),
-    onRefresh() {
+    onRefresh(val) {
+      console.log(val)
+
       this.getEmails()
     },
     getEmails() {

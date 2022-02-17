@@ -1,4 +1,4 @@
-const retriveToken =  async ({ state, commit } , userInfo) => {
+const retrieveToken =  async ({ state, commit } , userInfo) => {
 
   commit('setIsAuth', true)
   commit('setToken', userInfo.token)
@@ -7,5 +7,5 @@ const retriveToken =  async ({ state, commit } , userInfo) => {
 }
 
 export default {
-  retriveToken
+  retrieveToken: retrieveToken
 }

@@ -43,4 +43,77 @@ export default [{
   title: 'Britta Holt',
   content: 'We should eat this: Grate, Squash, Corn, and tomatillo Tacos.',
   labels: ['invoice']
-}]
+}, {
+  id: 6,
+  read: false,
+  starred: false,
+  time: '2 hr',
+  subject: 'Summer BBQ',
+  title: 'me, Scrott, Jennifer',
+  content: 'Wish I could come, but I\'m out of town this weekend.',
+  labels: []
+}, {
+  id: 7,
+  read: false,
+  starred: false,
+  time: '6 hr',
+  subject: 'Oui oui',
+  title: 'Sandra Adams',
+  content: 'Do you have Paris recommendations? Have you ever been?',
+  labels: ['work', 'invoice']
+}, {
+  id: 8,
+  read: true,
+  starred: false,
+  time: '12 hr',
+  subject: 'Birthday gift',
+  title: 'Trevor Hansen',
+  content: 'Have any ideas about what we should get Heidi for her birthday?',
+  labels: []
+}, {
+  id: 9,
+  read: true,
+  starred: true,
+  time: '18hr',
+  subject: 'Recipe to try',
+  title: 'Britta Holt',
+  content: 'We should eat this: Grate, Squash, Corn, and tomatillo Tacos.',
+  labels: ['invoice']
+}, {
+  id: 10,
+  read: false,
+  starred: false,
+  time: '2 hr',
+  subject: 'Summer BBQ',
+  title: 'me, Scrott, Jennifer',
+  content: 'Wish I could come, but I\'m out of town this weekend.',
+  labels: []
+}, {
+  id: 11,
+  read: false,
+  starred: false,
+  time: '6 hr',
+  subject: 'Oui oui',
+  title: 'Sandra Adams',
+  content: 'Do you have Paris recommendations? Have you ever been?',
+  labels: ['work', 'invoice']
+}, {
+  id: 12,
+  read: true,
+  starred: false,
+  time: '12 hr',
+  subject: 'Birthday gift',
+  title: 'Trevor Hansen',
+  content: 'Have any ideas about what we should get Heidi for her birthday?',
+  labels: []
+}, {
+  id: 13,
+  read: true,
+  starred: true,
+  time: '18hr',
+  subject: 'Recipe to try',
+  title: 'Britta Holt',
+  content: 'We should eat this: Grate, Squash, Corn, and tomatillo Tacos.',
+  labels: ['invoice']
+}
+]

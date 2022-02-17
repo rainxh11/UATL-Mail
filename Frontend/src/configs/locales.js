@@ -26,16 +26,19 @@ export default {
     code: 'en',
     flag: 'us',
     label: 'English',
+    format: 'en-US',
     messages: en
   },  {
     code: 'fr',
     flag: 'fr',
     label: 'Français',
+    format: 'fr-FR',
     messages: fr
   }, {
     code: 'ar',
     flag: 'sa',
     label: 'العربية',
+    format: 'ar-SA',
     messages: ar
   }]
 }

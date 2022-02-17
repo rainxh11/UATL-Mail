@@ -11,7 +11,7 @@ import navigation from './navigation'
 export default {
   // product display information
   product: {
-    name: 'RIS Espoir',
+    name: 'UATL Mail',
     version: '1.0.0'
   },
 

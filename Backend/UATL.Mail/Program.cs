@@ -20,6 +20,8 @@ using Microsoft.AspNetCore.Http.Features;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
+using Newtonsoft.Json.Serialization;
+using Jetsons.JetPack;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +29,7 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .Enrich.FromLogContext()
-            .WriteTo.Console(theme: Serilog.Sinks.SystemConsole.Themes.SystemConsoleTheme.Colored)
+            .WriteTo.Console(theme: Serilog.Sinks.SystemConsole.Themes.SystemConsoleTheme.Colored, restrictedToMinimumLevel: LogEventLevel.Information)
             .WriteTo.File(AppContext.BaseDirectory + @"\Log\UATLMail_Log.log", 
                 rollingInterval: RollingInterval.Day, 
                 rollOnFileSizeLimit: true, 
@@ -39,7 +41,8 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 
-await DatabaseHelper.InitDb(builder.Configuration["MongoDB:DatabaseName"], builder.Configuration["MongoDB:ConnectionString"]); 
+await DatabaseHelper.InitDb(builder.Configuration["MongoDB:DatabaseName"], builder.Configuration["MongoDB:ConnectionString"]);
+DatabaseHelper.InitCache();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -50,6 +53,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+            RequireExpirationTime = true,
+            ClockSkew = TimeSpan.Zero,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
         };
     });
@@ -57,7 +62,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddControllers(/*options => options.Filters.Add(new ValidationFilter())*/).AddNewtonsoftJson(o =>
 {
     o.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
-    o.SerializerSettings.DefaultValueHandling = DefaultValueHandling.Ignore;
+    o.SerializerSettings.Formatting = Formatting.Indented;
+    o.SerializerSettings.ContractResolver = null;
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(setup =>
@@ -105,9 +111,9 @@ builder.Services
     .AddScoped<IIdentityService, IdentityService>()
     .AddScoped<ITokenService, TokenService>();
 
-builder.Services
-    .AddScoped<SakonyConsoleMiddleware>()
-    .AddScoped<MailAttachementVerificationMiddleware>();
+/*builder.Services
+    //.AddScoped<SakonyConsoleMiddleware>()
+    .AddScoped<MailAttachementVerificationMiddleware>();*/
 
 builder.Services.Configure<FormOptions>(x =>
 {
@@ -115,7 +121,15 @@ builder.Services.Configure<FormOptions>(x =>
     x.MultipartBodyLengthLimit = int.MaxValue; // In case of multipart
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
+
 //---------------------------------------------------------------//
+builder.WebHost
+    .UseKestrel(o => o.ListenAnyIP(builder.Configuration["Port"].ToInt()));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -127,13 +141,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors();
 app.UseAuthentication();
 app.UseHttpLogging();
 app.UseAuthorization();
 
 app.MapControllers();
-app
-    .UseMiddleware<SakonyConsoleMiddleware>()
-    .UseMiddleware<MailAttachementVerificationMiddleware>();
+/*app
+    //.UseMiddleware<SakonyConsoleMiddleware>()
+    .UseMiddleware<MailAttachementVerificationMiddleware>();*/
 
 app.Run();

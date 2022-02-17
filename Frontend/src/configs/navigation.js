@@ -3,10 +3,10 @@ export default {
   menu: [
     {
       text: 'Command Center',
-      role: ['admin','user'],
-      key: 'menu.mailbox',
+      role: ['Admin','User'],
+      key: 'menu.dashboard',
       items: [
-        { icon: 'fa-duotone fa-mailbox', key: 'menu.studyPage', text: 'Mail Box', link: '/mailbox' , role: ['user','admin']  }
+        { icon: 'fa-duotone fa-mailbox', key: 'menu.mailbox', text: 'Mail Box', link: '/mailbox' , role: ['User','Admin']  }
       ]
     }],
 

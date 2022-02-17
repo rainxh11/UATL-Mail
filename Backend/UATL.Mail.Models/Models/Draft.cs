@@ -19,7 +19,14 @@ namespace UATL.MailSystem.Models.Models
         public string Subject { get; set; }
         public string Body { get; set; } = string.Empty;
         public List<Attachement> Attachements { get; set; } = new List<Attachement>();
-        
+        public bool Starred { get; set; } = false;
+
+    }
+    public enum MailDirection
+    {
+        Both,
+        Sent,
+        Received
     }
     public enum MailTag
     {
@@ -29,7 +36,8 @@ namespace UATL.MailSystem.Models.Models
         Acknowledged,
         Archived
     }
-    public class Mail : Draft
+    [Collection("Mail")]
+    public class MailModel : Draft
     {
         [IgnoreDefault]
         [AsObjectId]
@@ -46,6 +54,7 @@ namespace UATL.MailSystem.Models.Models
         [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
         [IgnoreDefault]
         public List<MailTag> Tags { get; set; } = new List<MailTag>();
+
     }
 
     public class Attachement : FileEntity, ICreatedOn, IModifiedOn

@@ -9,5 +9,8 @@ export default {
   },
   loadStarred: (state, emails) => {
     state.starred = emails
+  },
+  loadDrafts: (state, emails) => {
+    state.drafts = emails
   }
 }

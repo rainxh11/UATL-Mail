@@ -1,5 +1,6 @@
 import actions from './actions'
 import mutations from './mutations'
+import Vuecookie from 'vue-cookies'
 
 const state = {
   token: null,
@@ -13,6 +14,10 @@ export default {
   state,
   getters: {
     getToken(state) {
+      const token = Vuecookie.get('T') || ''
+
+      if (token !== '') state.token = token
+
       return state.token
     },
     getIsAuth(state) {

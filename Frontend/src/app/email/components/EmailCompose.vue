@@ -16,6 +16,7 @@
         <v-btn v-if="!$vuetify.breakpoint.mdAndDown" icon @click="fullscreen = !fullscreen">
           <v-icon>{{ fullscreen ? 'mdi-arrow-collapse' : 'mdi-arrow-expand' }}</v-icon>
         </v-btn>
+
         <v-btn icon @click="$emit('close-dialog')">
           <v-icon>mdi-close</v-icon>
         </v-btn>
