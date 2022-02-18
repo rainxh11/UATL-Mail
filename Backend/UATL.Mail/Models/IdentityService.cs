@@ -14,9 +14,11 @@ namespace UATL.MailSystem.Models
     public class IdentityService : IIdentityService
     {
         private IConfiguration _configuration;
-        public IdentityService(IConfiguration configuration)
+        private readonly ILogger<IdentityService> _logger;
+        public IdentityService(IConfiguration configuration, ILogger<IdentityService> logger)
         {
             _configuration = configuration;
+            _logger = logger;
         }
         private JwtSecurityToken ValidateToken(string token)
         {
@@ -42,6 +44,7 @@ namespace UATL.MailSystem.Models
             }
             catch(Exception ex)
             {
+                _logger.LogError(ex.Message);
                 return null;
             }
 
@@ -57,7 +60,10 @@ namespace UATL.MailSystem.Models
                 if (cached != null)
                     return cached;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
 
             var identity = httpContext.User.Identity as ClaimsIdentity;
 
@@ -81,6 +87,8 @@ namespace UATL.MailSystem.Models
                 }
                 catch(Exception ex)
                 {
+                    _logger.LogError(ex.Message);
+
                     httpContext.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     await httpContext.Response.WriteAsJsonAsync(new { Message = ex.Message }).ConfigureAwait(false);
                     await httpContext.Response.CompleteAsync().ConfigureAwait(false);

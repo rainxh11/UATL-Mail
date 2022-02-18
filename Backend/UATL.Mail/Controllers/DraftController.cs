@@ -171,7 +171,7 @@ namespace UATL.MailSystem.Controllers
                 await transaction.CommitAsync();
                 var result = await DB.Find<Draft>().OneAsync(draft.ID);
 
-                return Ok(new ResultResponse<string, Draft>($"Created Draft with {files.Count} attachements uploaded.", draft));
+                return Ok(new ResultResponse<Draft, string>(draft, $"Created Draft with {files.Count} attachements uploaded."));
             }
             catch (Exception ex)
             {

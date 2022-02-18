@@ -8,6 +8,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using Mapster;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using UATL.MailSystem.Models.Models;
 
 namespace UATL.MailSystem.Models
 {
@@ -29,6 +30,7 @@ namespace UATL.MailSystem.Models
         public DateTime ModifiedOn { get; set; }
         public DateTime LastLogin { get; set; }
         public DateTime PasswordUpdatedOn { get; set; }
+        public string Description { get; set; }
         [IgnoreDefault]
         public AccountBase CreatedBy { get; set; }
 
@@ -39,6 +41,9 @@ namespace UATL.MailSystem.Models
         [JsonProperty("Role")]
         public string RoleName { get => Role.ToString(); }
         public bool Enabled { get; set; } = true;
+
+        [IgnoreDefault]
+        public Avatar Avatar { get; set; }
 
         public AccountBase ToBaseAccount()
         {

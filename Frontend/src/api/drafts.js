@@ -9,6 +9,17 @@ function headerAuth(token) {
   }
 }
 
+function formData(data, files) {
+  const formData = new FormData()
+
+  for (const i of Object.keys(files)) {
+    formData.append('files', this.files[i])
+  }
+  formData.append('value', data)
+
+  return formData
+}
+
 // GET Api for { User }
 const getAllDrafts = async (page, limit, token) =>  {
   const query = `?page=${page}&limit=${limit ?? -1}&sort=CreatedOn&desc=true`
@@ -26,6 +37,10 @@ const getDraft = async (id, token) =>  await axios.get('/draft/' + id, headerAut
 
 const deleteDraft = async (id, token) => await axios.delete('/draft/' + id, headerAuth(token))
 
+const createDraft = async (draft, files, token) => {
+  return await axios.post('/draft', formData(draft, files), headerAuth(token))
+}
+
 export {
-  getDraft, getAllDrafts, searchDrafts, deleteDraft
+  getDraft, getAllDrafts, searchDrafts, deleteDraft, createDraft
 }

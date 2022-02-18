@@ -203,15 +203,9 @@ import {
   History
 } from 'tiptap-extensions'
 import Upload from '@/app/email/components/FileDragDrop'
+import { encode, decode } from 'html-entities'
+import { mapGetters } from 'vuex'
 
-/*
-|---------------------------------------------------------------------
-| Email Editor Component
-|---------------------------------------------------------------------
-|
-| Form to send and edit email content built on top of tip tap plugin
-|
-*/
 export default {
   components: {
     Upload,
@@ -275,6 +269,10 @@ export default {
     this.editor.destroy()
   },
   methods:{
+    ...mapGetters('auth', ['getToken', 'getUserInfo']),
+    saveDraft() {
+
+    },
     processUpload(val) {
       console.log(val)
     }

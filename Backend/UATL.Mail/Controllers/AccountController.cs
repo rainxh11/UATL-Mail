@@ -11,6 +11,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq.Expressions;
 using MongoDB.Bson;
 using MongoDB.Entities;
+using UATL.MailSystem.Models.Models;
+using UATL.Mail.Helpers;
 
 namespace UATL.MailSystem.Controllers
 {
@@ -33,7 +35,7 @@ namespace UATL.MailSystem.Controllers
             _tokenService = tokenService;
             _identityService = identityService;
         }
-
+        //--------------------------------------------------------------------------------------------------------------//
         [AllowAnonymous]
         [HttpPost]
         [Route("signup")]
@@ -54,9 +56,107 @@ namespace UATL.MailSystem.Controllers
             }
             catch(Exception ex)
             {
+                _logger.LogError(ex.Message);
+
                 return BadRequest(ex.Message);
             }
         }
+
+        //--------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [HttpPost]
+        [Route("{id}/avatar")]
+        public async Task<IActionResult> AddAvatar(string id, [FromForm] IFormFile file, CancellationToken ct)
+        {
+            var transaction = DB.Transaction();
+            try
+            {
+                if(!file.ContentType.Contains("image"))
+                    return BadRequest(new MessageResponse<string>($"Content of type: '{file.ContentType}' not allowed! Only image type is allowed!"));
+
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+                if (account.ID != id)
+                    return Unauthorized(new MessageResponse<string>($"Only the owner of the account can modify the account Avatar!"));
+                if(account.Avatar != null)
+                    await account.Avatar.DeleteAsync(transaction.Session, ct);
+                var avatar = new Avatar(account);
+
+                await avatar.SaveAsync(transaction.Session, ct);
+                using (var stream = await ImageHelper.EncodeWebp(file, ct))
+                {                    
+                    await avatar.Data.UploadAsync(stream, cancellation: ct, session: transaction.Session);
+                }
+                var uploaded = await DB.Find<Avatar>(transaction.Session).OneAsync(avatar.ID);
+                account.Avatar = uploaded;
+                await account.SaveAsync(transaction.Session, ct);
+                await transaction.CommitAsync(ct);
+
+                return Ok(new ResultResponse<Account, string>(account, $"Avatar updated!"));
+            }
+            catch(Exception ex)
+            {
+                await transaction.AbortAsync();
+                _logger.LogError(ex.Message);
+
+                return BadRequest(ex.Message);
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [HttpGet]
+        [Route("{id}/avatar")]
+        public async Task<IActionResult> GetAvatar(string id, CancellationToken ct)
+        {
+            try
+            {
+                var avatar = await DB.Find<Avatar>().Match(x => x.Account.ID == id).ExecuteFirstAsync();
+                if (avatar == null)
+                    return NotFound();
+
+                using (var stream = new MemoryStream())
+                {
+                    await avatar.Data.DownloadAsync(stream, cancellation: ct).ConfigureAwait(false);
+                    return File(stream.ToArray(), "image/webp");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [HttpDelete]
+        [Route("{id}/avatar")]
+        public async Task<IActionResult> DeleteAvatar(string id, CancellationToken ct)
+        {
+            var transaction = DB.Transaction();
+            try
+            {
+                var account = await DB.Find<Account>(transaction.Session).OneAsync(id, ct);
+                if (account == null || account.Avatar == null)
+                    return NotFound();
+
+                account.Avatar = null;
+                await account.SaveAsync(transaction.Session, ct);
+                await transaction.CommitAsync(ct);
+                var result = await DB.DeleteAsync<Avatar>(x => x.Account.ID == id, transaction.Session, ct);
+
+                if (result.IsAcknowledged)
+                    return Ok($"Avatar Deleted.");
+                else
+                    return BadRequest();
+
+            }
+            catch (Exception ex)
+            {
+                await transaction.AbortAsync();
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------//
         [Authorize(Roles = $"{AccountRole.Admin}")]
         [HttpPost]
         [Route("")]
@@ -82,10 +182,12 @@ namespace UATL.MailSystem.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.Message);
+
                 return BadRequest(ex.Message);
             }
         }
-
+        //--------------------------------------------------------------------------------------------------------------//
         [AllowAnonymous]
         [HttpGet]
         [Route("")]
@@ -105,10 +207,12 @@ namespace UATL.MailSystem.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.Message);
+
                 return BadRequest(ex.Message);
             }
         }
-
+        //--------------------------------------------------------------------------------------------------------------//
         [AllowAnonymous]
         [HttpPatch]
         [Route("{id}/changepassword")]
@@ -135,7 +239,7 @@ namespace UATL.MailSystem.Controllers
             }
             return NotFound("User not found!");
         }
-
+        //--------------------------------------------------------------------------------------------------------------//
         [AllowAnonymous]
         [HttpPost]
         [Route("login")]
@@ -161,7 +265,7 @@ namespace UATL.MailSystem.Controllers
             }
             return NotFound("User not found!");
         }
-
+        //--------------------------------------------------------------------------------------------------------------//
 
         [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
@@ -182,10 +286,74 @@ namespace UATL.MailSystem.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.Message);
+
                 return BadRequest(ex.Message);
             }
         }
+        //--------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [HttpGet]
+        [Route("me/avatar")]
+        public async Task<IActionResult> GetCurrentAvatar(CancellationToken ct)
+        {
+            try
+            {
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+                if (account is null)
+                    return NotFound("Token Invalid or Account not found.");
 
+                var avatar = await DB.Find<Avatar>().Match(x => x.Account.ID == account.ID).ExecuteFirstAsync();
+                if (avatar == null)
+                    return NotFound();
+
+                using (var stream = new MemoryStream())
+                {
+                    await avatar.Data.DownloadAsync(stream, cancellation: ct).ConfigureAwait(false);
+                    return File(stream.ToArray(), "image/webp");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [HttpDelete]
+        [Route("me/avatar")]
+        public async Task<IActionResult> DeleteCurrentAvatar(CancellationToken ct)
+        {
+            var transaction = DB.Transaction();
+            try
+            {
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+                if (account is null)
+                    return NotFound("Token Invalid or Account not found.");
+                
+                if (account == null || account.Avatar == null)
+                    return NotFound();
+
+                account.Avatar = null;
+                await account.SaveAsync(transaction.Session, ct);
+                await transaction.CommitAsync(ct);
+                var result = await DB.DeleteAsync<Avatar>(x => x.Account.ID == account.ID, transaction.Session, ct);
+
+                if (result.IsAcknowledged)
+                    return Ok($"Avatar Deleted.");
+                else
+                    return BadRequest();
+
+            }
+            catch (Exception ex)
+            {
+                await transaction.AbortAsync();
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------//
         [Authorize(Roles = $"{AccountRole.Admin}")]
         [HttpPatch]
         [Route("{id}")]
@@ -219,10 +387,12 @@ namespace UATL.MailSystem.Controllers
             catch(Exception ex)
             {
                 await transaction.AbortAsync();
+                _logger.LogError(ex.Message);
+
                 return BadRequest(ex.Message);
             }
         }
-
+        //--------------------------------------------------------------------------------------------------------------//
         [Authorize(Roles = $"{AccountRole.Admin}")]
         [HttpPatch]
         [Route("")]
@@ -255,10 +425,12 @@ namespace UATL.MailSystem.Controllers
             catch (Exception ex)
             {
                 await transaction.AbortAsync();
+                _logger.LogError(ex.Message);
+
                 return BadRequest(ex.Message);
             }
         }
-
+        //--------------------------------------------------------------------------------------------------------------//
         [Authorize(Roles = $"{AccountRole.Admin}")]
         [HttpDelete]
         [Route("{id}")]
@@ -281,7 +453,7 @@ namespace UATL.MailSystem.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
+        //--------------------------------------------------------------------------------------------------------------//
         [Authorize(Roles = $"{AccountRole.Admin}")]
         [HttpDelete]
         [Route("")]
@@ -298,6 +470,8 @@ namespace UATL.MailSystem.Controllers
             }
             catch(Exception ex)
             {
+                _logger.LogError(ex.Message);
+
                 return BadRequest(ex.Message);
             }
         }

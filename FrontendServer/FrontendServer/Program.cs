@@ -6,8 +6,10 @@ using EmbedIO;
 using EmbedIO.Actions;
 using EmbedIO.Files;
 using EmbedIO.WebApi;
+using EmbedIO.Routing;
 using Swan.Logging;
 using System.Linq;
+using System.Net.Http;
 
 namespace UATL.Mail.FrontendServer
 {
@@ -33,8 +35,11 @@ namespace UATL.Mail.FrontendServer
 
         private static WebServer CreateWebServer(DirectoryInfo htmlDir, IEnumerable<string> urls)
         {
+            HttpClient httpClient = new HttpClient();
+
             var server = new WebServer(o => o
                     .WithUrlPrefixes(urls)
+                    .WithMicrosoftHttpListener()
                     .WithMode(HttpListenerMode.Microsoft))
                 .WithLocalSessionManager()
                 .WithStaticFolder("/", htmlDir.FullName, true, m => m
@@ -57,7 +62,7 @@ namespace UATL.Mail.FrontendServer
                 {
                     ctx.Redirect("/");
                     return Task.CompletedTask;
-                }) );
+                }));
 
 
 
