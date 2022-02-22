@@ -18,9 +18,14 @@ namespace UATL.MailSystem.Models.Models
         public AccountBase From { get; set; }
         public string Subject { get; set; }
         public string Body { get; set; } = string.Empty;
-        public List<Attachement> Attachements { get; set; } = new List<Attachement>();
+        public List<Attachment> Attachements { get; set; } = new List<Attachment>();
         public bool Starred { get; set; } = false;
 
+    }
+    public enum MailType
+    {
+        Internal,
+        External
     }
     public enum MailDirection
     {
@@ -30,10 +35,10 @@ namespace UATL.MailSystem.Models.Models
     }
     public enum MailTag
     {
-        ResponseRequired,
-        Viewed,
+        Important,
         TimeSensitive,
         Acknowledged,
+        Approved,
         Archived
     }
     [Collection("Mail")]
@@ -44,7 +49,7 @@ namespace UATL.MailSystem.Models.Models
         public string GroupId { get; set; } = null;
         [IgnoreDefault]
         [AsObjectId]
-        public string ResponseTo { get; set; }
+        public string ReplyTo { get; set; }
 
         [IgnoreDefault]
         public DateTime SentOn { get; set; }
@@ -55,9 +60,20 @@ namespace UATL.MailSystem.Models.Models
         [IgnoreDefault]
         public List<MailTag> Tags { get; set; } = new List<MailTag>();
 
-    }
+        public MailType Type { get; set; } = MailType.Internal;
 
-    public class Attachement : FileEntity, ICreatedOn, IModifiedOn
+        [IgnoreDefault]
+        public DateTime ViewedOn { get; set; }
+        public bool Viewed { get; set; } = false;
+        public void SetViewed()
+        {
+            this.Viewed = true;
+            this.ViewedOn = DateTime.Now;
+        }
+
+    }
+    [Collection("Attachement")]
+    public class Attachment : FileEntity, ICreatedOn, IModifiedOn
     {
         public DateTime CreatedOn { get; set; }
         public DateTime ModifiedOn { get; set; }

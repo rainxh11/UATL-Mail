@@ -9,6 +9,16 @@ function headerAuth(token) {
   }
 }
 
+function avatarHeaderAuth(token) {
+  return {
+    responseType: 'arraybuffer',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'content-Type': 'image/webp'
+    }
+  }
+}
+
 // GET Api for { User }
 const getAllUser = async (query) =>  {
   query ??= '?page=1&limit=-1&sort=CreatedOn&desc=true'
@@ -46,6 +56,29 @@ const getCurrentUser = async (token) => {
   return await axios.get('/account/me' , headerAuth(token))
 }
 
+const getCurrentUserAvatar = async (token) => {
+  return await axios.get('/account/me/avatar', avatarHeaderAuth(token))
+}
+
+const getUserAvatar = async (id, token) => {
+  return await axios.get('/account/me/' + id , avatarHeaderAuth(token))
+}
+
+const searchRecipients = async (search, token) => {
+  return await axios.get('/account/recipients?search=' + search, headerAuth(token))
+}
+
 export {
-  getCurrentUser, getAllUser , getOneUser ,  createUser, deleteUser, updateUser, updateMyPassword, checkMyPassword, updateMe
+  getCurrentUser,
+  getAllUser ,
+  getOneUser ,
+  createUser,
+  deleteUser,
+  updateUser,
+  updateMyPassword,
+  checkMyPassword,
+  updateMe,
+  getUserAvatar,
+  getCurrentUserAvatar,
+  searchRecipients
 }

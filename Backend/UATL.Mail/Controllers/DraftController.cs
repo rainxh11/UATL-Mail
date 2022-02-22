@@ -16,6 +16,7 @@ using MongoDB.Bson;
 using System.Linq;
 using UATL.Mail.Models.Bindings;
 using FluentValidation.AspNetCore;
+using UATL.Mail.Helpers;
 
 namespace UATL.MailSystem.Controllers
 {
@@ -137,11 +138,13 @@ namespace UATL.MailSystem.Controllers
                 draft = await DB.Find<Draft>(transaction.Session).Match(x => x.From.ID == account.ID).OneAsync(draft.ID, ct);
                 if (draft == null) return NotFound();
 
-                var attachements = new List<Attachement>();
+
+                draft.Body = ModelHelper.ReplaceHref(draft.Body);
+                var attachements = new List<Attachment>();
                 foreach (var file in files)
                 {
-                    var hash = Helpers.HashHelper.CalculateFileFormMd5(file);
-                    var query = DB.Find<Attachement>(transaction.Session).Match(x => x.MD5 == hash && x.FileSize == file.Length);
+                    var hash = HashHelper.CalculateFileFormMd5(file);
+                    var query = DB.Find<Attachment>(transaction.Session).Match(x => x.MD5 == hash && x.FileSize == file.Length);
                     var exist = await query.ExecuteAnyAsync(ct);
                     if (exist)
                     {
@@ -150,7 +153,7 @@ namespace UATL.MailSystem.Controllers
                     }
                     else
                     {
-                        var attachement = new Attachement()
+                        var attachement = new Attachment()
                         {
                             MD5 = hash,
                             UploadedBy = account.ToBaseAccount(),
@@ -162,7 +165,7 @@ namespace UATL.MailSystem.Controllers
                         {
                             await attachement.Data.UploadAsync(stream, cancellation: ct, session: transaction.Session);
                         }
-                        var uploaded = await DB.Find<Attachement>(transaction.Session).OneAsync(attachement.ID);
+                        var uploaded = await DB.Find<Attachment>(transaction.Session).OneAsync(attachement.ID);
                         draft.Attachements.Add(uploaded);
                     }
                 }
@@ -192,11 +195,11 @@ namespace UATL.MailSystem.Controllers
                 var draft = await DB.Find<Draft>().Match(x => x.From.ID == account.ID).OneAsync(id);
                 if (draft == null) return NotFound();
 
-                var attachements = new List<Attachement>();
+                var attachements = new List<Attachment>();
                 foreach (var file in files)
                 {
-                    var hash = Helpers.HashHelper.CalculateFileFormMd5(file);
-                    var query = DB.Find<Attachement>().Match(x => x.MD5 == hash && x.FileSize == file.Length);
+                    var hash = HashHelper.CalculateFileFormMd5(file);
+                    var query = DB.Find<Attachment>().Match(x => x.MD5 == hash && x.FileSize == file.Length);
                     var exist = await query.ExecuteAnyAsync();
                     if (exist)
                     {
@@ -205,7 +208,7 @@ namespace UATL.MailSystem.Controllers
                     }
                     else
                     {
-                        var attachement = new Attachement()
+                        var attachement = new Attachment()
                         {
                             MD5 = hash,
                             UploadedBy = account.ToBaseAccount(),
@@ -217,7 +220,7 @@ namespace UATL.MailSystem.Controllers
                         {
                             await attachement.Data.UploadAsync(stream, cancellation: ct, session: transaction.Session);
                         }
-                        var uploaded = await DB.Find<Attachement>(transaction.Session).OneAsync(attachement.ID);
+                        var uploaded = await DB.Find<Attachment>(transaction.Session).OneAsync(attachement.ID);
                         draft.Attachements.Add(uploaded);
                     }
                 }
@@ -286,8 +289,8 @@ namespace UATL.MailSystem.Controllers
                 var draft = await DB.Find<Draft>().OneAsync(id);
                 if (draft == null) return NotFound();
 
-                draft.Body = draftRequest.Body;
                 draft.Subject = draftRequest.Subject;
+                draft.Body = ModelHelper.ReplaceHref(draftRequest.Body);
 
                 await draft.SaveAsync();
 

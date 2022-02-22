@@ -53,12 +53,13 @@ namespace UATL.MailSystem.Models
         {
 
         }
-        public Account(string name, string userName, string password)
+        public Account(string name, string userName, string password, string description = "")
         {
             PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password);
             PasswordUpdatedOn = DateTime.Now;
             Name = name;
             UserName = userName;
+            Description = description;
         }
         public static string SetPassword(string password)
         {

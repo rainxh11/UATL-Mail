@@ -13,7 +13,8 @@ const signIn = async (username, password) => {
   return await axios.post('/account/login', {
     username: username,
     password: password
-  })
+  },
+  { timeout: 5000 })
 }
 
 const signOut = async (user) => {

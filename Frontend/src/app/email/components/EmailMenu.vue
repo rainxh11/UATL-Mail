@@ -5,7 +5,7 @@
       large
       color="primary"
       class="mb-3"
-      @click="showCompose = true"
+      @click="showCompose = false; showCompose = true;"
     >
       <v-icon class="pa-2">fa-regular fa-plus</v-icon>
       {{ $t('email.compose') }}
@@ -70,7 +70,7 @@
       </v-list-item>
     </v-list>
 
-    <email-compose :show-compose="showCompose" @close-dialog="showCompose = false" />
+    <email-compose class="elevation-12" :show-compose="showCompose" @close-dialog="showCompose = false" />
   </div>
 </template>
 

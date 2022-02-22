@@ -23,13 +23,10 @@
 
       <div v-show="selected.length > 0">
         <v-btn icon>
-          <v-icon>bx-archive</v-icon>
+          <v-icon>fa-solid fa-envelope</v-icon>
         </v-btn>
         <v-btn icon>
-          <v-icon>mdi-email-mark-as-unread</v-icon>
-        </v-btn>
-        <v-btn icon>
-          <v-icon>bx-trash-alt</v-icon>
+          <v-icon color="red">fa-solid fa-trash-can</v-icon>
         </v-btn>
       </div>
 
@@ -73,7 +70,7 @@
             <v-list-item-subtitle v-show="type === 'draft'" class="font-weight-bold">
               {{ getTitle(item) }}
             </v-list-item-subtitle>
-            <v-list-item-subtitle v-text="item.Body"></v-list-item-subtitle>
+            <v-list-item-subtitle v-html="item.Body.slice(0,200) + '...'"></v-list-item-subtitle>
             <v-list-item-subtitle>
               <v-chip
                 v-for="label in item.labels"
@@ -88,10 +85,31 @@
             </v-list-item-subtitle>
           </v-list-item-content>
 
+          <v-list-item-content v-if="item.Attachements.length > 0">
+            <v-list-item-title>
+              <v-icon>fa-solid fa-paperclip</v-icon>
+              {{ `${$t('email.attachments')}: ${item.Attachements.length}` }}
+            </v-list-item-title>
+            <div
+              v-for="file in item.Attachements.slice(0,3)"
+              :key="file"
+              class="font-italic"
+            >
+              {{ file.Name }} <b>({{ file.FileSize | formatByte }})</b>
+            </div>
+            <div v-if="item.Attachements.length > 3">...</div>
+          </v-list-item-content>
+
           <v-list-item-action>
             <v-list-item-action-text>
               <span class="text--primary text-lg-body-2">
                 {{ item.CreatedOn | formatTimeAgo }}
+                <v-icon color="primary" x-small>fa-regular fa-clock</v-icon>
+              </span>
+            </v-list-item-action-text>
+            <v-list-item-action-text>
+              <span label class="text--primary text-lg-body-1 font-italic">
+                {{ item.CreatedOn | formatDate('HH:mm | YYYY/MM/DD') }}
               </span>
             </v-list-item-action-text>
           </v-list-item-action>
@@ -166,7 +184,7 @@ export default {
     return {
       value:null,
       page: 1,
-      pageSize: 10,
+      pageSize: 5,
       selectAll: false,
       selectAlmostAll: false,
       selected: [],
@@ -189,6 +207,7 @@ export default {
   computed: {
   },
   watch: {
+
     search (val) {
 
     },

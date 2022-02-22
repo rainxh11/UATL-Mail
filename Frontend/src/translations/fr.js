@@ -64,9 +64,11 @@ export default {
     'message': 'Message'
   },
   'email': {
+    'attachments' : 'Attachements',
+    'to': 'Vers',
     'compose': 'Composer un courrier',
     'send': 'Envoyer',
-    'subject': 'Matière',
+    'subject': 'Sujet',
     'labels': 'Étiquettes',
     'emptyList': 'Liste de diffusion vide',
     'inbox': 'Boîte de réception',

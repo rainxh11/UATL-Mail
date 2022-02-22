@@ -31,6 +31,10 @@ namespace UATL.MailSystem.Models.Validations
                 .MinimumLength(8).WithMessage("Password length is 8 characters minimum!")
                 .Equal(x => x.ConfirmPassword).WithMessage("Passowrd & Confirmation are not equal!")
                 .MaximumLength(20).WithMessage("Password maximum length is 20 characters!");
+
+            RuleFor(x => x.Description)
+                .MaximumLength(100).WithMessage("Description maximum length is 100 characters!")
+                .Matches(@"^[a-zA-Z\s]*$").WithMessage("Special characters & digits are not allowed in Descritpion!");
         }
     }
     public class CreateAccountValidator : AbstractValidator<CreateAccountModel>
@@ -57,6 +61,10 @@ namespace UATL.MailSystem.Models.Validations
                 .MinimumLength(8).WithMessage("Password length is 8 characters minimum!")
                 .Equal(x => x.ConfirmPassword).WithMessage("Passowrd & Confirmation are not equal!")
                 .MaximumLength(20).WithMessage("Password maximum length is 20 characters!");
+
+            RuleFor(x => x.Description)
+                .MaximumLength(100).WithMessage("Description maximum length is 100 characters!")
+                .Matches(@"^[a-zA-Z\s]*$").WithMessage("Special characters & digits are not allowed in Descritpion!");
         }
     }
 

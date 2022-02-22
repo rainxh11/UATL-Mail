@@ -3,14 +3,14 @@ using UATL.MailSystem.Models.Models;
 
 namespace UATL.MailSystem.Models.EqualityComparer
 {
-    public class AttachementEqualityComparer : IEqualityComparer<Attachement>
+    public class AttachementEqualityComparer : IEqualityComparer<Attachment>
     {
-        public bool Equals(Attachement x, Attachement y)
+        public bool Equals(Attachment x, Attachment y)
         {
             return string.Equals(x.MD5, y.MD5, System.StringComparison.OrdinalIgnoreCase) && x.FileSize == y.FileSize;
         }
 
-        public int GetHashCode(Attachement obj)
+        public int GetHashCode(Attachment obj)
         {
             unchecked
             {

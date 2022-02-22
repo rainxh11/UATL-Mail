@@ -22,6 +22,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 using Newtonsoft.Json.Serialization;
 using Jetsons.JetPack;
+using Microsoft.AspNetCore.SignalR;
+using UATL.Mail.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -123,8 +125,10 @@ builder.Services.Configure<FormOptions>(x =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    //options.AddDefaultPolicy(x => x.AllowAnyOrigin().AllowAnyMethod().AllowCredentials());
 });
+
+builder.Services.AddSignalR();
 
 //---------------------------------------------------------------//
 builder.WebHost
@@ -141,14 +145,26 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors();
+app.UseCors(config => config
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .WithOrigins("http://127.0.0.1:8080")
+    .AllowCredentials()
+    );
 app.UseAuthentication();
 app.UseHttpLogging();
-app.UseAuthorization();
 
 app.MapControllers();
 /*app
     //.UseMiddleware<SakonyConsoleMiddleware>()
     .UseMiddleware<MailAttachementVerificationMiddleware>();*/
+
+app.UseRouting();
+app.UseAuthorization(); 
+app.UseEndpoints(endpoint =>
+{
+    endpoint.MapHub<MailHub>("/hubs/mail");
+    endpoint.MapHub<ChatHub>("/hubs/chat");
+});
 
 app.Run();

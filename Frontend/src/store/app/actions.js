@@ -16,18 +16,16 @@ const notificationUpdate = async ({ state, commit }) => {
 
 }
 
-const showError = (state, commit) => {
+const showError = ({ state, commit }, message) => {
   if (state.toast.show) commit('hideToast')
-
   setTimeout(() => {
     commit('showToast', {
       color: 'error',
-      message: message + ' ' + error,
+      message: message,
       timeout: 3000
     })
   })
 }
-
 const showSuccess = ({ state, commit }, message) => {
   if (state.toast.show) commit('hideToast')
 

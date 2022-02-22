@@ -1,34 +1,26 @@
 <template>
-  <div class="email-editor">
-    <email-input label="To:" :addresses="toAddresses">
-      <v-btn icon @click="showCC = !showCC">
-        Cc
-      </v-btn>
-      <v-btn icon class="mr-2" @click="showBCC = !showBCC">
-        Bcc
-      </v-btn>
+  <div
+    class="email-editor pa-2"
+    @drop.prevent="onDrop($event)"
+    @dragover.prevent="dragover = true"
+    @dragenter.prevent="dragover = true"
+    @dragleave.prevent="dragover = false"
+    @dragstart.prevent="dragover = true"
+  >
+
+    <email-input :label="$t('email.to') + ':'" :addresses.sync="toAddresses">
     </email-input>
-    <v-divider></v-divider>
+    <v-divider class="pa-1"></v-divider>
 
-    <div v-if="showCC">
-      <email-input label="Cc:">
-        <v-btn icon class="mr-2" @click="showCC = false">
-          <v-icon small>mdi-close</v-icon>
-        </v-btn>
-      </email-input>
-      <v-divider></v-divider>
-    </div>
-
-    <div v-if="showBCC">
-      <email-input label="Bcc:">
-        <v-btn icon class="mr-2" @click="showBCC = false">
-          <v-icon small>mdi-close</v-icon>
-        </v-btn>
-      </email-input>
-      <v-divider></v-divider>
-    </div>
-
-    <v-text-field :label="$t('email.subject')" solo flat hide-details></v-text-field>
+    <v-text-field
+      v-model="subject"
+      :label="$t('email.subject')"
+      outlined
+      flat
+      hide-details
+      clearable
+      clear-icon="fa-circle-xmark"
+    ></v-text-field>
     <v-divider></v-divider>
 
     <editor-menu-bar v-slot="{ commands, isActive }" :editor="editor">
@@ -161,18 +153,69 @@
     <editor-content class="editor__content pa-3 py-4" :editor="editor" />
 
     <v-divider></v-divider>
-    <Upload :dialog.sync="uploadDialog" @filesUploaded="processUpload($event)"/>
+    <v-card-text
+      v-if="dragover"
+      :class="[ dragover ? 'grey lighten-2' : '']"
+    >
+      <v-row
+        class="d-flex flex-column"
+        dense
+        align="center"
+        justify="center"
+      >
+        <v-icon color="info" class="" size="60">
+          fa-solid fa-cloud-arrow-up
+        </v-icon>
+        <p>
+          {{ $t('email.uploadHint') }}
+        </p>
+      </v-row>
+      <v-virtual-scroll
+        v-if="files.length > 0"
+        :items="fileList"
+        item-height="50"
+        min-height="100"
+        max-height="300"
+      >
+        <template v-slot:default="{ item }">
+          <v-list-item :key="item.name">
+            <v-list-item-content>
+              <v-list-item-title>
+                {{ item.name }}
+              </v-list-item-title>
+            </v-list-item-content>
+            <v-list-item-action-text>
+              <span class="ml-1 text-lg-body-1 text--secondary">
+                {{ item.size | formatByte }}
+              </span>
+            </v-list-item-action-text>
+            <v-list-item-action>
+              <v-btn icon @click.stop="removeFile(item.name)">
+                <v-icon color="red">fa-solid fa-circle-xmark</v-icon>
+              </v-btn>
+            </v-list-item-action>
+          </v-list-item>
 
+          <v-divider></v-divider>
+        </template>
+      </v-virtual-scroll>
+    </v-card-text>
+
+    <v-divider/>
     <div class="d-flex align-center pa-2">
-      <v-btn color="primary">
+      <v-btn :disabled="toAddresses.length === 0" color="primary" @click="$emit('refresh')">
         <v-icon small class="pa-1">fa-solid fa-paper-plane-top</v-icon>
         {{ $t('email.send') }}
       </v-btn>
-      <v-btn icon class="pa-0 mx-1" @click="uploadDialog = true">
-        <v-icon>fa-solid fa-paperclip</v-icon>
-      </v-btn>
+      <v-file-input
+        v-model="tempFiles"
+        class="d-flex align-center pa-2"
+        hide-input
+        append-icon="fa-solid fa-paperclip"
+        multiple
+      />
       <v-spacer/>
-      <v-btn color="info">
+      <v-btn color="info" :loading="saveLoading" @click="saveDraft()">
         <v-icon small class="pa-1">fa-solid fa-save</v-icon>
         {{ $t('email.saveDraft') }}
       </v-btn>
@@ -202,53 +245,68 @@ import {
   Underline,
   History
 } from 'tiptap-extensions'
-import Upload from '@/app/email/components/FileDragDrop'
-import { encode, decode } from 'html-entities'
-import { mapGetters } from 'vuex'
+import { Html5Entities } from 'html-entities'
+import { mapActions, mapGetters } from 'vuex'
+import { createDraft } from '@/api/drafts'
 
 export default {
   components: {
-    Upload,
     EditorContent,
     EditorMenuBar,
     EmailInput
   },
   data() {
     return {
+      subject: '',
+      body:'',
       uploadDialog: false,
-      toAddresses: [{
-        text: 'Ruben Breitenberg',
-        email: 'ruben@notarealemailaddress.com',
-        avatar: '/images/avatars/avatar2.svg'
-      }, {
-        text: 'Blaze Carter',
-        email: 'blaze@notarealemailaddress.com',
-        avatar: '/images/avatars/avatar3.svg'
-      }],
-      showCC: false,
-      showBCC: false,
+      toAddresses: [],
+      recipients: [],
       toggleFormat: [],
-      editor: new Editor({
-        extensions: [
-          new Blockquote(),
-          new BulletList(),
-          new CodeBlock(),
-          new HardBreak(),
-          new Heading({ levels: [1, 2, 3] }),
-          new HorizontalRule(),
-          new ListItem(),
-          new OrderedList(),
-          new TodoItem(),
-          new TodoList(),
-          new Link(),
-          new Bold(),
-          new Code(),
-          new Italic(),
-          new Strike(),
-          new Underline(),
-          new History()
-        ],
-        content: `
+      saveLoading: false,
+      files: [],
+      tempFiles: [],
+      editor: null,
+      dragover: false
+    }
+  },
+  computed:{
+    fileList() {
+      return this.$enumerable(this.files).Distinct((x) => x.name + x.size).OrderByDescending((x) => x.size).ToArray()
+    }
+  },
+  watch: {
+    tempFiles: function (val) {
+      if (val.length > 0) {
+        this.files = this.$enumerable(this.files)
+          .Concat(val)
+          .ToArray()
+      }
+      this.dragover = val.length > 0
+    }
+  },
+  created() {
+    this.editor = new Editor({
+      extensions: [
+        new Blockquote(),
+        new BulletList(),
+        new CodeBlock(),
+        new HardBreak(),
+        new Heading({ levels: [1, 2, 3] }),
+        new HorizontalRule(),
+        new ListItem(),
+        new OrderedList(),
+        new TodoItem(),
+        new TodoList(),
+        new Link(),
+        new Bold(),
+        new Code(),
+        new Italic(),
+        new Strike(),
+        new Underline(),
+        new History()
+      ],
+      content:`
           <h3>
             Hi there,
           </h3>
@@ -262,25 +320,56 @@ export default {
             – Tom Cruise
           </blockquote>
         `
-      })
-    }
+    })
   },
   beforeDestroy() {
     this.editor.destroy()
   },
   methods:{
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
-    saveDraft() {
+    ...mapActions('app', ['showSuccess', 'showError']),
 
+    removeFile(name) {
+      this.files = this.$enumerable(this.files)
+        .Where((x) => x.name !== name)
+        .ToArray()
     },
-    processUpload(val) {
-      console.log(val)
+    onDrop(e) {
+      console.log(e.dataTransfer.files)
+      this.files = this.$enumerable(this.files)
+        .Concat(e.dataTransfer.files)
+        .ToArray()
+    },
+    saveDraft() {
+      const draft = {
+        Subject: this.subject,
+        Body: Html5Entities.encode(this.editor.getHTML())
+      }
+
+      this.saveLoading = true
+      createDraft(draft, this.fileList, this.getToken())
+        .then(() => {
+          this.$emit('close')
+        })
+        .catch((err) => console.log(err))
+        .finally(() => this.saveLoading = false)
+    },
+    getFiles(val) {
+      this.files = val
     }
   }
 }
 </script>
 
 <style lang="scss">
+ .drop-area {
+   position: relative;
+   border: gray dotted 2px;
+   min-height: 10em;
+   text-align: center;
+   margin-bottom: .5em;
+   color: gray;
+ }
 .email-editor {
   position: relative;
 

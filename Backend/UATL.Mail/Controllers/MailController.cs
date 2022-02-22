@@ -14,6 +14,9 @@ using MongoDB.Driver;
 using System.Linq.Expressions;
 using MongoDB.Bson;
 using System.Linq;
+using UATL.Mail.Models.Bindings;
+using FluentValidation.AspNetCore;
+using UATL.Mail.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -151,5 +154,66 @@ namespace UATL.Mail.Controllers
             }
         }
         //---------------------------------------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [HttpPost]
+        [Route("")]
+        public async Task<IActionResult> SendMail([ModelBinder(BinderType = typeof(JsonModelBinder))] SendMailRequest value, IList<IFormFile>? files, CancellationToken ct)
+        {
+            var transaction = DB.Transaction();
+            try
+            {
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+                var mail = value.Adapt<MailModel>();
+                mail.From = account.ToBaseAccount();
+
+                await mail.InsertAsync(transaction.Session, ct);
+                mail = await DB.Find<MailModel>(transaction.Session).Match(x => x.From.ID == account.ID).OneAsync(mail.ID, ct);
+                if (mail == null) return NotFound();
+
+
+                mail.Body = ModelHelper.ReplaceHref(mail.Body);
+                var attachements = new List<Attachment>();
+                foreach (var file in files)
+                {
+                    var hash = HashHelper.CalculateFileFormMd5(file);
+                    var query = DB.Find<Attachment>(transaction.Session).Match(x => x.MD5 == hash && x.FileSize == file.Length);
+                    var exist = await query.ExecuteAnyAsync(ct);
+                    if (exist)
+                    {
+                        var attachement = await query.ExecuteFirstAsync(ct);
+                        mail.Attachements.Add(attachement);
+                    }
+                    else
+                    {
+                        var attachement = new Attachment()
+                        {
+                            MD5 = hash,
+                            UploadedBy = account.ToBaseAccount(),
+                            ContentType = file.ContentType,
+                            Name = file.FileName,
+                        };
+                        await attachement.SaveAsync(transaction.Session);
+                        using (var stream = file.OpenReadStream())
+                        {
+                            await attachement.Data.UploadAsync(stream, cancellation: ct, session: transaction.Session);
+                        }
+                        var uploaded = await DB.Find<Attachment>(transaction.Session).OneAsync(attachement.ID);
+                        mail.Attachements.Add(uploaded);
+                    }
+                }
+                await mail.SaveAsync(transaction.Session);
+
+                await transaction.CommitAsync();
+                var result = await DB.Find<MailModel>().OneAsync(mail.ID);
+
+                return Ok(new ResultResponse<MailModel, string>(mail, $"Created Draft with {files.Count} attachements uploaded."));
+            }
+            catch (Exception ex)
+            {
+                await transaction.AbortAsync();
+                return BadRequest(ex.Message);
+            }
+        }
+
     }
 }

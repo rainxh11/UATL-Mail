@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 
-namespace UATL.MailSystem.Helpers
+namespace UATL.Mail.Helpers
 {
     public class HashHelper
     {

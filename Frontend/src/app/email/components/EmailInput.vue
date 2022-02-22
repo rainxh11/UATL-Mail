@@ -1,53 +1,50 @@
 <template>
-  <v-combobox
+  <v-autocomplete
     v-model="model"
-    :filter="filter"
-    :hide-no-data="!search"
     :items="items"
+    :filter="filter"
     :search-input.sync="search"
     :label="label"
-    hide-selected
+    :loading="searchLoading"
+    item-value="ID"
+    item-text="Name"
     hide-details
-    append-icon=""
-    solo
-    flat
-    full-width
+    :prepend-inner-icon="model.length > 1 ? 'fa-users' : 'fa-user'"
+    outlined
+    clearable
+    clear-icon="fa-circle-xmark"
     multiple
   >
     <template v-slot:append-outer>
       <slot></slot>
     </template>
 
-    <template v-slot:selection="{ attrs, item, parent, selected }">
+    <template v-slot:selection="data">
       <v-chip
-        v-if="item === Object(item)"
-        v-bind="attrs"
-        class="font-weight-bold"
-        color="primary lighten-5 primary--text"
-        :input-value="selected"
-        label
+        v-bind="data.attrs"
+        :input-value="data.selected"
+        close
+        @click="data.select"
+        @click:close="remove(data.item)"
       >
-        <span class="pr-2">
-          {{ item.text }}
-        </span>
-        <v-icon
-          small
-          @click="parent.selectItem(item)"
-        >close</v-icon>
+        <v-avatar left>
+          <v-img :src="avatar(data.item.Avatar)"></v-img>
+        </v-avatar>
+        {{ data.item.Name }}
       </v-chip>
     </template>
 
     <template v-slot:item="{ index, item }">
       <v-list-item-avatar>
-        <img :src="item.avatar" />
+        <v-img :src="avatar(item.Avatar)" />
       </v-list-item-avatar>
 
       <v-list-item-content>
-        <v-list-item-title>{{ item.text }}</v-list-item-title>
-        <v-list-item-subtitle>{{ item.email }}</v-list-item-subtitle>
+        <v-list-item-title>{{ item.Name }}</v-list-item-title>
+        <v-list-item-subtitle>{{ item.Description ? item.Description : '' }}</v-list-item-subtitle>
       </v-list-item-content>
     </template>
-  </v-combobox>
+  </v-autocomplete>
 </template>
 
 <script>
@@ -59,6 +56,10 @@
 | Add and remove emails input
 |
 */
+import { searchRecipients } from '@/api/users'
+import { debounceTime, distinctUntilChanged, pluck, map } from 'rxjs/operators'
+import { mapGetters } from 'vuex'
+
 export default {
   props: {
     // Input label
@@ -75,68 +76,64 @@ export default {
   data() {
     return {
       model: [],
-      search: null
+      search: '',
+      searchLoading: false,
+      items: [],
+      searchObservable: null
     }
   },
-  computed: {
-    items() {
-      if (!this.search) return []
-
-      return  [{
-        text: 'Ubaldo Romaguera',
-        email: 'ubaldo@notarealemailaddress.com',
-        avatar: '/images/avatars/avatar1.svg'
-      }, {
-        text: 'Ruben Breitenberg',
-        email: 'ruben@notarealemailaddress.com',
-        avatar: '/images/avatars/avatar2.svg'
-      }, {
-        text: 'Blaze Carter',
-        email: 'blaze@notarealemailaddress.com',
-        avatar: '/images/avatars/avatar3.svg'
-      }, {
-        text: 'Bernita Lehner',
-        email: 'bernita@notarealemailaddress.com',
-        avatar: '/images/avatars/avatar4.svg'
-      }]
-    }
-  },
-
-  watch: {
-    model (val, prev) {
-      if (val.length === prev.length) return
-
-      this.model = val.map((v) => {
-        if (typeof v === 'string') {
-          v = {
-            text: v,
-            email: v
-          }
-
-          this.items.push(v)
-        }
-
-        return v
-      })
-
-      this.search = ''
-    }
-  },
-
   mounted() {
-    this.model = this.addresses
+    this.searchObservable = this.$watchAsObservable('search')
+      .pipe(
+        distinctUntilChanged((p, c) => p === c),
+        debounceTime(500),
+        pluck('newValue'),
+        map((x) => x ?? '')
+      )
+      .subscribe((val) => {
+        console.log(this.model, 'model')
+        this.searchRecipients(val)
+      })
   },
-
+  beforeDestroy() {
+    this.searchObservable.unsubscribe()
+  },
   methods: {
+    ...mapGetters('auth', ['getToken', 'getUserInfo']),
+    avatar(val) {
+      return `${this.$apiHost}/api/v1${val}`
+    },
+    log( attrs, item, parent, selected ) {
+      console.log(attrs, item, parent, selected, 'logging')
+
+      return ''
+    },
     filter (item, queryText, itemText) {
-      const hasValue = (val) => val !== null ? val : ''
+      if (!item) return false
+      if (!queryText) return true
 
-      const text = hasValue(itemText)
-      const query = hasValue(queryText)
+      return item.UserName.includes(queryText) || item.Name.includes(queryText)
+    },
+    remove(val) {
+      console.log(val, 'remove')
 
-      return text.toString()
-        .toLowerCase()
-        .indexOf(query.toString().toLowerCase()) > -1
+      this.model = this.$enumerable(this.model)
+        .Where((x) => x !== val.ID)
+        .ToArray()
+
+      console.log(this.model, 'removed')
+    },
+    searchRecipients(val) {
+      this.searchLoading = true
+      searchRecipients(val, this.getToken())
+        .then((res) => {
+          this.items.length = 0
+          this.items = res.data.Data
+        })
+        .catch((err) => {
+          console.log(err)
+        })
+        .finally(() => this.searchLoading = false)
     }
   }
 }

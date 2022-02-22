@@ -8,6 +8,7 @@ using System.Reactive.Linq;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.SignalR;
 
 namespace UATL.MailSystem.Models
 {
@@ -50,6 +51,20 @@ namespace UATL.MailSystem.Models
 
         }
 
+        public async Task<Account?> GetAccountFromToken(string token)
+        {
+            try
+            {
+                var cached = await BlobCache.InMemory.GetObject<Account>(token);
+
+                return cached;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return null;
+            }
+        }
         public async Task<Account?> GetCurrentAccount(HttpContext httpContext)
         {
             var token = httpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
@@ -68,7 +83,7 @@ namespace UATL.MailSystem.Models
             var identity = httpContext.User.Identity as ClaimsIdentity;
 
             if (identity != null)
-            { 
+            {
                 try
                 {
 
@@ -78,14 +93,14 @@ namespace UATL.MailSystem.Models
                     var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
 
                     var account = await DB.Find<Account>().MatchID(accountId).ExecuteSingleAsync().ConfigureAwait(false);
-                    if (account.PasswordHash != hash || account.Role.ToString() != role || account.UserName != username) 
+                    if (account.PasswordHash != hash || account.Role.ToString() != role || account.UserName != username)
                         throw new Exception("Account Informations changed, Token Invalid! Please relogin.");
 
-                    if (account != null) 
+                    if (account != null)
                         return account;
                     throw new Exception("Account not found! Token Invalid.");
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _logger.LogError(ex.Message);
 
@@ -96,5 +111,38 @@ namespace UATL.MailSystem.Models
             }
             return null;
         }
+
+        public async Task<Account?> GetCurrentHubClient(HubCallerContext hubContext)
+        {
+            var identity = hubContext.User.Identity as ClaimsIdentity;
+
+            if (identity != null)
+            {
+                try
+                {
+
+                    var accountId = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.NameIdentifier)?.Value;
+                    var username = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Email)?.Value;
+                    var hash = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Hash)?.Value;
+                    var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
+
+                    var account = await DB.Find<Account>().MatchID(accountId).ExecuteSingleAsync().ConfigureAwait(false);
+                    if (account.PasswordHash != hash || account.Role.ToString() != role || account.UserName != username)
+                        throw new Exception("Account Informations changed, Token Invalid! Please relogin.");
+
+                    if (account != null)
+                        return account;
+                    throw new Exception("Account not found! Token Invalid.");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+
+                    
+                }
+            }
+            return null;
+        }
+
     }
 }

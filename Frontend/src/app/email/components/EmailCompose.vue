@@ -4,20 +4,20 @@
     v-model="dialog"
     :fullscreen="fullscreen || $vuetify.breakpoint.mdAndDown"
     :hide-overlay="!$vuetify.breakpoint.mdAndDown"
-    no-click-animation
     persistent
     width="600"
     content-class="dialog-bottom"
+    @keydown.esc="$emit('close-dialog')"
   >
     <v-card>
       <v-card-title class="pa-2">
         {{ $t('email.compose') }}
         <v-spacer></v-spacer>
-        <v-btn v-if="!$vuetify.breakpoint.mdAndDown" icon @click="fullscreen = !fullscreen">
+        <v-btn  v-if="!$vuetify.breakpoint.mdAndDown" icon @click="fullscreen = !fullscreen">
           <v-icon>{{ fullscreen ? 'mdi-arrow-collapse' : 'mdi-arrow-expand' }}</v-icon>
         </v-btn>
 
-        <v-btn icon @click="$emit('close-dialog')">
+        <v-btn  icon @click="$emit('close-dialog')">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>

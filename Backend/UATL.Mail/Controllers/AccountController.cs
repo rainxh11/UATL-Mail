@@ -11,8 +11,13 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq.Expressions;
 using MongoDB.Bson;
 using MongoDB.Entities;
+using MongoDB.Driver;
 using UATL.MailSystem.Models.Models;
 using UATL.Mail.Helpers;
+using UATL.Mail.Models.Models.Response;
+using Microsoft.AspNetCore.SignalR;
+using System.Linq;
+using UATL.Mail.Hubs;
 
 namespace UATL.MailSystem.Controllers
 {
@@ -24,16 +29,19 @@ namespace UATL.MailSystem.Controllers
         private IConfiguration _config;
         private ITokenService _tokenService;
         private IIdentityService _identityService;
+        private readonly IHubContext<MailHub> _mailHub;
         public AccountController(
             ILogger<AccountController> logger,
             IIdentityService identityService,
             ITokenService tokenService,
+            IHubContext<MailHub> mailHub,
             IConfiguration config)
         {
             _logger = logger;
             _config = config;
             _tokenService = tokenService;
             _identityService = identityService;
+            _mailHub = mailHub;
         }
         //--------------------------------------------------------------------------------------------------------------//
         [AllowAnonymous]
@@ -48,7 +56,7 @@ namespace UATL.MailSystem.Controllers
                     return BadRequest($"Account with username '{model.UserName}' already exists!");
                 }
 
-                var account = new Account(model.Name, model.UserName, model.Password);
+                var account = new Account(model.Name, model.UserName, model.Password, model.Description);
                 await account.InsertAsync();
                 account = await DB.Find<Account>().MatchID(account.ID).ExecuteSingleAsync();
 
@@ -75,10 +83,18 @@ namespace UATL.MailSystem.Controllers
                     return BadRequest(new MessageResponse<string>($"Content of type: '{file.ContentType}' not allowed! Only image type is allowed!"));
 
                 var account = await _identityService.GetCurrentAccount(HttpContext);
+
+                if (account.ID != id && account.Role != AccountType.Admin)
+                    return Unauthorized(new MessageResponse<string>($"Only the owner of the account or an Admin account can modify Avatar!"));
+
                 if (account.ID != id)
-                    return Unauthorized(new MessageResponse<string>($"Only the owner of the account can modify the account Avatar!"));
-                if(account.Avatar != null)
-                    await account.Avatar.DeleteAsync(transaction.Session, ct);
+                    account = await DB.Find<Account>(transaction.Session).OneAsync(id, ct);
+
+                if (account == null)
+                    return NotFound();
+
+                if (account.Avatar != null)
+                await account.Avatar.DeleteAsync(transaction.Session, ct);
                 var avatar = new Avatar(account);
 
                 await avatar.SaveAsync(transaction.Session, ct);
@@ -102,7 +118,7 @@ namespace UATL.MailSystem.Controllers
             }
         }
         //--------------------------------------------------------------------------------------------------------------//
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        //[Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
         [Route("{id}/avatar")]
         public async Task<IActionResult> GetAvatar(string id, CancellationToken ct)
@@ -111,13 +127,12 @@ namespace UATL.MailSystem.Controllers
             {
                 var avatar = await DB.Find<Avatar>().Match(x => x.Account.ID == id).ExecuteFirstAsync();
                 if (avatar == null)
-                    return NotFound();
+                    return File(new byte[] { }, "image/webp");
 
-                using (var stream = new MemoryStream())
-                {
-                    await avatar.Data.DownloadAsync(stream, cancellation: ct).ConfigureAwait(false);
-                    return File(stream.ToArray(), "image/webp");
-                }
+                var stream = new MemoryStream();               
+                await avatar.Data.DownloadAsync(stream, cancellation: ct).ConfigureAwait(false);
+                stream.Position = 0;
+                return File(stream, "image/webp");
             }
             catch (Exception ex)
             {
@@ -171,7 +186,7 @@ namespace UATL.MailSystem.Controllers
                 var currentAccount = await _identityService.GetCurrentAccount(HttpContext);
 
 
-                var account = new Account(model.Name, model.UserName, model.Password);
+                var account = new Account(model.Name, model.UserName, model.Password, model.Description);
                 account.Role = model.Role;
                 account.CreatedBy = currentAccount.ToBaseAccount();
 
@@ -274,6 +289,7 @@ namespace UATL.MailSystem.Controllers
         {
             try
             {
+                await _mailHub.Clients.All.SendAsync("refresh", "fucker");
                 var account = await _identityService.GetCurrentAccount(HttpContext);
                 if(account is null)
                 {
@@ -300,6 +316,32 @@ namespace UATL.MailSystem.Controllers
             try
             {
                 var account = await _identityService.GetCurrentAccount(HttpContext);
+                if (account is null)
+                    return NotFound("Token Invalid or Account not found.");
+
+                var avatar = await DB.Find<Avatar>().Match(x => x.Account.ID == account.ID).ExecuteFirstAsync();
+                if (avatar == null)
+                    return NotFound();
+
+                var stream = new MemoryStream();
+                await avatar.Data.DownloadAsync(stream, cancellation: ct).ConfigureAwait(false);
+                stream.Position = 0;
+                return File(stream, "image/webp");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+        }
+
+        [HttpGet]
+        [Route("me/avatar/{token}")]
+        public async Task<IActionResult> GetCurrentAvatarQueryToken(string token, CancellationToken ct)
+        {
+            try
+            {
+                var account = await _identityService.GetAccountFromToken(token);
                 if (account is null)
                     return NotFound("Token Invalid or Account not found.");
 
@@ -476,6 +518,45 @@ namespace UATL.MailSystem.Controllers
             }
         }
 
+        //--------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [HttpGet]
+        [Route("recipients")]
+        public async Task<IActionResult> GetRecipients(string? search = "")
+        {
+            try
+            {
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+                var query = new List<Account>();
+                search = search == "null" ? "" : search;
+
+                if (string.IsNullOrEmpty(search))
+                {
+                    query = await DB.Find<Account>()
+                        .Match(x => x.ID != account.ID)
+                        .ExecuteAsync();
+                }
+                else
+                {
+                    query = await DB.Find<Account>()
+                        .Match(x => x.ID != account.ID)
+                        .ManyAsync(f => f.Regex(x => x.Name, new BsonRegularExpression($"/{search}/i")) |
+                            f.Regex(x => x.UserName, new BsonRegularExpression($"/{search}/i")) |
+                            f.Regex(x => x.ID, new BsonRegularExpression($"/{search}/i")) |
+                            f.Regex(x => x.Description, new BsonRegularExpression($"/{search}/i"))
+                        );
+                }
+
+                var recipients = query.Select(x => new Recipient(x));
+
+                return Ok(new ResultResponse<IEnumerable<Recipient>, int>(recipients, recipients.Count()));
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+        }
         //--------------------------------------------------------------------------------------------------------------//
         private bool VerifyPassword(Account account, string password)
         {

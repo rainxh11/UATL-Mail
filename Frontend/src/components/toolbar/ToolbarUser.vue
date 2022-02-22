@@ -54,18 +54,25 @@
 import config from '../../configs'
 import { mapActions, mapGetters, mapMutations } from 'vuex'
 import Vuecookie from 'vue-cookies'
-import { signOut } from '../../api/auth'
+import { signOut } from '@/api/auth'
+import { getCurrentUserAvatar } from '@/api/users'
 
 export default {
   data() {
     return {
-      avatar: '/images/avatars/avatar1.svg',
       menu: config.toolbar.user
     }
   },
-  mounted() {
-    this.getUniqueAvatar()
+  computed: {
+    avatar() {
+      const url =  `${this.$apiHost}/api/v1/account/me/avatar/${this.getToken()}`
 
+      console.log(url)
+
+      return url
+    }
+  },
+  mounted() {
   },
   methods: {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
@@ -81,11 +88,6 @@ export default {
         this.$router.push('/auth/signin')
 
       })
-    },
-    getUniqueAvatar() {
-      const userInfo = this.getUserInfo()
-
-      this.avatar = 'https://robohash.org/' + userInfo.UserName
     }
   }
 }

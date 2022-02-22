@@ -18,6 +18,10 @@ namespace UATL.MailSystem.Models.Validations
             RuleFor(x => x.Role)
                 .IsInEnum().WithMessage("Role must a valid Account Role.");
 
+            RuleFor(x => x.Description)
+                .MaximumLength(100).WithMessage("Description maximum length is 100 characters!")
+                .Matches(@"^[a-zA-Z\s]*$").WithMessage("Special characters & digits are not allowed in Descritpion!");
+
         }
     }
 }

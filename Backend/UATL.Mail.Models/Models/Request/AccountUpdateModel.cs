@@ -13,6 +13,7 @@ namespace UATL.MailSystem.Models.Request
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public AccountType? Role { get; set; }
         public bool? Enabled { get; set; }
+        public string? Description { get; set; }
 #nullable disable
     }
 }

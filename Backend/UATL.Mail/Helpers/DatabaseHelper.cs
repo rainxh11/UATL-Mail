@@ -54,6 +54,7 @@ namespace UATL.MailSystem.Helpers
                 .Key(b => b.Name, KeyType.Text)
                 .Key(b => b.UserName, KeyType.Text)
                 .Key(b => b.ID, KeyType.Text)
+                .Key(b => b.Description, KeyType.Text)
                 .CreateAsync();
 
             await DB.Index<Account>()

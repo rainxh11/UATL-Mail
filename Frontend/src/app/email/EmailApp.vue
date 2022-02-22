@@ -42,6 +42,11 @@ export default {
       // navigation drawer
       drawer: null
     }
+  },
+  created() {
+  },
+  beforeDestroy() {
+    this.$mailHub.stop()
   }
 }
 </script>

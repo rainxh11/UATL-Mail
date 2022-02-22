@@ -115,10 +115,10 @@ export default {
 
       }).catch( (err) => {
         this.isLoading = false
-        this.showError(err)
         this.error = true
         this.errorMessages = err.toString()
         this.isSignInDisabled = false
+        this.showError(err)
       })
     },
     resetErrors() {

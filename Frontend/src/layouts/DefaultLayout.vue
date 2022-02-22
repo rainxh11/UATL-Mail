@@ -6,6 +6,7 @@
   >
     <!-- Navigation -->
     <v-navigation-drawer
+      v-if="$store.getters['auth/getUserInfo'].Role === 'Admin'"
       v-model="drawer"
       app
       floating
@@ -29,7 +30,7 @@
       </template>
 
       <!-- Navigation menu -->
-      <main-menu :menu="navigation.menu" />
+      <main-menu  :menu="navigation.menu" />
 
     </v-navigation-drawer>
 
@@ -58,7 +59,7 @@
           ></v-text-field>
 
           <div v-else class="d-flex flex-grow-1 align-center">
-            <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+            <v-app-bar-nav-icon v-if="$store.getters['auth/getUserInfo'].Role === 'Admin'" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
 
             <div class="pa-1"></div>
             <v-menu
