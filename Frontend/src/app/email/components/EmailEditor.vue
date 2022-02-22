@@ -8,7 +8,7 @@
     @dragstart.prevent="dragover = true"
   >
 
-    <email-input :label="$t('email.to') + ':'" :addresses.sync="toAddresses">
+    <email-input :label="$t('email.to') + ':'" :addresses="toAddresses" @change="addRecipients($event)">
     </email-input>
     <v-divider class="pa-1"></v-divider>
 
@@ -17,9 +17,11 @@
       :label="$t('email.subject')"
       outlined
       flat
-      hide-details
       clearable
       clear-icon="fa-circle-xmark"
+      counter="100"
+      maxlength="100"
+      :rules="rules.subject"
     ></v-text-field>
     <v-divider></v-divider>
 
@@ -203,7 +205,7 @@
 
     <v-divider/>
     <div class="d-flex align-center pa-2">
-      <v-btn :disabled="toAddresses.length === 0" color="primary" @click="$emit('refresh')">
+      <v-btn :disabled="toAddresses.length === 0 || subject.length === 0" color="primary" :loading="sendLoading" @click="sendMail">
         <v-icon small class="pa-1">fa-solid fa-paper-plane-top</v-icon>
         {{ $t('email.send') }}
       </v-btn>
@@ -215,7 +217,7 @@
         multiple
       />
       <v-spacer/>
-      <v-btn color="info" :loading="saveLoading" @click="saveDraft()">
+      <v-btn :disabled="subject.length === 0 || !subject" color="info" :loading="saveLoading" @click="saveDraft()">
         <v-icon small class="pa-1">fa-solid fa-save</v-icon>
         {{ $t('email.saveDraft') }}
       </v-btn>
@@ -248,6 +250,7 @@ import {
 import { Html5Entities } from 'html-entities'
 import { mapActions, mapGetters } from 'vuex'
 import { createDraft } from '@/api/drafts'
+import { sendMail } from '@/api/mails'
 
 export default {
   components: {
@@ -264,10 +267,17 @@ export default {
       recipients: [],
       toggleFormat: [],
       saveLoading: false,
+      sendLoading: false,
       files: [],
       tempFiles: [],
       editor: null,
-      dragover: false
+      dragover: false,
+      rules: {
+        subject: [
+          (value) => value.trim().length > 0 || this.$t('rules.subjectRequired'),
+          (value) => !!value || this.$t('rules.subjectRequired')
+        ]
+      }
     }
   },
   computed:{
@@ -328,7 +338,9 @@ export default {
   methods:{
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
     ...mapActions('app', ['showSuccess', 'showError']),
-
+    addRecipients(recipients) {
+      this.toAddresses = recipients
+    },
     removeFile(name) {
       this.files = this.$enumerable(this.files)
         .Where((x) => x.name !== name)
@@ -340,6 +352,21 @@ export default {
         .Concat(e.dataTransfer.files)
         .ToArray()
     },
+    sendMail() {
+      const mail = {
+        Subject: this.subject,
+        Body: Html5Entities.encode(this.editor.getHTML()),
+        Recipients: this.toAddresses,
+        Tags: [],
+        Type: 'Internal'
+      }
+
+      this.sendLoading = true
+      sendMail(mail, this.fileList, this.getToken())
+        .then(() => this.$emit('close'))
+        .catch((err) => this.showError(err))
+        .finally(() => this.sendLoading = false)
+    },
     saveDraft() {
       const draft = {
         Subject: this.subject,
@@ -348,10 +375,8 @@ export default {
 
       this.saveLoading = true
       createDraft(draft, this.fileList, this.getToken())
-        .then(() => {
-          this.$emit('close')
-        })
-        .catch((err) => console.log(err))
+        .then(() => this.$emit('close'))
+        .catch((err) => this.showError(err))
         .finally(() => this.saveLoading = false)
     },
     getFiles(val) {

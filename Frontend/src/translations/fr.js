@@ -63,6 +63,10 @@ export default {
     'channel': 'Channel | Chaînes',
     'message': 'Message'
   },
+  'rules': {
+    'subjectRequired': 'Sujet est obligatoire',
+    'recipientsRequired': 'Pas de Recipients!'
+  },
   'email': {
     'attachments' : 'Attachements',
     'to': 'Vers',

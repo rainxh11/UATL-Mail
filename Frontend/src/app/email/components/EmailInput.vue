@@ -8,12 +8,12 @@
     :loading="searchLoading"
     item-value="ID"
     item-text="Name"
-    hide-details
     :prepend-inner-icon="model.length > 1 ? 'fa-users' : 'fa-user'"
     outlined
     clearable
     clear-icon="fa-circle-xmark"
     multiple
+    :rules="rules.recipients"
   >
     <template v-slot:append-outer>
       <slot></slot>
@@ -79,7 +79,17 @@ export default {
       search: '',
       searchLoading: false,
       items: [],
-      searchObservable: null
+      searchObservable: null,
+      rules: {
+        recipients: [
+          (value) => value.length > 0 || this.$t('rules.recipientsRequired')
+        ]
+      }
+    }
+  },
+  watch: {
+    model(val) {
+      this.$emit('change', val)
     }
   },
   mounted() {
@@ -91,7 +101,6 @@ export default {
         map((x) => x ?? '')
       )
       .subscribe((val) => {
-        console.log(this.model, 'model')
         this.searchRecipients(val)
       })
   },
@@ -103,11 +112,6 @@ export default {
     avatar(val) {
       return `${this.$apiHost}/api/v1${val}`
     },
-    log( attrs, item, parent, selected ) {
-      console.log(attrs, item, parent, selected, 'logging')
-
-      return ''
-    },
     filter (item, queryText, itemText) {
       if (!item) return false
       if (!queryText) return true
@@ -115,13 +119,9 @@ export default {
       return item.UserName.includes(queryText) || item.Name.includes(queryText)
     },
     remove(val) {
-      console.log(val, 'remove')
-
       this.model = this.$enumerable(this.model)
         .Where((x) => x !== val.ID)
         .ToArray()
-
-      console.log(this.model, 'removed')
     },
     searchRecipients(val) {
       this.searchLoading = true
@@ -130,9 +130,7 @@ export default {
           this.items.length = 0
           this.items = res.data.Data
         })
-        .catch((err) => {
-          console.log(err)
-        })
+        .catch((err) => console.log(err))
         .finally(() => this.searchLoading = false)
     }
   }

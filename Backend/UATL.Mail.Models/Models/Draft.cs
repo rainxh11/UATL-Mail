@@ -5,8 +5,6 @@ using System.Collections.Generic;
 using System.Text;
 using BsonRequired = MongoDB.Bson.Serialization.Attributes.BsonRequiredAttribute;
 using BsonIgnore = MongoDB.Bson.Serialization.Attributes.BsonIgnoreAttribute;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace UATL.MailSystem.Models.Models
 {
@@ -21,86 +19,5 @@ namespace UATL.MailSystem.Models.Models
         public List<Attachment> Attachements { get; set; } = new List<Attachment>();
         public bool Starred { get; set; } = false;
 
-    }
-    public enum MailType
-    {
-        Internal,
-        External
-    }
-    public enum MailDirection
-    {
-        Both,
-        Sent,
-        Received
-    }
-    public enum MailTag
-    {
-        Important,
-        TimeSensitive,
-        Acknowledged,
-        Approved,
-        Archived
-    }
-    [Collection("Mail")]
-    public class MailModel : Draft
-    {
-        [IgnoreDefault]
-        [AsObjectId]
-        public string GroupId { get; set; } = null;
-        [IgnoreDefault]
-        [AsObjectId]
-        public string ReplyTo { get; set; }
-
-        [IgnoreDefault]
-        public DateTime SentOn { get; set; }
-        public AccountBase To { get; set; }
-        bool IsEncrypted { get; set; } = false;
-
-        [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
-        [IgnoreDefault]
-        public List<MailTag> Tags { get; set; } = new List<MailTag>();
-
-        public MailType Type { get; set; } = MailType.Internal;
-
-        [IgnoreDefault]
-        public DateTime ViewedOn { get; set; }
-        public bool Viewed { get; set; } = false;
-        public void SetViewed()
-        {
-            this.Viewed = true;
-            this.ViewedOn = DateTime.Now;
-        }
-
-    }
-    [Collection("Attachement")]
-    public class Attachment : FileEntity, ICreatedOn, IModifiedOn
-    {
-        public DateTime CreatedOn { get; set; }
-        public DateTime ModifiedOn { get; set; }
-        public string Name { get; set; }
-        public string ContentType { get; set; }
-        public AccountBase UploadedBy { get; set; }
-        public bool Compare(string md5, long fileSize)
-        {
-            return MD5 == md5 && FileSize == fileSize;
-        }
-        bool IsEncrypted { get; set; } = false;
-
-    }
-    public class Avatar : FileEntity, ICreatedOn, IModifiedOn
-    {
-        public DateTime CreatedOn { get; set; }
-        public DateTime ModifiedOn { get; set; }
-        public Avatar(Account account)
-        {
-            Account = account.ToBaseAccount();
-        }
-        public Avatar()
-        {
-
-        }
-        public string ContentType { get; set; } = "image/webp";
-        [JsonIgnore]
-        public AccountBase Account { get; private set; }
     }
 }

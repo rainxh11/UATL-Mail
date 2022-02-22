@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json.Serialization;
 using Mapster;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -17,10 +16,5 @@ namespace UATL.MailSystem.Models.Request
         public string? Description { get; set; }
 #nullable disable
 
-    }
-    public class CreateAccountModel : SignupModel
-    {
-        [JsonConverter(typeof(JsonStringEnumConverter))]
-        public AccountType Role { get; set; }
     }
 }

@@ -157,21 +157,20 @@ namespace UATL.Mail.Controllers
         [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpPost]
         [Route("")]
-        public async Task<IActionResult> SendMail([ModelBinder(BinderType = typeof(JsonModelBinder))] SendMailRequest value, IList<IFormFile>? files, CancellationToken ct)
+        public async Task<IActionResult> SendMails([ModelBinder(BinderType = typeof(JsonModelBinder))] SendMailRequest value, IList<IFormFile>? files, CancellationToken ct)
         {
             var transaction = DB.Transaction();
             try
             {
                 var account = await _identityService.GetCurrentAccount(HttpContext);
-                var mail = value.Adapt<MailModel>();
-                mail.From = account.ToBaseAccount();
+                var mails = await MailRequestHelper.GetMails(value, account, ct, transaction.Session);
+                var mail = mails.First();
 
                 await mail.InsertAsync(transaction.Session, ct);
                 mail = await DB.Find<MailModel>(transaction.Session).Match(x => x.From.ID == account.ID).OneAsync(mail.ID, ct);
-                if (mail == null) return NotFound();
+                if (mail == null)
+                    return NotFound();
 
-
-                mail.Body = ModelHelper.ReplaceHref(mail.Body);
                 var attachements = new List<Attachment>();
                 foreach (var file in files)
                 {
@@ -202,15 +201,32 @@ namespace UATL.Mail.Controllers
                     }
                 }
                 await mail.SaveAsync(transaction.Session);
+                mail = await DB.Find<MailModel>(transaction.Session).OneAsync(mail.ID, ct);
+
+                mails = mails
+                    .Where(x => x.ID != mail.ID)
+                    .Select(x =>
+                    {
+                        x.Attachements = mail.Attachements;
+
+                        return x;
+                    })
+                    .ToList();
+
+                var bulkWrite = await DB.InsertAsync<MailModel>(mails, transaction.Session, ct);
 
                 await transaction.CommitAsync();
-                var result = await DB.Find<MailModel>().OneAsync(mail.ID);
+                if (!bulkWrite.IsAcknowledged)
+                    return BadRequest();
 
-                return Ok(new ResultResponse<MailModel, string>(mail, $"Created Draft with {files.Count} attachements uploaded."));
+                var result = await DB.Find<MailModel>().ManyAsync(x => x.In(x => x.ID, mails.Select(i => i.ID)));
+
+                return Ok(new ResultResponse<List<MailModel>, string>(result, $"Sent {result.Count} Mails with {files.Count} attachements. To {value.Recipients.Count} Recipients."));
             }
             catch (Exception ex)
             {
                 await transaction.AbortAsync();
+                _logger.LogError(ex.Message);
                 return BadRequest(ex.Message);
             }
         }

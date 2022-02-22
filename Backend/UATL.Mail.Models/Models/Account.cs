@@ -12,15 +12,6 @@ using UATL.MailSystem.Models.Models;
 
 namespace UATL.MailSystem.Models
 {
-
-    public class AccountBase : Entity
-    {
-        [BsonRequired]
-        public string Name { get; set; }
-
-        [BsonRequired]
-        public string UserName { get; set; }
-    }
     public class Account :  AccountBase, ICreatedOn, IModifiedOn
     {
         [BsonRequired]
