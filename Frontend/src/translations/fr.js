@@ -15,6 +15,7 @@ export default {
     'signinSubheader': 'Connectez-vous à votre compte'
   },
   'common': {
+    'requestCancelled':'Annulé par l\'utilisateur',
     'years': ' Ans',
     'months': ' Mois',
     'days': ' Jours',
@@ -68,6 +69,7 @@ export default {
     'recipientsRequired': 'Pas de Recipients!'
   },
   'email': {
+    'sending': 'En cours d\'envoi de courrier',
     'attachments' : 'Attachements',
     'to': 'Vers',
     'compose': 'Composer un courrier',

@@ -10,23 +10,26 @@
     @keydown.esc="$emit('close-dialog')"
   >
     <v-card>
-      <v-card-title class="pa-2">
+      <v-card-title v-if="hideButtons" class="pa-2">
+        {{ $t('email.sending') }}...
+      </v-card-title>r
+      <v-card-title v-if="!hideButtons" class="pa-2">
         {{ $t('email.compose') }}
         <v-spacer></v-spacer>
-        <v-btn  v-if="!$vuetify.breakpoint.mdAndDown" icon @click="fullscreen = !fullscreen; minimized = false;">
+        <v-btn v-if="!$vuetify.breakpoint.mdAndDown" icon @click="fullscreen = !fullscreen; minimized = false;">
           <v-icon>{{ fullscreen ? 'fa-down-left-and-up-right-to-center' : 'fa-up-right-and-down-left-from-center' }}</v-icon>
         </v-btn>
-        <v-btn  icon @click="minimized = !minimized; fullscreen = false;">
+        <v-btn icon @click="minimized = !minimized; fullscreen = false;">
           <v-icon>{{ minimized ? 'fa-regular fa-window-maximize' : 'fa-window-minimize' }}</v-icon>
         </v-btn>
-        <v-btn  icon @click="$emit('close-dialog')">
+        <v-btn icon @click="$emit('close-dialog')">
           <v-icon>fa-xmark</v-icon>
         </v-btn>
       </v-card-title>
 
-      <v-divider></v-divider>
+      <v-divider v-if="!hideButtons" />
 
-      <email-editor v-if="!minimized"></email-editor>
+      <email-editor v-if="!minimized" @upload="isUploading($event)"></email-editor>
     </v-card>
   </v-dialog>
 </template>
@@ -57,7 +60,8 @@ export default {
     return {
       dialog: false,
       fullscreen: false,
-      minimized: false
+      minimized: false,
+      hideButtons: false
     }
   },
   watch: {
@@ -70,6 +74,11 @@ export default {
   },
   mounted() {
     this.dialog = this.showCompose
+  },
+  methods: {
+    isUploading(event) {
+      this.hideButtons = event
+    }
   }
 }
 </script>

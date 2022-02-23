@@ -34,8 +34,12 @@ const searchMails = async (query, token) =>  {
 
 const getMail = async (id, token) =>  await axios.get('/mail/' + id, headerAuth(token))
 
-const sendMail = async (mail, files, token) => {
-  return await axios.post('/mail', formData(mail, files), headerAuth(token))
+const sendMail = async (mail, files, onProgress, token, ct) => {
+  return await axios.post('/mail', formData(mail, files), {
+    ...headerAuth(token),
+    cancelToken: ct.token,
+    onUploadProgress: onProgress
+  })
 }
 
 export {

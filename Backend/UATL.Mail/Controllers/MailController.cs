@@ -213,11 +213,15 @@ namespace UATL.Mail.Controllers
                     })
                     .ToList();
 
-                var bulkWrite = await DB.InsertAsync<MailModel>(mails, transaction.Session, ct);
+                if(mails.Count != 0 && mails != null)
+                {
+                    var bulkWrite = await DB.InsertAsync<MailModel>(mails, transaction.Session, ct);
 
-                await transaction.CommitAsync();
-                if (!bulkWrite.IsAcknowledged)
-                    return BadRequest();
+                    await transaction.CommitAsync();
+                    if (!bulkWrite.IsAcknowledged)
+                        return BadRequest();
+                }
+
 
                 var result = await DB.Find<MailModel>().ManyAsync(x => x.In(x => x.ID, mails.Select(i => i.ID)));
 

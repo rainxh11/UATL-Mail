@@ -8,11 +8,11 @@
     @dragstart.prevent="dragover = true"
   >
 
-    <email-input :label="$t('email.to') + ':'" :addresses="toAddresses" @change="addRecipients($event)">
-    </email-input>
-    <v-divider class="pa-1"></v-divider>
+    <email-input v-if="!sendLoading" :label="$t('email.to') + ':'" :addresses="toAddresses" @change="addRecipients($event)"/>
+    <v-divider v-if="!sendLoading" class="pa-1"/>
 
     <v-text-field
+      v-if="!sendLoading"
       v-model="subject"
       :label="$t('email.subject')"
       outlined
@@ -23,9 +23,9 @@
       maxlength="100"
       :rules="rules.subject"
     ></v-text-field>
-    <v-divider></v-divider>
+    <v-divider v-if="!sendLoading" />
 
-    <editor-menu-bar v-slot="{ commands, isActive }" :editor="editor">
+    <editor-menu-bar v-if="!sendLoading" v-slot="{ commands, isActive }" :editor="editor">
       <div class="pa-1">
         <v-btn
           icon
@@ -150,14 +150,14 @@
       </div>
     </editor-menu-bar>
 
-    <v-divider></v-divider>
+    <v-divider v-if="!sendLoading" />
 
-    <editor-content class="editor__content pa-3 py-4" :editor="editor" />
+    <editor-content v-if="!sendLoading" class="editor__content pa-3 py-4" :editor="editor" />
 
-    <v-divider></v-divider>
+    <v-divider v-if="!sendLoading"/>
     <v-card-text
-      v-if="dragover"
-      :class="[ dragover ? 'grey lighten-2' : '']"
+      v-if="dragover && !sendLoading"
+      :class="[ dragover ? dragBackground : '']"
     >
       <v-row
         class="d-flex flex-column"
@@ -203,8 +203,8 @@
       </v-virtual-scroll>
     </v-card-text>
 
-    <v-divider/>
-    <div class="d-flex align-center pa-2">
+    <v-divider v-if="!sendLoading"/>
+    <v-card-title v-if="!sendLoading" class="d-flex align-center pa-2">
       <v-btn :disabled="toAddresses.length === 0 || subject.length === 0" color="primary" :loading="sendLoading" @click="sendMail">
         <v-icon small class="pa-1">fa-solid fa-paper-plane-top</v-icon>
         {{ $t('email.send') }}
@@ -221,7 +221,27 @@
         <v-icon small class="pa-1">fa-solid fa-save</v-icon>
         {{ $t('email.saveDraft') }}
       </v-btn>
-    </div>
+    </v-card-title>
+    <v-card-title v-if="sendLoading" class="d-flex align-center justify-center">
+      <v-row no-gutters>
+        <v-col cols="12" lg="10" sm="12" class="pa-1">
+          <v-progress-linear
+            v-model="progress"
+            height="35"
+            color="primary"
+            rounded
+          >
+            <strong>{{ Math.ceil(progress) }}%</strong>
+          </v-progress-linear>
+        </v-col>
+        <v-col cols="12" lg="2" sm="12" class="pa-1">
+          <v-btn dark color="red" @click.prevent="cancelRequest">
+            <v-icon small class="px-1">fa-solid fa-xmark</v-icon>
+            {{ $t('common.cancel') }}
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-card-title>
   </div>
 </template>
 
@@ -251,6 +271,8 @@ import { Html5Entities } from 'html-entities'
 import { mapActions, mapGetters } from 'vuex'
 import { createDraft } from '@/api/drafts'
 import { sendMail } from '@/api/mails'
+import axios from 'axios'
+const { CancelToken } = axios
 
 export default {
   components: {
@@ -260,6 +282,8 @@ export default {
   },
   data() {
     return {
+      cancel: CancelToken.source(),
+      progress: 0,
       subject: '',
       body:'',
       uploadDialog: false,
@@ -283,6 +307,10 @@ export default {
   computed:{
     fileList() {
       return this.$enumerable(this.files).Distinct((x) => x.name + x.size).OrderByDescending((x) => x.size).ToArray()
+    },
+    dragBackground() {
+      if (this.$vuetify.theme.dark) return ''
+      else return 'grey lighten-2'
     }
   },
   watch: {
@@ -316,21 +344,10 @@ export default {
         new Underline(),
         new History()
       ],
-      content:`
-          <h3>
-            Hi there,
-          </h3>
-          <p>
-            <br />
-            I'll take my boat.
-          </p>
-          <blockquote>
-            Best regards 👏
-            <br />
-            – Tom Cruise
-          </blockquote>
-        `
+      content:''
     })
+  },
+  mounted() {
   },
   beforeDestroy() {
     this.editor.destroy()
@@ -338,6 +355,16 @@ export default {
   methods:{
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
     ...mapActions('app', ['showSuccess', 'showError']),
+    clearFields() {
+      this.progress = 0
+      this.saveLoading = false
+      this.sendLoading = false
+      this.files.length = 0
+      this.recipients.length = 0
+      this.toAddresses.length = 0
+      this.dragover = false
+      this.editor.clear()
+    },
     addRecipients(recipients) {
       this.toAddresses = recipients
     },
@@ -353,6 +380,7 @@ export default {
         .ToArray()
     },
     sendMail() {
+      this.cancel = CancelToken.source()
       const mail = {
         Subject: this.subject,
         Body: Html5Entities.encode(this.editor.getHTML()),
@@ -362,11 +390,20 @@ export default {
       }
 
       this.sendLoading = true
-      sendMail(mail, this.fileList, this.getToken())
-        .then(() => this.$emit('close'))
+      this.$emit('upload', true)
+      sendMail(mail, this.fileList, (progress) => {
+        this.progress = Math.ceil(progress.loaded * 100 / progress.total)
+      }, this.getToken(), this.cancel)
+        .then(() => {
+          this.$emit('close')
+          this.clearFields()
+          this.showSuccess()
+        })
         .catch((err) => this.showError(err))
-        .finally(() => this.sendLoading = false)
-    },
+        .finally(() => {
+          this.saveLoading = false
+          this.$emit('upload', false)
+        })},
     saveDraft() {
       const draft = {
         Subject: this.subject,
@@ -374,10 +411,25 @@ export default {
       }
 
       this.saveLoading = true
+      this.$emit('upload', true)
       createDraft(draft, this.fileList, this.getToken())
-        .then(() => this.$emit('close'))
+        .then(() => {
+          this.$emit('close')
+          this.clearFields()
+          this.showSuccess()
+        })
         .catch((err) => this.showError(err))
-        .finally(() => this.saveLoading = false)
+        .finally(() => {
+          this.saveLoading = false
+          this.$emit('upload', false)
+        })
+    },
+    cancelRequest() {
+      if (this.cancel) {
+        this.cancel.cancel(this.$t('common.requestCancelled'))
+        this.$emit('upload', false)
+        this.progress = 0
+      }
     },
     getFiles(val) {
       this.files = val
