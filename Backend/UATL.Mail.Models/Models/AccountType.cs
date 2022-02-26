@@ -3,6 +3,7 @@
     public enum AccountType
     {
         Admin,
-        User
+        User,
+        OrderOffice
     }
 }

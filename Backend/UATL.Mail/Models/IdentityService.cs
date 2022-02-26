@@ -67,7 +67,7 @@ namespace UATL.MailSystem.Models
         }
         public async Task<Account?> GetCurrentAccount(HttpContext httpContext)
         {
-            var token = httpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            /*var token = httpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
             try
             {
                 var cached = await BlobCache.InMemory.GetObject<Account>(token);
@@ -78,7 +78,7 @@ namespace UATL.MailSystem.Models
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-            }
+            }*/
 
             var identity = httpContext.User.Identity as ClaimsIdentity;
 

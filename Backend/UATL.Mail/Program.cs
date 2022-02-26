@@ -24,27 +24,83 @@ using Newtonsoft.Json.Serialization;
 using Jetsons.JetPack;
 using Microsoft.AspNetCore.SignalR;
 using UATL.Mail.Hubs;
+using Serilog.Enrichers;
+using Serilog.Enrichers.AspNetCore;
+using Hangfire.AspNetCore;
+using Hangfire;
+using Hangfire.Mongo;
+using MongoDB.Entities;
+using Hangfire.Mongo.Migration.Strategies;
+using Hangfire.Mongo.Migration.Strategies.Backup;
+using UATL.Mail.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Verbose)
             .Enrich.FromLogContext()
+            .Enrich.WithClientIp()
+            .Enrich.WithClientAgent()
+            .Enrich.WithExceptionData()
+            .Enrich.WithMemoryUsage()
+            .Enrich.WithProcessName()
+            .Enrich.WithThreadName()
+            .WriteTo.Seq(builder.Configuration["SeqUrl"])
             .WriteTo.Console(theme: Serilog.Sinks.SystemConsole.Themes.SystemConsoleTheme.Colored, restrictedToMinimumLevel: LogEventLevel.Information)
-            .WriteTo.File(AppContext.BaseDirectory + @"\Log\UATLMail_Log.log", 
+            .WriteTo.File(AppContext.BaseDirectory + @"\Log\[DEBUG]_UATLMail_Log_.log", 
                 rollingInterval: RollingInterval.Day, 
                 rollOnFileSizeLimit: true, 
                 retainedFileCountLimit:365,
-                shared: true
-            )
+                shared: true,
+                restrictedToMinimumLevel: LogEventLevel.Debug)
+            .WriteTo.File(AppContext.BaseDirectory + @"\Log\[VERBOSE]_UATLMail_Log_.log",
+                rollingInterval: RollingInterval.Day,
+                rollOnFileSizeLimit: true,
+                retainedFileCountLimit: 365,
+                shared: true,
+                restrictedToMinimumLevel: LogEventLevel.Verbose)
+            .WriteTo.File(AppContext.BaseDirectory + @"\Log\[ERROR]_UATLMail_Log_.log",
+                rollingInterval: RollingInterval.Day,
+                rollOnFileSizeLimit: true,
+                retainedFileCountLimit: 365,
+                shared: true,
+                restrictedToMinimumLevel: LogEventLevel.Error)
+            .WriteTo.File(AppContext.BaseDirectory + @"\Log\[WARNING]_UATLMail_Log_.log",
+                rollingInterval: RollingInterval.Day,
+                rollOnFileSizeLimit: true,
+                retainedFileCountLimit: 365,
+                shared: true,
+                restrictedToMinimumLevel: LogEventLevel.Warning)
+            .WriteTo.File(AppContext.BaseDirectory + @"\Log\[INFO]_UATLMail_Log_.log",
+                rollingInterval: RollingInterval.Day,
+                rollOnFileSizeLimit: true,
+                retainedFileCountLimit: 365,
+                shared: true,
+                restrictedToMinimumLevel: LogEventLevel.Information)
             .CreateLogger();
 
 builder.Host.UseSerilog();
 
-
-await DatabaseHelper.InitDb(builder.Configuration["MongoDB:DatabaseName"], builder.Configuration["MongoDB:ConnectionString"]);
+var mongoConnectionString = builder.Configuration["MongoDB:ConnectionString"];
+var mongoDbName = builder.Configuration["MongoDB:DatabaseName"];
+await DatabaseHelper.InitDb(mongoDbName, mongoConnectionString);
 DatabaseHelper.InitCache();
+
+builder.Services.AddHangfire(configuration => configuration
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UseMongoStorage(mongoConnectionString, mongoDbName, new MongoStorageOptions
+        {
+            MigrationOptions = new MongoMigrationOptions
+            {
+                MigrationStrategy = new MigrateMongoMigrationStrategy(),
+                BackupStrategy = new CollectionMongoBackupStrategy()
+            },
+            Prefix = "uatl.backgroundjobs.server",
+            CheckConnection = true
+        }));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -106,12 +162,14 @@ builder.Services
         .RegisterValidatorsFromAssemblyContaining<SignupValidator>(lifetime: ServiceLifetime.Singleton)
     );
 
-/*builder.Services
-    .AddHostedService<DatabaseChangeService>();*/
+builder.Services
+    .AddHostedService<DatabaseChangeService>();
 
 builder.Services
     .AddScoped<IIdentityService, IdentityService>()
     .AddScoped<ITokenService, TokenService>();
+
+
 
 /*builder.Services
     //.AddScoped<SakonyConsoleMiddleware>()
@@ -129,14 +187,23 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddSignalR();
+builder.Services.AddHangfireServer(serverOptions =>
+{
+    serverOptions.ServerName = "UATL Background Jobs Server 1";
+});
 
+builder.Services
+    .AddSingleton<NotificationService>();
 //---------------------------------------------------------------//
 builder.WebHost
-    .UseKestrel(o => o.ListenAnyIP(builder.Configuration["Port"].ToInt()));
+    .UseKestrel(o => {
+        o.ListenAnyIP(builder.Configuration["Port"].ToInt());
+        o.Limits.MaxRequestBodySize = int.MaxValue;
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
@@ -166,5 +233,7 @@ app.UseEndpoints(endpoint =>
     endpoint.MapHub<MailHub>("/hubs/mail");
     endpoint.MapHub<ChatHub>("/hubs/chat");
 });
+
+app.UseHangfireDashboard("/backgroundjobs");
 
 app.Run();

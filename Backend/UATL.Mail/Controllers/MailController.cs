@@ -229,7 +229,8 @@ namespace UATL.Mail.Controllers
             }
             catch (Exception ex)
             {
-                await transaction.AbortAsync();
+                if(transaction.Session.IsInTransaction) 
+                    await transaction.AbortAsync();
                 _logger.LogError(ex.Message);
                 return BadRequest(ex.Message);
             }

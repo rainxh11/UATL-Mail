@@ -12,7 +12,7 @@
     <v-card>
       <v-card-title v-if="hideButtons" class="pa-2">
         {{ $t('email.sending') }}...
-      </v-card-title>r
+      </v-card-title>
       <v-card-title v-if="!hideButtons" class="pa-2">
         {{ $t('email.compose') }}
         <v-spacer></v-spacer>

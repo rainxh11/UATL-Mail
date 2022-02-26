@@ -20,11 +20,12 @@
         link
       >
         <v-list-item-icon>
-          <v-icon small>{{ item.icon }}</v-icon>
+          <v-icon :color="item.color">{{ item.icon }}</v-icon>
         </v-list-item-icon>
 
         <v-list-item-content>
           <v-list-item-title>{{ $t(item.label) }}</v-list-item-title>
+          <v-list-item-subtitle v-if="item.external"><b>({{ item.external ? $t('email.external') : '' }})</b></v-list-item-subtitle>
         </v-list-item-content>
 
         <v-list-item-action v-if="item.count > 0">
@@ -51,7 +52,7 @@
         link
       >
         <v-list-item-icon>
-          <v-icon small :color="item.color">{{ item.icon }}</v-icon>
+          <v-icon :color="item.color">{{ item.icon }}</v-icon>
         </v-list-item-icon>
 
         <v-list-item-content>
@@ -96,11 +97,28 @@ export default {
         label: 'email.inbox',
         icon: 'fa-regular fa-inbox-in',
         link: '/mailbox/inbox',
+        color: 'green',
+        external: false,
         count: 3
-      }, {
+      },{
+        label: 'email.inbox',
+        icon: 'fa-solid fa-inbox-in',
+        link: '/mailbox/inbox-external',
+        color: 'green',
+        external: true,
+        count: 3
+      },{
         label: 'email.sent',
         icon: 'fa-regular fa-inbox-out',
+        color: 'blue',
+        external: false,
         link: '/mailbox/sent'
+      }, {
+        label: 'email.sent',
+        icon: 'fa-solid fa-inbox-out',
+        color: 'blue',
+        external: true,
+        link: '/mailbox/sent-external'
       }, {
         label: 'email.drafts',
         icon: 'mdi-pencil-outline',
@@ -110,10 +128,6 @@ export default {
         icon: 'fa-regular fa-star',
         link: '/mailbox/starred',
         count: 1
-      }, {
-        label: 'email.trash',
-        icon: 'fa-regular fa-trash',
-        link: '/mailbox/trash'
       }],
       labels: [{
         label: 'email.work',

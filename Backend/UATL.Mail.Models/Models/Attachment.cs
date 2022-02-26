@@ -3,7 +3,6 @@ using System;
 
 namespace UATL.MailSystem.Models.Models
 {
-    [Collection("Attachement")]
     public class Attachment : FileEntity, ICreatedOn, IModifiedOn
     {
         public DateTime CreatedOn { get; set; }

@@ -98,9 +98,9 @@ export default {
         distinctUntilChanged((p, c) => p === c),
         debounceTime(500),
         pluck('newValue'),
-        map((x) => x ?? '')
+        map(x => x ?? '')
       )
-      .subscribe((val) => {
+      .subscribe(val => {
         this.searchRecipients(val)
       })
   },
@@ -115,22 +115,21 @@ export default {
     filter (item, queryText, itemText) {
       if (!item) return false
       if (!queryText) return true
-
       return item.UserName.includes(queryText) || item.Name.includes(queryText)
     },
     remove(val) {
       this.model = this.$enumerable(this.model)
-        .Where((x) => x !== val.ID)
+        .Where(x => x !== val.ID)
         .ToArray()
     },
     searchRecipients(val) {
       this.searchLoading = true
       searchRecipients(val, this.getToken())
-        .then((res) => {
+        .then(res => {
           this.items.length = 0
           this.items = res.data.Data
         })
-        .catch((err) => console.log(err))
+        .catch(err => console.log(err))
         .finally(() => this.searchLoading = false)
     }
   }

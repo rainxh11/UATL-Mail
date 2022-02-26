@@ -69,6 +69,8 @@ export default {
     'recipientsRequired': 'Pas de Recipients!'
   },
   'email': {
+    'external': 'Exterieure',
+    'externalMail': 'Courrier Exterieure',
     'sending': 'En cours d\'envoi de courrier',
     'attachments' : 'Attachements',
     'to': 'Vers',
@@ -78,7 +80,7 @@ export default {
     'labels': 'Étiquettes',
     'emptyList': 'Liste de diffusion vide',
     'inbox': 'Boîte de réception',
-    'sent': 'Expédié',
+    'sent': 'Envoyé',
     'drafts': 'Brouillons',
     'starred': 'Favoris',
     'trash': 'Poubelle',

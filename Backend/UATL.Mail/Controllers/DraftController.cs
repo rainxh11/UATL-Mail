@@ -178,7 +178,8 @@ namespace UATL.MailSystem.Controllers
             }
             catch (Exception ex)
             {
-                await transaction.AbortAsync();
+                if (transaction.Session.IsInTransaction)
+                    await transaction.AbortAsync();
                 return BadRequest(ex.Message);
             }
         }
@@ -233,7 +234,8 @@ namespace UATL.MailSystem.Controllers
             }
             catch (Exception ex)
             {
-                await transaction.AbortAsync();
+                if (transaction.Session.IsInTransaction)
+                    await transaction.AbortAsync();
                 return BadRequest(ex.Message);
             }
         }
@@ -273,7 +275,8 @@ namespace UATL.MailSystem.Controllers
             }
             catch (Exception ex)
             {
-                await transaction.AbortAsync();
+                if (transaction.Session.IsInTransaction)
+                    await transaction.AbortAsync();
                 return BadRequest(ex.Message);
             }
         }

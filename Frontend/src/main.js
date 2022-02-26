@@ -12,7 +12,7 @@ import { Plugin } from 'vue2-storage'
 
 // VUE-ROUTER - https://router.vuejs.org/
 import router from './router'
-import { mailHub, chatHub } from '@/configs/sockets'
+import { mailHub } from '@/plugins/sockets'
 // PLUGINS
 import './icons/css/all.css'
 import vuetify from './plugins/vuetify'
@@ -69,7 +69,6 @@ const apiHost = process.env.VUE_APP_API || '127.0.0.1:5000'
 Vue.prototype.$apiHost = apiHost
 // Connect Websockets
 Vue.prototype.$mailHub = mailHub(apiHost)
-Vue.prototype.$chatHub = chatHub(apiHost)
 
 // Set this to false to prevent the production tip on Vue startup.
 Vue.config.productionTip = false

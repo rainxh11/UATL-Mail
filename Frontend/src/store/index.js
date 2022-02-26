@@ -5,6 +5,7 @@ import Vuex from 'vuex'
 import AppModule from './app'
 import authModule from './auth'
 import mailModule from '@/app/email/store'
+
 Vue.use(Vuex)
 
 /**

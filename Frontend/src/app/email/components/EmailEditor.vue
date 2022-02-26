@@ -8,9 +8,14 @@
     @dragstart.prevent="dragover = true"
   >
 
-    <email-input v-if="!sendLoading" :label="$t('email.to') + ':'" :addresses="toAddresses" @change="addRecipients($event)"/>
-    <v-divider v-if="!sendLoading" class="pa-1"/>
-
+    <email-input v-if="!sendLoading && !external" :label="$t('email.to') + ':'" :addresses="toAddresses" @change="addRecipients($event)"/>
+    <v-checkbox
+      v-if="!sendLoading"
+      v-model="external"
+      :label="$t('email.externalMail')"
+    >
+      {{ $t('email.externalMail') }}
+    </v-checkbox>
     <v-text-field
       v-if="!sendLoading"
       v-model="subject"
@@ -149,9 +154,6 @@
 
       </div>
     </editor-menu-bar>
-
-    <v-divider v-if="!sendLoading" />
-
     <editor-content v-if="!sendLoading" class="editor__content pa-3 py-4" :editor="editor" />
 
     <v-divider v-if="!sendLoading"/>
@@ -296,17 +298,18 @@ export default {
       tempFiles: [],
       editor: null,
       dragover: false,
+      external: false,
       rules: {
         subject: [
-          (value) => value.trim().length > 0 || this.$t('rules.subjectRequired'),
-          (value) => !!value || this.$t('rules.subjectRequired')
+          value => value.trim().length > 0 || this.$t('rules.subjectRequired'),
+          value => !!value || this.$t('rules.subjectRequired')
         ]
       }
     }
   },
   computed:{
     fileList() {
-      return this.$enumerable(this.files).Distinct((x) => x.name + x.size).OrderByDescending((x) => x.size).ToArray()
+      return this.$enumerable(this.files).Distinct(x => x.name + x.size).OrderByDescending(x => x.size).ToArray()
     },
     dragBackground() {
       if (this.$vuetify.theme.dark) return ''
@@ -324,6 +327,7 @@ export default {
     }
   },
   created() {
+
     this.editor = new Editor({
       extensions: [
         new Blockquote(),
@@ -363,14 +367,13 @@ export default {
       this.recipients.length = 0
       this.toAddresses.length = 0
       this.dragover = false
-      this.editor.clear()
     },
     addRecipients(recipients) {
       this.toAddresses = recipients
     },
     removeFile(name) {
       this.files = this.$enumerable(this.files)
-        .Where((x) => x.name !== name)
+        .Where(x => x.name !== name)
         .ToArray()
     },
     onDrop(e) {
@@ -391,7 +394,7 @@ export default {
 
       this.sendLoading = true
       this.$emit('upload', true)
-      sendMail(mail, this.fileList, (progress) => {
+      sendMail(mail, this.fileList, progress => {
         this.progress = Math.ceil(progress.loaded * 100 / progress.total)
       }, this.getToken(), this.cancel)
         .then(() => {
@@ -399,7 +402,7 @@ export default {
           this.clearFields()
           this.showSuccess()
         })
-        .catch((err) => this.showError(err))
+        .catch(err => this.showError(err))
         .finally(() => {
           this.saveLoading = false
           this.$emit('upload', false)
@@ -418,7 +421,7 @@ export default {
           this.clearFields()
           this.showSuccess()
         })
-        .catch((err) => this.showError(err))
+        .catch(err => this.showError(err))
         .finally(() => {
           this.saveLoading = false
           this.$emit('upload', false)
@@ -429,6 +432,7 @@ export default {
         this.cancel.cancel(this.$t('common.requestCancelled'))
         this.$emit('upload', false)
         this.progress = 0
+        this.sendLoading = false
       }
     },
     getFiles(val) {

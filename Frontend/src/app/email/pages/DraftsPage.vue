@@ -26,10 +26,11 @@ export default {
     }
   },
   async created() {
-    this.$mailHub.on('refresh', (x) => {
-      console.log( this.$mailHub)
+    this.$mailHub.on('refresh_draft', (x) => {
+      console.log('refresh_draft')
+      this.getDrafts({ page: 1, pageSize: 5 })
     })
-    await this.$mailHub.start()
+    if (this.$mailHub.state === 'Disconnected') await this.$mailHub.start()
 
   },
   mounted() {

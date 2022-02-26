@@ -24,6 +24,7 @@ namespace UATL.MailSystem.Models.Models
         [IgnoreDefault]
         public List<MailTag> Tags { get; set; } = new List<MailTag>();
 
+        [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
         public MailType Type { get; set; } = MailType.Internal;
 
         [IgnoreDefault]

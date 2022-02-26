@@ -40,8 +40,24 @@
     </div>
 
     <v-divider></v-divider>
-    <v-list class="py-0">
-      <template v-for="(item, index) in emails">
+    <v-list
+      v-for="group in $enumerable(emails).GroupBy(x => Date(x.CreatedOn).toString('YYYY/MM/DD'), x => x).ToArray()"
+      :key="group"
+      class="py-0"
+    >
+      <v-subheader>
+        <v-list-item-action class="d-flex flex-row align-center">
+          <v-list-item-action class="d-flex flex-row align-center">
+            <v-icon>fa-regular fa-calendar-day</v-icon>
+          </v-list-item-action>
+          <v-list-item-action-text>
+            <span class="text--primary text-h6">
+              {{ Date(group.key) | formatDate('dddd, DD MMMM YYYY') | uppercase }}
+            </span>
+          </v-list-item-action-text>
+        </v-list-item-action></v-subheader>
+      <v-divider/>
+      <template v-for="(item, index) in group.values()">
         <v-list-item
           :key="item.Subject"
           :class="{
@@ -64,8 +80,10 @@
             <v-icon v-if="type === 'sent'" small color="info">fa-solid fa-inbox-out</v-icon>
             <v-icon v-if="type === 'draft'" small>fa-solid fa-pencil</v-icon>
           </v-list-item-action>
-
-          <v-list-item-content @click="$router.push(`/mailbox/inbox/${item.id}`)">
+          <v-list-item-avatar v-if="item.From" class="d-flex flex-row">
+            <v-img :src="avatar(item.From.ID)" />
+          </v-list-item-avatar>
+          <v-list-item-content class="pa-2" @click="$router.push(`/mailbox/inbox/${item.id}`)">
             <v-list-item-title v-text="item.Subject"></v-list-item-title>
             <v-list-item-subtitle v-show="type === 'draft'" class="font-weight-bold">
               {{ getTitle(item) }}
@@ -102,15 +120,15 @@
 
           <v-list-item-action>
             <v-list-item-action-text>
-              <span class="text--primary text-lg-body-2">
-                {{ item.CreatedOn | formatTimeAgo }}
-                <v-icon color="primary" x-small>fa-regular fa-clock</v-icon>
-              </span>
-            </v-list-item-action-text>
-            <v-list-item-action-text>
-              <span label class="text--primary text-lg-body-1 font-italic">
-                {{ item.CreatedOn | formatDate('HH:mm | YYYY/MM/DD') }}
-              </span>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <span v-bind="attrs" class="text--primary text-lg-body-2" v-on="on">
+                    {{ item.CreatedOn | formatTimeAgo }}
+                    <v-icon color="primary" x-small>fa-regular fa-clock</v-icon>
+                  </span>
+                </template>
+                <span >{{ item.CreatedOn | formatDate('HH:mm | DD MMMM YYYY') }}</span>
+              </v-tooltip>
             </v-list-item-action-text>
           </v-list-item-action>
         </v-list-item>
@@ -265,6 +283,9 @@ export default {
       case 'received':
         return `${item.From.Name}`
       }
+    },
+    avatar(val) {
+      return `${this.$apiHost}/api/v1/account/${val}/avatar`
     }
   }
 }

@@ -102,6 +102,9 @@
             <!--            ></v-text-field>-->
 
             <v-spacer class="d-block"></v-spacer>
+            <div :class="[$vuetify.rtl ? 'ml-1' : 'mr-1']">
+              <toolbar-notifications />
+            </div>
             <toolbar-user />
           </div>
         </div>
@@ -139,8 +142,8 @@ import Vuecookie from 'vue-cookies'
 export default {
   components: {
     MainMenu,
-    ToolbarUser
-
+    ToolbarUser,
+    ToolbarNotifications
   },
   data() {
     return {

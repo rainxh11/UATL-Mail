@@ -46,7 +46,7 @@ namespace UATL.MailSystem.Models
         }
         public Account(string name, string userName, string password, string description = "")
         {
-            PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password);
+            PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password, 13);
             PasswordUpdatedOn = DateTime.Now;
             Name = name;
             UserName = userName;
@@ -54,11 +54,11 @@ namespace UATL.MailSystem.Models
         }
         public static string SetPassword(string password)
         {
-            return BCrypt.Net.BCrypt.EnhancedHashPassword(password);
+            return BCrypt.Net.BCrypt.EnhancedHashPassword(password, 13);
         }
         public void CreatePassword(string password)
         {
-            PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password);
+            PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password, 13);
             PasswordUpdatedOn = DateTime.Now;
         }
 
@@ -74,7 +74,7 @@ namespace UATL.MailSystem.Models
         {
             if (BCrypt.Net.BCrypt.EnhancedVerify(password, PasswordHash))
             {
-                PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(newPassword);
+                PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(newPassword, 13);
                 PasswordUpdatedOn = DateTime.Now;
                 ModifiedOn = DateTime.Now;
                 return true;
