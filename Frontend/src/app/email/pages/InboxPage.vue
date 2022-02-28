@@ -1,5 +1,11 @@
 <template>
-  <email-list :is-loading.sync="isLoading" :emails="inbox" :labels="labels" @refresh="onRefresh" />
+  <email-list
+    :emails="mails"
+    :is-loading="loading"
+    :page-count="pageCount"
+    type="draft"
+    @refresh="getMails"
+  />
 </template>
 
 <script>
@@ -12,11 +18,10 @@ export default {
   },
   data() {
     return {
-      mails:[]
+      mails: [],
+      loading: false,
+      pageCount: 1
     }
-  },
-  computed: {
-    ...mapState('email-app', ['inbox', 'isLoading', 'labels'])
   },
   watch: {
     '$route.hash'(val) {

@@ -42,7 +42,7 @@ namespace UATL.MailSystem.Models
         }
         public Account()
         {
-
+            this.InitOneToMany(() => Starred);
         }
         public Account(string name, string userName, string password, string description = "")
         {
@@ -84,5 +84,7 @@ namespace UATL.MailSystem.Models
                 return false;
             }
         }
+        [JsonIgnore]
+        public Many<MailModel> Starred { get; set; }
     }
 }

@@ -20,7 +20,7 @@ namespace UATL.MailSystem.Models.Validations
             RuleFor(x => x.NewPassword)
                 .NotEmpty().WithMessage("Password cannot be empty!")
                 .MinimumLength(8).WithMessage("Password length is 8 characters minimum!")
-                .Equal(x => x.ConfirmPassword).WithMessage("Passowrd & Confirmation are not equal!")
+                .Equal(x => x.ConfirmPassword).WithMessage("Password & Confirmation are not equal!")
                 .MaximumLength(20).WithMessage("Password maximum length is 20 characters!")
                 .NotEqual(x => x.OldPassword).WithMessage("New Password cannot be the same as the Old Password!");
         }

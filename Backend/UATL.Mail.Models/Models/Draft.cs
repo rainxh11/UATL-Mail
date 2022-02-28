@@ -17,7 +17,8 @@ namespace UATL.MailSystem.Models.Models
         public string Subject { get; set; }
         public string Body { get; set; } = string.Empty;
         public List<Attachment> Attachements { get; set; } = new List<Attachment>();
-        public bool Starred { get; set; } = false;
 
+        [IgnoreDefault]
+        public ISet<string> HashTags { get; set; } = new HashSet<string>();
     }
 }

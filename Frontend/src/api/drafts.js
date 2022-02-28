@@ -21,16 +21,41 @@ function formData(data, files) {
 }
 
 // GET Api for { User }
-const getAllDrafts = async (page, limit, token) =>  {
-  const query = `?page=${page}&limit=${limit ?? -1}&sort=CreatedOn&desc=true`
-
-  return await axios.get('/draft' + query, headerAuth(token))
+const getAllDrafts = async (params, token) =>  {
+  const defaultParams = {
+    page: 1,
+    limit: -1,
+    direction: 'Received',
+    type: 'Internal',
+    sort: 'CreatedOn',
+    desc: true
+  }
+  return await axios.get('/draft', {
+    ...headerAuth(token),
+    params: {
+      ...defaultParams,
+      ...params
+    }
+  })
 }
 
-const searchDrafts = async (query, token) =>  {
-  query ??= '?page=1&limit=-1&sort=CreatedOn&desc=true&search=|'
+const searchDrafts = async (search, params, token) =>  {
+  const defaultParams = {
+    page: 1,
+    limit: -1,
+    direction: 'Received',
+    type: 'Internal',
+    sort: 'CreatedOn',
+    desc: true
+  }
 
-  return await axios.get('/draft/search' + query, headerAuth(token))
+  return await axios.get('/draft/search', {
+    ...headerAuth(token),
+    params: {
+      ...defaultParams,
+      ...params,
+      search: search ?? '|'
+    } })
 }
 
 const getDraft = async (id, token) =>  await axios.get('/draft/' + id, headerAuth(token))

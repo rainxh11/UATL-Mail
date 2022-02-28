@@ -17,7 +17,10 @@ using UATL.Mail.Helpers;
 using UATL.Mail.Models.Models.Response;
 using Microsoft.AspNetCore.SignalR;
 using System.Linq;
+using FluentEmail.Core;
 using UATL.Mail.Hubs;
+using Hangfire;
+using UATL.Mail.Services;
 
 namespace UATL.MailSystem.Controllers
 {
@@ -30,11 +33,16 @@ namespace UATL.MailSystem.Controllers
         private ITokenService _tokenService;
         private IIdentityService _identityService;
         private readonly IHubContext<MailHub> _mailHub;
+        private IBackgroundJobClient _backgroundJobs;
+        private NotificationService _notificationSerivce;
+
         public AccountController(
             ILogger<AccountController> logger,
             IIdentityService identityService,
             ITokenService tokenService,
             IHubContext<MailHub> mailHub,
+            IBackgroundJobClient bgJobs,
+            NotificationService nservice,
             IConfiguration config)
         {
             _logger = logger;
@@ -42,6 +50,8 @@ namespace UATL.MailSystem.Controllers
             _tokenService = tokenService;
             _identityService = identityService;
             _mailHub = mailHub;
+            _backgroundJobs = bgJobs;
+            _notificationSerivce = nservice;
         }
         //--------------------------------------------------------------------------------------------------------------//
         [AllowAnonymous]
@@ -259,7 +269,7 @@ namespace UATL.MailSystem.Controllers
         [AllowAnonymous]
         [HttpPost]
         [Route("login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        public async Task<IActionResult> Login([FromBody] LoginModel model, CancellationToken ct)
         {
             var account = await Authenticate(x => x.UserName == model.UserName);
 
@@ -277,6 +287,8 @@ namespace UATL.MailSystem.Controllers
                 await account.SaveAsync();
 
                 var token = await _tokenService.BuildToken(_config, account);
+                //_backgroundJobs.Enqueue(() => _notificationSerivce.SendEmail("rainxh11@gmail.com", "UATL MAIL Test",$"Account {account.Name} Logged in.", ct));
+
                 return Ok(new ResultResponse<Account, string>(account, token));
             }
             return NotFound("User not found!");

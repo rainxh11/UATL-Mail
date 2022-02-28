@@ -30,8 +30,9 @@ namespace UATL.Mail.Helpers
                     To = destinationAccount.ToBaseAccount(),
                     SentOn = DateTime.Now,
                     Type = request.Type,
-                    Tags = request.Tags,
-                    GroupId = groupId
+                    Flags = request.Flags,
+                    GroupId = groupId,
+                    HashTags = request.HashTags
                 };
                 mails.Add(mail);
             }

@@ -5,6 +5,8 @@ using UATL.MailSystem.Models.Models;
 using MongoDB;
 using Akavache;
 using Akavache.Sqlite3;
+using MongoDB.Driver.Core.Configuration;
+using MongoDB.Driver.Core.Compression;
 
 namespace UATL.MailSystem.Helpers
 {
@@ -12,7 +14,14 @@ namespace UATL.MailSystem.Helpers
     {
         public static async Task InitDb(string dbName, string connectionString)
         {
-            await DB.InitAsync(dbName, MongoClientSettings.FromConnectionString(connectionString));
+            var clientSettings = MongoClientSettings.FromConnectionString(connectionString);
+            clientSettings.Compressors = new List<CompressorConfiguration>() 
+            {
+                new CompressorConfiguration(CompressorType.ZStandard)
+            };
+            clientSettings.ApplicationName = "UATL Mail Server";
+
+            await DB.InitAsync(dbName, clientSettings);
             await CreateIndices();
         }
         public static void InitCache()

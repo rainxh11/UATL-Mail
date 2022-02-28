@@ -33,10 +33,17 @@ using MongoDB.Entities;
 using Hangfire.Mongo.Migration.Strategies;
 using Hangfire.Mongo.Migration.Strategies.Backup;
 using UATL.Mail.Services;
+using Microsoft.AspNetCore.ResponseCompression;
+using System.IO.Compression;
+using System.Net;
+using System.Net.Mail;
+using System.Reactive.Concurrency;
+using FluentEmail;
+using FluentEmail.Smtp;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+//---------- Logging ---------------//
 Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Verbose)
             .Enrich.FromLogContext()
@@ -82,11 +89,13 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
+//---------- MongoDB & Caching ---------------//
 var mongoConnectionString = builder.Configuration["MongoDB:ConnectionString"];
 var mongoDbName = builder.Configuration["MongoDB:DatabaseName"];
 await DatabaseHelper.InitDb(mongoDbName, mongoConnectionString);
 DatabaseHelper.InitCache();
 
+//---------- Background Jobs ---------------//
 builder.Services.AddHangfire(configuration => configuration
         .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
         .UseSimpleAssemblyNameTypeSerializer()
@@ -99,9 +108,14 @@ builder.Services.AddHangfire(configuration => configuration
                 BackupStrategy = new CollectionMongoBackupStrategy()
             },
             Prefix = "uatl.backgroundjobs.server",
-            CheckConnection = true
+            CheckConnection = true,
         }));
-
+builder.Services.AddHangfireServer(serverOptions =>
+{
+    serverOptions.WorkerCount = builder.Configuration["BackgroundJobs:WorkerCount"].ToInt(20);
+    serverOptions.ServerName = "UATL Background Jobs Server 1";
+});
+//---------- Authentication ---------------//
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -117,12 +131,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+//---------- JSON Serializer ---------------//
 builder.Services.AddControllers(/*options => options.Filters.Add(new ValidationFilter())*/).AddNewtonsoftJson(o =>
 {
     o.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
     o.SerializerSettings.Formatting = Formatting.Indented;
     o.SerializerSettings.ContractResolver = null;
 });
+
+//---------- Swagger ---------------//
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(setup =>
 {
@@ -157,53 +174,80 @@ builder.Services.AddSwaggerGen(setup =>
 });
 builder.Services.AddSwaggerGenNewtonsoftSupport();
 
+//---------- Validator ---------------//
 builder.Services
     .AddFluentValidation(fv => fv
         .RegisterValidatorsFromAssemblyContaining<SignupValidator>(lifetime: ServiceLifetime.Singleton)
     );
-
+//---------- MongoDB Change Stream ---------------//
 builder.Services
     .AddHostedService<DatabaseChangeService>();
 
+//---------- Token & Identity ---------------//
 builder.Services
     .AddScoped<IIdentityService, IdentityService>()
     .AddScoped<ITokenService, TokenService>();
-
-
 
 /*builder.Services
     //.AddScoped<SakonyConsoleMiddleware>()
     .AddScoped<MailAttachementVerificationMiddleware>();*/
 
+//---------- Attachments Limits ---------------//
 builder.Services.Configure<FormOptions>(x =>
 {
     x.ValueLengthLimit = int.MaxValue;
     x.MultipartBodyLengthLimit = int.MaxValue; // In case of multipart
 });
 
+//---------- CORS ---------------//
 builder.Services.AddCors(options =>
 {
     //options.AddDefaultPolicy(x => x.AllowAnyOrigin().AllowAnyMethod().AllowCredentials());
 });
 
-builder.Services.AddSignalR();
-builder.Services.AddHangfireServer(serverOptions =>
-{
-    serverOptions.ServerName = "UATL Background Jobs Server 1";
-});
+//---------- SignalR Websocket ---------------//
 
+builder.Services.AddSignalR();
+
+//---------- NotificationService ---------------//
 builder.Services
     .AddSingleton<NotificationService>();
-//---------------------------------------------------------------//
+
+//---------- Email Notifications ---------------//
+builder.Services
+    .AddFluentEmail(builder.Configuration["SMTP:Email"], "Univesity Of Ammar Thlidji, LAGHOUAT - Mailing System")
+    //.AddRazorRenderer()
+    .AddSmtpSender(new SmtpClient(builder.Configuration["SMTP:Host"], builder.Configuration["SMTP:Port"].ToInt(587))
+    {
+        EnableSsl = true,
+        Credentials = new NetworkCredential(builder.Configuration["SMTP:Email"],
+            builder.Configuration["SMTP:Password"])
+    });
+
+//---------- Compression ---------------//
+builder.Services.AddResponseCompression(options =>
+{
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes =
+        ResponseCompressionDefaults.MimeTypes.Concat(
+            new[] { "image/svg+xml+application/json" });
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.SmallestSize);
+builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.SmallestSize);
+
+//---------------------------------------------------------------------------------------------------------//
+//---------------------------------------------------------------------------------------------------------//
 builder.WebHost
     .UseKestrel(o => {
         o.ListenAnyIP(builder.Configuration["Port"].ToInt());
         o.Limits.MaxRequestBodySize = int.MaxValue;
-});
-
+    });
 var app = builder.Build();
+//---------------------------------------------------------------------------------------------------------//
+//---------------------------------------------------------------------------------------------------------//
 
-// Configure the HTTP request pipeline
+
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
@@ -212,10 +256,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+var hosts = builder.Configuration["CorsHosts"];
 app.UseCors(config => config
     .AllowAnyHeader()
     .AllowAnyMethod()
-    .WithOrigins("http://127.0.0.1:8080")
+    .WithOrigins(builder.Configuration["CorsHosts"].Split(";"))
     .AllowCredentials()
     );
 app.UseAuthentication();
@@ -234,6 +279,10 @@ app.UseEndpoints(endpoint =>
     endpoint.MapHub<ChatHub>("/hubs/chat");
 });
 
-app.UseHangfireDashboard("/backgroundjobs");
+app.UseHangfireDashboard("/backgroundjobs", new DashboardOptions()
+{
+    DashboardTitle = "UATL Mail Server - Background Jobs Dashboard",
+    IsReadOnlyFunc = ctx => true,
+});
 
 app.Run();

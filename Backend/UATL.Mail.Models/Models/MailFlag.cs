@@ -1,9 +1,9 @@
 ﻿namespace UATL.MailSystem.Models.Models
 {
-    public enum MailTag
+    public enum MailFlag
     {
         Important,
-        TimeSensitive,
+        RequireTask,
         Acknowledged,
         Approved,
         Archived

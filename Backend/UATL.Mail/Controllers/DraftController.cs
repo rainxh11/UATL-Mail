@@ -260,7 +260,7 @@ namespace UATL.MailSystem.Controllers
                     var mail = draft.Adapt<MailModel>();
                     var to = await DB.Find<Account>(transaction.Session).OneAsync(recipient);
                     mail.To = to.ToBaseAccount();
-                    mail.Tags = sendModel.Tags;
+                    mail.Flags = sendModel.Flags;
                     mails.Add(mail);
                 }
                 var result = await DB.InsertAsync<MailModel>(mails, transaction.Session, ct);

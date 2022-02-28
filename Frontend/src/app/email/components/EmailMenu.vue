@@ -28,12 +28,20 @@
           <v-list-item-subtitle v-if="item.external"><b>({{ item.external ? $t('email.external') : '' }})</b></v-list-item-subtitle>
         </v-list-item-content>
 
-        <v-list-item-action v-if="item.count > 0">
+        <v-list-item-action v-if="getStat(item) > 0">
+          <v-list-item-action-text>
+            <span class="font-weight-bold text-body-1">
+              <b>{{ getStat(item) | formatNumber }}</b>
+            </span>
+          </v-list-item-action-text>
+        </v-list-item-action>
+
+        <v-list-item-action v-if="getUnread(item) > 0">
           <v-badge
             inline
             color="primary"
             class="font-weight-bold"
-            :content="item.count"
+            :content="getUnread(item) > 99 ? '+99' : getUnread(item)"
           >
           </v-badge>
         </v-list-item-action>
@@ -77,6 +85,8 @@
 
 <script>
 import EmailCompose from './EmailCompose'
+import { mapGetters } from 'vuex'
+import { getStats } from '@/api/mails'
 
 /*
 |---------------------------------------------------------------------
@@ -94,40 +104,43 @@ export default {
     return {
       showCompose: false,
       menu: [{
+        id: 'receivedInternal',
         label: 'email.inbox',
         icon: 'fa-regular fa-inbox-in',
-        link: '/mailbox/inbox',
+        link: '/mailbox/inbox-internal',
         color: 'green',
-        external: false,
-        count: 3
+        external: false
       },{
+        id: 'receivedExternal',
         label: 'email.inbox',
         icon: 'fa-solid fa-inbox-in',
         link: '/mailbox/inbox-external',
         color: 'green',
-        external: true,
-        count: 3
+        external: true
       },{
+        id: 'sentInternal',
         label: 'email.sent',
-        icon: 'fa-regular fa-inbox-out',
+        icon: 'fa-regular fa-paper-plane-top',
         color: 'blue',
         external: false,
-        link: '/mailbox/sent'
+        link: '/mailbox/sent-internal'
       }, {
+        id: 'sentExternal',
         label: 'email.sent',
-        icon: 'fa-solid fa-inbox-out',
+        icon: 'fa-solid fa-paper-plane-top',
         color: 'blue',
         external: true,
         link: '/mailbox/sent-external'
       }, {
+        id: 'drafts',
         label: 'email.drafts',
         icon: 'mdi-pencil-outline',
         link: '/mailbox/drafts'
       }, {
+        id: 'starred',
         label: 'email.starred',
         icon: 'fa-regular fa-star',
-        link: '/mailbox/starred',
-        count: 1
+        link: '/mailbox/starred'
       }],
       labels: [{
         label: 'email.work',
@@ -139,7 +152,56 @@ export default {
         color: 'green',
         icon: 'fa-regular fa-tag',
         link: '/mailbox/inbox#invoice'
-      }]
+      }],
+      stats: null
+    }
+  },
+  async created() {
+    this.$mailHub.on('refresh_stats', (x) => {
+      this.getStats()
+    })
+    if (this.$mailHub.state === 'Disconnected') await this.$mailHub.start()
+  },
+  mounted() {
+    this.getStats()
+  },
+  beforeDestroy() {
+    this.$mailHub.off('refresh_stats')
+  },
+  methods: {
+    ...mapGetters('auth', ['getToken', 'getUserInfo']),
+    getStats() {
+      getStats(this.getToken())
+        .then(res => this.stats = res.data)
+        .catch(err => console.log(err))
+    },
+    getUnread(item) {
+      switch (item.id) {
+      default:
+        return 0
+      case 'receivedInternal':
+        return this.stats.InternalReceived.Unread
+      case 'receivedExternal':
+        return this.stats.ExternalReceived.Unread
+      }
+    },
+    getStat(item) {
+      switch (item.id) {
+      default:
+        return 0
+      case 'receivedInternal':
+        return this.stats.InternalReceived.Count
+      case 'receivedExternal':
+        return this.stats.ExternalReceived.Count
+      case 'sentInternal':
+        return this.stats.InternalSent.Count
+      case 'sentExternal':
+        return this.stats.ExternalSent.Count
+      case 'drafts':
+        return this.stats.Drafts.Count
+      case 'starred':
+        return this.stats.Starred.Count
+      }
     }
   }
 }

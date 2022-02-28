@@ -20,16 +20,41 @@ function formData(data, files) {
   return formData
 }
 
-const getAllMails = async (page, limit, token) =>  {
-  const query = `?page=${page}&limit=${limit ?? -1}&sort=CreatedOn&desc=true`
-
-  return await axios.get('/mail' + query, headerAuth(token))
+const getAllMails = async (params, token) =>  {
+  const defaultParams = {
+    page: 1,
+    limit: -1,
+    direction: 'Received',
+    type: 'Internal',
+    sort: 'CreatedOn',
+    desc: true
+  }
+  return await axios.get('/mail',
+    {
+      ...headerAuth(token),
+      params: {
+        ...defaultParams,
+        ...params
+      }
+    })
 }
 
-const searchMails = async (query, token) =>  {
-  query ??= '?page=1&limit=-1&sort=CreatedOn&desc=true&search=|'
-
-  return await axios.get('/mail/search' + query, headerAuth(token))
+const searchMails = async (search, params, token) =>  {
+  const defaultParams = {
+    page: 1,
+    limit: -1,
+    direction: 'Received',
+    type: 'Internal',
+    sort: 'CreatedOn',
+    desc: true
+  }
+  return await axios.get('/mail/search', {
+    ...headerAuth(token),
+    params: {
+      ...defaultParams,
+      ...params,
+      search: search ?? '|'
+    } })
 }
 
 const getMail = async (id, token) =>  await axios.get('/mail/' + id, headerAuth(token))
@@ -42,6 +67,8 @@ const sendMail = async (mail, files, onProgress, token, ct) => {
   })
 }
 
+const getStats = async (token) => await axios.get('/mail/stats', headerAuth(token))
+
 export {
-  searchMails, sendMail, getMail, getAllMails
+  searchMails, sendMail, getMail, getAllMails, getStats
 }

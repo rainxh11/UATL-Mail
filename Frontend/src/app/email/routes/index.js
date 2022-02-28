@@ -1,26 +1,26 @@
 export default [
   {
     path: '',
-    redirect: 'inbox'
+    redirect: 'inbox-internal'
   },
   {
-    path: 'inbox',
+    path: 'inbox-:type(.*)',
     name: 'apps-email-inbox',
     component: () => import(/* webpackChunkName: "apps-email-inbox" */ '@/app/email/pages/InboxPage.vue')
   },
   {
-    path: 'inbox-external',
-    name: 'apps-email-inbox-external',
+    path: 'inbox-:type(.*)',
+    name: 'apps-email-inbox',
     component: () => import(/* webpackChunkName: "apps-email-inbox" */ '@/app/email/pages/InboxPage.vue')
   },
   {
-    path: 'sent',
+    path: 'sent-:type(.*)',
     name: 'apps-email-sent',
     component: () => import(/* webpackChunkName: "apps-email-sent" */ '@/app/email/pages/SentPage.vue')
   },
   {
-    path: 'sent-external',
-    name: 'apps-email-sent-external',
+    path: 'sent-:type(.*)',
+    name: 'apps-email-sent',
     component: () => import(/* webpackChunkName: "apps-email-sent" */ '@/app/email/pages/SentPage.vue')
   },
   {

@@ -1,4 +1,7 @@
 export default {
+  'utility':{
+    'externalLink': 'Vous êtes sur le point d\'être redirigé vers un lien externe!'
+  },
   'confirmation': {
     'title': 'Confirmation',
     'delete': 'Voulez vous supprimer \'#\' ?',

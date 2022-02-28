@@ -33,6 +33,9 @@ export default {
     if (this.$mailHub.state === 'Disconnected') await this.$mailHub.start()
 
   },
+  beforeDestroy() {
+    this.$mailHub.off('refresh_draft')
+  },
   mounted() {
     this.getDrafts({ page: 1, pageSize: 5 })
   },
@@ -40,9 +43,8 @@ export default {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
     ...mapActions('app', ['showSuccess', 'showError']),
     getDrafts(pagination) {
-      console.log(pagination)
       this.loading = true
-      getAllDrafts(pagination.page, pagination.pageSize, this.getToken())
+      getAllDrafts({ page: pagination.page, limit: pagination.pageSize } , this.getToken())
         .then((res) => {
           this.drafts = res.data.Data.map((x) => {
             x.Body = Html5Entities.decode(x.Body)

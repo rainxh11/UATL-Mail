@@ -80,15 +80,15 @@
             <v-icon v-if="type === 'sent'" small color="info">fa-solid fa-inbox-out</v-icon>
             <v-icon v-if="type === 'draft'" small>fa-solid fa-pencil</v-icon>
           </v-list-item-action>
-          <v-list-item-avatar v-if="item.From" class="d-flex flex-row">
-            <v-img :src="avatar(item.From.ID)" />
+          <v-list-item-avatar v-if="item.To" class="d-flex flex-row">
+            <v-img :src="avatar(item.To.ID)" />
           </v-list-item-avatar>
           <v-list-item-content class="pa-2" @click="$router.push(`/mailbox/inbox/${item.id}`)">
             <v-list-item-title v-text="item.Subject"></v-list-item-title>
             <v-list-item-subtitle v-show="type === 'draft'" class="font-weight-bold">
               {{ getTitle(item) }}
             </v-list-item-subtitle>
-            <v-list-item-subtitle v-html="item.Body.slice(0,200) + '...'"></v-list-item-subtitle>
+            <v-list-item-subtitle @click.stop v-html="item.Body.slice(0,500) + '...'"></v-list-item-subtitle>
             <v-list-item-subtitle>
               <v-chip
                 v-for="label in item.labels"
@@ -101,21 +101,22 @@
                 {{ getLabelTitle(label) }}
               </v-chip>
             </v-list-item-subtitle>
-          </v-list-item-content>
-
-          <v-list-item-content v-if="item.Attachements.length > 0">
-            <v-list-item-title>
-              <v-icon>fa-solid fa-paperclip</v-icon>
-              {{ `${$t('email.attachments')}: ${item.Attachements.length}` }}
-            </v-list-item-title>
-            <div
-              v-for="file in item.Attachements.slice(0,3)"
-              :key="file"
-              class="font-italic"
-            >
-              {{ file.Name }} <b>({{ file.FileSize | formatByte }})</b>
-            </div>
-            <div v-if="item.Attachements.length > 3">...</div>
+            <v-list-item-subtitle v-if="item.Attachements.length !== 0">
+              <v-list-item-title>
+                <v-icon small>fa-solid fa-paperclip</v-icon>
+                {{ `${item.Attachements.length} ${$t('email.attachments')}: ` }}
+                <v-chip
+                  v-for="file in $enumerable(item.Attachements).Take(3).ToArray()"
+                  :key="file"
+                  small
+                  label
+                  class="font-italic"
+                >
+                  {{ file.Name }} <b>({{ file.FileSize | formatByte }})</b>
+                </v-chip>
+                <span v-if="item.Attachements.length > 3">...</span>
+              </v-list-item-title>
+            </v-list-item-subtitle>
           </v-list-item-content>
 
           <v-list-item-action>
@@ -187,6 +188,10 @@ export default {
     type: {
       type: String,
       default: 'received'
+    },
+    internal: {
+      type: Boolean,
+      default: false
     },
     pageSizes: {
       type: Array,
@@ -274,15 +279,13 @@ export default {
       return label ? label.title : ''
     },
     getTitle(item) {
-      switch (this.type) {
-      default:
-      case 'draft':
-        return ''
-      case 'sent':
-        return `-> ${item.To.Name}`
-      case 'received':
-        return `${item.From.Name}`
+      if (this.type === 'draft') return ''
+      const user = this.getUserInfo()
+      if (item.From.ID === user.ID) {
+        if (item.To) return `-> ${item.To.Name}`
       }
+      if (item.To.ID === user.ID) return `${item.From.Name}`
+      return ''
     },
     avatar(val) {
       return `${this.$apiHost}/api/v1/account/${val}/avatar`

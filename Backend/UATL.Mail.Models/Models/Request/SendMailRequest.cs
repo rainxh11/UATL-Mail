@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Converters;
+﻿using System.Collections.Generic;
+using Newtonsoft.Json.Converters;
 using System.Text.Json.Serialization;
 
 namespace UATL.MailSystem.Models.Models.Request
@@ -10,5 +11,7 @@ namespace UATL.MailSystem.Models.Models.Request
 
         [JsonConverter(typeof(StringEnumConverter))]
         public MailType Type { get; set; }
+
+        public ISet<string> HashTags { get; set; } = new HashSet<string>();
     }
 }

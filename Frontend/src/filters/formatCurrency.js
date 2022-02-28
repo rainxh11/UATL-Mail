@@ -1,6 +1,8 @@
 import Vue from 'vue'
 import store from '../store'
 
+Vue.filter('formatNumber', formatNumber)
+Vue.use(formatNumber)
 Vue.filter('formatCurrency', formatCurrency)
 Vue.use(formatCurrency)
 /**
@@ -45,6 +47,20 @@ export function formatPrice(price, currency) {
     return price
   }
 }
+export function formatNumber(number, isInteger = true) {
+  try {
+    return numberFormat(
+      number,
+      isInteger ? 0 : 2,
+      '.',
+      ','
+    )
+
+  } catch (e) {
+    console.log(e)
+    return number
+  }
+}
 
 /**
    * Helper method to format a number given a few configurations such as the separation
@@ -79,5 +95,6 @@ export function numberFormat(number, decimals, dec_point, thousands_sep) {
 
 export default {
   formatPrice,
-  numberFormat
+  numberFormat,
+  formatNumber
 }

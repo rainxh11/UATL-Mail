@@ -14,6 +14,7 @@ using MongoDB.Driver;
 using System.Linq.Expressions;
 using MongoDB.Bson;
 using System.Linq;
+using System.Xml.Linq;
 using UATL.Mail.Models.Bindings;
 using FluentValidation.AspNetCore;
 using UATL.Mail.Helpers;
@@ -54,7 +55,10 @@ namespace UATL.Mail.Controllers
         [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
         [Route("")]
-        public async Task<IActionResult> GetMails(int page = 1, int limit = 10, string? sort = "CreatedOn", bool desc = true, [JsonProperty(ItemConverterType = typeof(StringEnumConverter))] MailDirection type = MailDirection.Both)
+        public async Task<IActionResult> GetMails(int page = 1, int limit = 10, string? sort = "CreatedOn", bool desc = true, 
+            [JsonProperty(ItemConverterType = typeof(StringEnumConverter))] MailDirection direction = MailDirection.Both,
+            [JsonProperty(ItemConverterType = typeof(StringEnumConverter))] MailType? type = MailType.Internal
+            )
         {
             try
             {
@@ -63,7 +67,7 @@ namespace UATL.Mail.Controllers
                 var account = await _identityService.GetCurrentAccount(HttpContext);
                 var query = DB.PagedSearch<MailModel, MailModel>();
 
-                switch (type)
+                switch (direction)
                 {
                     default:
                     case MailDirection.Both:
@@ -78,6 +82,7 @@ namespace UATL.Mail.Controllers
                 }
 
                 var mails = await query
+                    .Match(x => x.Type == type || type == null)
                     .Sort(s => desc ? s.Descending(sort) : s.Ascending(sort))
                     .PageNumber(page)
                     .PageSize(limit < 0 ? int.MaxValue : limit)
@@ -115,7 +120,10 @@ namespace UATL.Mail.Controllers
         [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
         [Route("search")]
-        public async Task<IActionResult> SearchMails(int page = 1, int limit = 10, string? sort = "CreatedOn", bool desc = true, string search = "", [JsonProperty(ItemConverterType = typeof(StringEnumConverter))] MailDirection type = MailDirection.Both)
+        public async Task<IActionResult> SearchMails(int page = 1, int limit = 10, string? sort = "CreatedOn", bool desc = true, string search = "", 
+            [JsonProperty(ItemConverterType = typeof(StringEnumConverter))] MailDirection direction = MailDirection.Both,
+            [JsonProperty(ItemConverterType = typeof(StringEnumConverter))] MailType? type = MailType.Internal
+        )
         {
             try
             {
@@ -125,7 +133,7 @@ namespace UATL.Mail.Controllers
 
                 var pipeline = DB.FluentTextSearch<MailModel>(Search.Full, search);
 
-                switch (type)
+                switch (direction)
                 {
                     default:
                     case MailDirection.Both:
@@ -140,7 +148,7 @@ namespace UATL.Mail.Controllers
                 }
 
                 var drafts = await DB.PagedSearch<MailModel>()
-                    .WithFluent(pipeline)
+                    .WithFluent(pipeline.Match(x => x.Type == type || type == null))
                     .Sort(s => desc ? s.Descending(sort) : s.Ascending(sort))
                     .PageNumber(page)
                     .PageSize(limit < 0 ? int.MaxValue : limit)
@@ -233,6 +241,51 @@ namespace UATL.Mail.Controllers
                     await transaction.AbortAsync();
                 _logger.LogError(ex.Message);
                 return BadRequest(ex.Message);
+            }
+        }
+        //---------------------------------------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [HttpGet]
+        [Route("stats")]
+        public async Task<IActionResult> GetStats()
+        {
+            try
+            {
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+
+                var internalReceivedCount = DB.Queryable<MailModel>().Count(x => x.To.ID == account.ID && x.Type == MailType.Internal);
+                var internalUnreadReceivedCount = DB.Queryable<MailModel>().Count(x => x.To.ID == account.ID && x.Type == MailType.Internal && !x.Viewed);
+
+                var internalSentCount = DB.Queryable<MailModel>().Count(x => x.From.ID == account.ID && x.Type == MailType.Internal);
+
+                var externalReceivedCount = DB.Queryable<MailModel>().Count(x => x.To.ID == account.ID && x.Type == MailType.External);
+                var externalUnreadReceivedCount = DB.Queryable<MailModel>().Count(x => x.To.ID == account.ID && x.Type == MailType.External && !x.Viewed);
+
+                var externalSentCount = DB.Queryable<MailModel>().Count(x => x.From.ID == account.ID && x.Type == MailType.External);
+
+                var starred = await DB.Find<MailModel>()
+                    .Match(mail =>
+                        mail.In(x => x.ID, account.Starred.Select(z => z.ID)) &
+                        (mail.Eq(x => x.From.ID, account.ID) | mail.Eq(x => x.To.ID, account.ID)))
+                    .ExecuteAsync();
+
+                var draftCount = DB.Queryable<Draft>().Count(x => x.From.ID == account.ID);
+
+                return Ok(new
+                {
+                    InternalReceived = new {Count = internalReceivedCount, Unread = internalUnreadReceivedCount},
+                    ExternalReceived = new {Count = externalReceivedCount, Unread = externalUnreadReceivedCount},
+                    InternalSent = new {Count = internalSentCount},
+                    ExternalSent = new {Count = externalSentCount},
+                    Drafts = new {Count = draftCount},
+                    Starred = new {Count = starred.Count}
+                });
+
+            }
+            catch(Exception ex) 
+            {
+                _logger.LogError(ex.Message);
+                return BadRequest();
             }
         }
 

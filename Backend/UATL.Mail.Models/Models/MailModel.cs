@@ -22,7 +22,7 @@ namespace UATL.MailSystem.Models.Models
 
         [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
         [IgnoreDefault]
-        public List<MailTag> Tags { get; set; } = new List<MailTag>();
+        public List<MailFlag> Flags { get; set; } = new List<MailFlag>();
 
         [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
         public MailType Type { get; set; } = MailType.Internal;
@@ -35,6 +35,8 @@ namespace UATL.MailSystem.Models.Models
             this.Viewed = true;
             this.ViewedOn = DateTime.Now;
         }
+
+       
 
     }
 }

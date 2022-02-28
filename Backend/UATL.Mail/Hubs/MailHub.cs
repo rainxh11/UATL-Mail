@@ -19,9 +19,16 @@ namespace UATL.Mail.Hubs
             var userId = Context.UserIdentifier;
             var user = Context.User;
 
-            _logger.LogInformation("Hub Client: {0} Connected. {1}", userId, user);
+            _logger.LogInformation("Hub Client: {@userId} Connected.", userId);
             await Groups.AddToGroupAsync(Context.ConnectionId, userId);
             await base.OnConnectedAsync();
+        }
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            var userId = Context.UserIdentifier;
+
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, userId);
+            await base.OnDisconnectedAsync(exception);
         }
     }
     [Authorize]
