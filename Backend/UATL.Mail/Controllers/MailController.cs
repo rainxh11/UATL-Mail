@@ -56,8 +56,8 @@ namespace UATL.Mail.Controllers
         [HttpGet]
         [Route("")]
         public async Task<IActionResult> GetMails(int page = 1, int limit = 10, string? sort = "CreatedOn", bool desc = true, 
-            [JsonProperty(ItemConverterType = typeof(StringEnumConverter))] MailDirection direction = MailDirection.Both,
-            [JsonProperty(ItemConverterType = typeof(StringEnumConverter))] MailType? type = MailType.Internal
+            MailDirection? direction = MailDirection.Both,
+            MailType? type = MailType.Internal
             )
         {
             try
@@ -88,7 +88,8 @@ namespace UATL.Mail.Controllers
                     .PageSize(limit < 0 ? int.MaxValue : limit)
                     .ExecuteAsync();
 
-                return Ok(new ResultResponse<IEnumerable<MailModel>, long>(mails.Results, mails.TotalCount)); ;
+                return Ok(new PagedResultResponse<IEnumerable<MailModel>>(mails.Results, mails.TotalCount, mails.PageCount, limit, page));
+
             }
             catch (Exception ex)
             {
@@ -121,8 +122,8 @@ namespace UATL.Mail.Controllers
         [HttpGet]
         [Route("search")]
         public async Task<IActionResult> SearchMails(int page = 1, int limit = 10, string? sort = "CreatedOn", bool desc = true, string search = "", 
-            [JsonProperty(ItemConverterType = typeof(StringEnumConverter))] MailDirection direction = MailDirection.Both,
-            [JsonProperty(ItemConverterType = typeof(StringEnumConverter))] MailType? type = MailType.Internal
+            MailDirection? direction = MailDirection.Both,
+            MailType? type = MailType.Internal
         )
         {
             try
@@ -147,14 +148,14 @@ namespace UATL.Mail.Controllers
                         break;
                 }
 
-                var drafts = await DB.PagedSearch<MailModel>()
+                var mails = await DB.PagedSearch<MailModel>()
                     .WithFluent(pipeline.Match(x => x.Type == type || type == null))
                     .Sort(s => desc ? s.Descending(sort) : s.Ascending(sort))
                     .PageNumber(page)
                     .PageSize(limit < 0 ? int.MaxValue : limit)
                     .ExecuteAsync();
 
-                return Ok(new ResultResponse<IEnumerable<MailModel>, long>(drafts.Results, drafts.TotalCount)); ;
+                return Ok(new PagedResultResponse<IEnumerable<MailModel>>(mails.Results, mails.TotalCount, mails.PageCount, limit, page));
             }
             catch (Exception ex)
             {
@@ -225,15 +226,15 @@ namespace UATL.Mail.Controllers
                 {
                     var bulkWrite = await DB.InsertAsync<MailModel>(mails, transaction.Session, ct);
 
-                    await transaction.CommitAsync();
                     if (!bulkWrite.IsAcknowledged)
                         return BadRequest();
                 }
+                await transaction.CommitAsync();
 
 
                 var result = await DB.Find<MailModel>().ManyAsync(x => x.In(x => x.ID, mails.Select(i => i.ID)));
 
-                return Ok(new ResultResponse<List<MailModel>, string>(result, $"Sent {result.Count} Mails with {files.Count} attachements. To {value.Recipients.Count} Recipients."));
+                return Ok(new ResultResponse<List<MailModel>, string>(result, $"Sent {result.Count + 1} Mails with {files.Count} attachements. To {value.Recipients.Count} Recipients."));
             }
             catch (Exception ex)
             {

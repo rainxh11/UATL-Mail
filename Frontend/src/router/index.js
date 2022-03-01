@@ -15,7 +15,7 @@ import { getMyInfo } from '@/api/auth'
 Vue.use(Router)
 
 export const routes = [{
-  path: '/',
+  path: '',
   redirect: '/mailbox'
 },
 ...Pages,

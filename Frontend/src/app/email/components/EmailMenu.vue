@@ -107,14 +107,14 @@ export default {
         id: 'receivedInternal',
         label: 'email.inbox',
         icon: 'fa-regular fa-inbox-in',
-        link: '/mailbox/inbox-internal',
+        link: '/mailbox/inbox-received/internal',
         color: 'green',
         external: false
       },{
         id: 'receivedExternal',
         label: 'email.inbox',
         icon: 'fa-solid fa-inbox-in',
-        link: '/mailbox/inbox-external',
+        link: '/mailbox/inbox-received/external',
         color: 'green',
         external: true
       },{
@@ -123,24 +123,24 @@ export default {
         icon: 'fa-regular fa-paper-plane-top',
         color: 'blue',
         external: false,
-        link: '/mailbox/sent-internal'
+        link: '/mailbox/inbox-sent/internal'
       }, {
         id: 'sentExternal',
         label: 'email.sent',
         icon: 'fa-solid fa-paper-plane-top',
         color: 'blue',
         external: true,
-        link: '/mailbox/sent-external'
+        link: '/mailbox/inbox-sent/external'
       }, {
         id: 'drafts',
         label: 'email.drafts',
         icon: 'mdi-pencil-outline',
-        link: '/mailbox/drafts'
+        link: '/mailbox/inbox-drafts'
       }, {
         id: 'starred',
         label: 'email.starred',
         icon: 'fa-regular fa-star',
-        link: '/mailbox/starred'
+        link: '/mailbox/inbox-starred'
       }],
       labels: [{
         label: 'email.work',
@@ -158,15 +158,25 @@ export default {
   },
   async created() {
     this.$mailHub.on('refresh_stats', (x) => {
+      console.log('refresh_stats')
       this.getStats()
     })
-    if (this.$mailHub.state === 'Disconnected') await this.$mailHub.start()
+    this.$mailHub.on('refresh_mail', (x) => {
+      //this.getStats()
+    })
+    try {
+      if (this.$mailHub.state !== 'Connected') await this.$mailHub.start()
+    }
+    catch (err) {
+      console.log(err)
+    }
   },
   mounted() {
     this.getStats()
   },
   beforeDestroy() {
     this.$mailHub.off('refresh_stats')
+    this.$mailHub.off('refresh_mail')
   },
   methods: {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),

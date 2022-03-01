@@ -16,22 +16,36 @@ namespace UATL.Mail.Services
             _logger = logger;
             _fluentMail = fluentMail;
         }
-        public async Task SendAll(string message, CancellationToken ct = default)
+        public async Task SendAll(string message)
         {
-            await _mailHub.Clients.All.SendAsync(message, ct);
+            try
+            {
+                await _mailHub.Clients.All.SendAsync(message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
 
         }
-        public async Task Send(string userId, string message, CancellationToken ct = default)
+        public async Task Send(string userId, string message)
         {
-            await _mailHub.Clients.Group(userId).SendAsync(message, ct);
+            try
+            {
+                await _mailHub.Clients.User(userId).SendAsync(message);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
         }
 
-        public async Task SendEmail(string to, string subject, string message, CancellationToken ct = default)
+        public async Task SendEmail(string to, string subject, string message)
         {
              await _fluentMail
                 .To(to)
                 .Subject(subject)
-                .SendAsync(ct);
+                .SendAsync();
         }
     }
 }

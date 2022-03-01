@@ -32,7 +32,8 @@ namespace UATL.Mail.Helpers
                     Type = request.Type,
                     Flags = request.Flags,
                     GroupId = groupId,
-                    HashTags = request.HashTags
+                    HashTags = request.HashTags,
+                    CreatedOn = DateTime.Now
                 };
                 mails.Add(mail);
             }

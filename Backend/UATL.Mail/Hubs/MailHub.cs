@@ -31,7 +31,7 @@ namespace UATL.Mail.Hubs
             await base.OnDisconnectedAsync(exception);
         }
     }
-    [Authorize]
+    [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
     public class ChatHub : Hub
     {
 

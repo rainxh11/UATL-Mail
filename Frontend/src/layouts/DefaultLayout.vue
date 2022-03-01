@@ -170,28 +170,30 @@ export default {
       this.$storage.set('themecolor',val)
     }
   },
+  async created() {
+    this.$mailHub.on('received_mail', (x) => {
+      this.playAudio('/sound/email_received.aac')
+    })
+    try {
+      if (this.$mailHub.state !== 'Connected') await this.$mailHub.start()
+    }
+    catch (err) {
+      console.log(err)
+    }
+  },
   mounted() {
     this.loadConfig()
-
-    /*  this.$socket.client.on('newStudy' , (it) => {
-
-    })
-    this.$socket.client.on('deleteStudy' , (it) => {
-      this.notificationUpdate()
-    })
-    this.$socket.client.on('updateStudy' , (it) => {
-
-    })
-    this.notificationUpdate()
-    //setInterval(() => this.notificationUpdate(), 10000)*/
-
   },
   beforeDestroy() {
-    // this.$socket.client.disconnect()
+    this.$mailHub.off('received_mail')
   },
   methods: {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
     ...mapActions('app', ['notificationUpdate']),
+    playAudio(soundUrl) {
+      const sound = new Audio(soundUrl)
+      sound.play()
+    },
     getDarkModeIcon() {
       if (this.$vuetify.theme.dark) {
         return 'fa-sun'

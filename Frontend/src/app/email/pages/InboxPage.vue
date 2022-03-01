@@ -3,14 +3,15 @@
     :emails="mails"
     :is-loading="loading"
     :page-count="pageCount"
-    type="draft"
+    type="mail"
     @refresh="getMails"
   />
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import EmailList from '../components/EmailList'
+import { getAllMails, searchMails } from '@/api/mails'
 
 export default {
   components: {
@@ -23,26 +24,48 @@ export default {
       pageCount: 1
     }
   },
-  watch: {
-    '$route.hash'(val) {
-      this.getEmails()
+  async created() {
+    this.$mailHub.on('received_mail', (x) => {
+      this.refresh()
+    })
+    try {
+      if (this.$mailHub.state === 'Disconnected') await this.$mailHub.start()
+    }
+    catch (err) {
+      console.log(err)
     }
   },
+  beforeDestroy() {
+    this.$mailHub.off('refresh_draft')
+  },
   mounted() {
-    this.getEmails()
+    this.refresh()
   },
   methods: {
-    ...mapActions('email-app', ['getInbox']),
-    onRefresh(val) {
-      console.log(val)
-
-      this.getEmails()
+    ...mapGetters('auth', ['getToken', 'getUserInfo']),
+    ...mapActions('app', ['showSuccess', 'showError']),
+    refresh() {
+      if (this.$route.hash) {
+        console.log('')
+      } else {
+        this.getMails({ page: 1, pageSize: 5 })
+      }
     },
-    getEmails() {
-      const { hash } = this.$route
-      const label = hash ? hash.replace('#', '') : ''
+    getMails(pagination) {
+      const { direction, internal } = this.$route.params
 
-      this.getInbox(label)
+      this.loading = true
+      getAllMails({
+        page: pagination.page,
+        limit: pagination.pageSize,
+        direction: direction,
+        type: internal
+      }, this.getToken())
+        .then(res => {
+          this.mails = res.data.Data
+          this.pageCount = res.data.PageCount
+        }).catch(err => this.showError(err))
+        .finally(() => this.loading = false)
     }
   }
 }

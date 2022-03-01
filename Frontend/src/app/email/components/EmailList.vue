@@ -2,7 +2,6 @@
   <v-card class="min-w-0">
     <div class="email-app-top px-2 py-1 d-flex align-center">
       <v-checkbox :value="selectAll" :indeterminate="selectAlmostAll" @click.stop="onSelectAll(selectAll)"></v-checkbox>
-
       <v-menu offset-y>
         <template v-slot:activator="{ on, attrs }">
           <v-btn icon v-bind="attrs" v-on="on">
@@ -16,12 +15,15 @@
           </v-list-item>
         </v-list>
       </v-menu>
-
-      <v-btn v-show="selected.length === 0" icon :loading="isLoading" @click="$emit('refresh', { page: 1, pageSize: pageSize }); page = 1;">
+      <v-btn
+        v-show="selected.length === 0"
+        icon
+        :loading="isLoading"
+        @click="$emit('refresh', { page: 1, pageSize: pageSize }); page = 1;"
+      >
         <v-icon>mdi-refresh</v-icon>
       </v-btn>
-
-      <div v-show="selected.length > 0">
+      <div v-show="selected.length > 0" >
         <v-btn icon>
           <v-icon>fa-solid fa-envelope</v-icon>
         </v-btn>
@@ -29,19 +31,21 @@
           <v-icon color="red">fa-solid fa-trash-can</v-icon>
         </v-btn>
       </div>
-
-      <v-spacer></v-spacer>
+      <v-spacer/>
       <v-pagination
         v-model="page"
+        circle
+        color="primary"
         :length="pageCount"
         :total-visible="maxPages"
+        class="col-md-4 col-sm-12"
         @input="$emit('refresh', { page: page, pageSize: pageSize })"
       ></v-pagination>
     </div>
 
-    <v-divider></v-divider>
+    <v-divider/>
     <v-list
-      v-for="group in $enumerable(emails).GroupBy(x => Date(x.CreatedOn).toString('YYYY/MM/DD'), x => x).ToArray()"
+      v-for="group in $enumerable(emails).GroupBy(x => Date(type === 'mail' ? x.SentOn : x.CreatedOn).toString('YYYY/MM/DD'), x => x).ToArray()"
       :key="group"
       class="py-0"
     >
@@ -83,7 +87,8 @@
           <v-list-item-avatar v-if="item.To" class="d-flex flex-row">
             <v-img :src="avatar(item.To.ID)" />
           </v-list-item-avatar>
-          <v-list-item-content class="pa-2" @click="$router.push(`/mailbox/inbox/${item.id}`)">
+          <v-list-item-content class="pa-2" @click="$router.push(`/mailbox/${type}/${item.id}`)">
+            <v-list-item-title>{{ getTitle(item) }}</v-list-item-title>
             <v-list-item-title v-text="item.Subject"></v-list-item-title>
             <v-list-item-subtitle v-show="type === 'draft'" class="font-weight-bold">
               {{ getTitle(item) }}
@@ -124,11 +129,11 @@
               <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
                   <span v-bind="attrs" class="text--primary text-lg-body-2" v-on="on">
-                    {{ item.CreatedOn | formatTimeAgo }}
+                    {{ type === 'mail' ? item.SentOn : item.CreatedOn | formatTimeAgo }}
                     <v-icon color="primary" x-small>fa-regular fa-clock</v-icon>
                   </span>
                 </template>
-                <span >{{ item.CreatedOn | formatDate('HH:mm | DD MMMM YYYY') }}</span>
+                <span >{{ type === 'mail' ? item.SentOn : item.CreatedOn | formatDate('HH:mm | DD MMMM YYYY') }}</span>
               </v-tooltip>
             </v-list-item-action-text>
           </v-list-item-action>
@@ -179,7 +184,7 @@ export default {
     },
     maxPages:{
       type: Number,
-      default: 10
+      default: 7
     },
     pageCount:{
       type: Number,
@@ -187,7 +192,7 @@ export default {
     },
     type: {
       type: String,
-      default: 'received'
+      default: 'mail'
     },
     internal: {
       type: Boolean,
@@ -279,10 +284,11 @@ export default {
       return label ? label.title : ''
     },
     getTitle(item) {
+      if (!item) return ''
       if (this.type === 'draft') return ''
       const user = this.getUserInfo()
       if (item.From.ID === user.ID) {
-        if (item.To) return `-> ${item.To.Name}`
+        if (item.To) return `${item.To.Name}`
       }
       if (item.To.ID === user.ID) return `${item.From.Name}`
       return ''

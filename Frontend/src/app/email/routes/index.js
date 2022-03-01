@@ -1,41 +1,46 @@
 export default [
   {
     path: '',
-    redirect: 'inbox-internal'
+    redirect: 'inbox-received/internal'
   },
   {
-    path: 'inbox-:type(.*)',
+    path: 'inbox-:direction(received)/:internal(.*)',
     name: 'apps-email-inbox',
     component: () => import(/* webpackChunkName: "apps-email-inbox" */ '@/app/email/pages/InboxPage.vue')
   },
   {
-    path: 'inbox-:type(.*)',
+    path: 'inbox-:direction(received)/:internal(.*)',
     name: 'apps-email-inbox',
     component: () => import(/* webpackChunkName: "apps-email-inbox" */ '@/app/email/pages/InboxPage.vue')
   },
   {
-    path: 'sent-:type(.*)',
+    path: 'inbox-:direction(sent)/:internal(.*)',
     name: 'apps-email-sent',
     component: () => import(/* webpackChunkName: "apps-email-sent" */ '@/app/email/pages/SentPage.vue')
   },
   {
-    path: 'sent-:type(.*)',
+    path: 'inbox-:direction(sent)/:internal(.*)',
     name: 'apps-email-sent',
     component: () => import(/* webpackChunkName: "apps-email-sent" */ '@/app/email/pages/SentPage.vue')
   },
   {
-    path: 'drafts',
+    path: 'inbox-:type(drafts)',
     name: 'apps-email-drafts',
     component: () => import(/* webpackChunkName: "apps-email-drafts" */ '@/app/email/pages/DraftsPage.vue')
   },
   {
-    path: 'starred',
+    path: 'inbox-:type(starred)',
     name: 'apps-email-starred',
     component: () => import(/* webpackChunkName: "apps-email-starred" */ '@/app/email/pages/StarredPage.vue')
   },
   {
-    path: 'inbox/:id',
+    path: ':type(mail|draft)/:id',
     name: 'apps-email-view',
     component: () => import(/* webpackChunkName: "apps-email-view" */ '@/app/email/pages/ViewPage.vue')
+  },
+  {
+    path: 'inbox',
+    name: 'apps-email-inbox',
+    component: () => import(/* webpackChunkName: "apps-email-inbox" */ '@/app/email/pages/InboxPage.vue')
   }
 ]

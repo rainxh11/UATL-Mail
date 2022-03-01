@@ -38,8 +38,10 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
 using System.Reactive.Concurrency;
+using System.Security.Claims;
 using FluentEmail;
 using FluentEmail.Smtp;
+using Hangfire.Storage.SQLite;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,19 +99,22 @@ DatabaseHelper.InitCache();
 
 //---------- Background Jobs ---------------//
 builder.Services.AddHangfire(configuration => configuration
-        .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-        .UseSimpleAssemblyNameTypeSerializer()
-        .UseRecommendedSerializerSettings()
-        .UseMongoStorage(mongoConnectionString, mongoDbName, new MongoStorageOptions
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseMongoStorage(mongoConnectionString.Replace("UATL-Mail", "UATL-BackgroundService"), mongoDbName.Replace("UATL-Mail", "UATL-BackgroundService"), new MongoStorageOptions
+    {
+        MigrationOptions = new MongoMigrationOptions
         {
-            MigrationOptions = new MongoMigrationOptions
-            {
-                MigrationStrategy = new MigrateMongoMigrationStrategy(),
-                BackupStrategy = new CollectionMongoBackupStrategy()
-            },
-            Prefix = "uatl.backgroundjobs.server",
-            CheckConnection = true,
-        }));
+            MigrationStrategy = new MigrateMongoMigrationStrategy(),
+            BackupStrategy = new CollectionMongoBackupStrategy()
+        },
+        Prefix = "uatl.backgroundjobs",
+        CheckConnection = true,
+    }));
+    //.UseSQLiteStorage());
+
+
 builder.Services.AddHangfireServer(serverOptions =>
 {
     serverOptions.WorkerCount = builder.Configuration["BackgroundJobs:WorkerCount"].ToInt(20);
@@ -129,7 +134,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    (path.StartsWithSegments("/hubs")))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(JwtBearerDefaults.AuthenticationScheme, policy =>
+    {
+        policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+        policy.RequireClaim(ClaimTypes.NameIdentifier);
+    });
+});
 
 //---------- JSON Serializer ---------------//
 builder.Services.AddControllers(/*options => options.Filters.Add(new ValidationFilter())*/).AddNewtonsoftJson(o =>
@@ -207,7 +236,10 @@ builder.Services.AddCors(options =>
 
 //---------- SignalR Websocket ---------------//
 
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(x =>
+{
+    //x.EnableDetailedErrors = true;
+});
 
 //---------- NotificationService ---------------//
 builder.Services
@@ -260,6 +292,7 @@ var hosts = builder.Configuration["CorsHosts"];
 app.UseCors(config => config
     .AllowAnyHeader()
     .AllowAnyMethod()
+    //.AllowAnyOrigin()
     .WithOrigins(builder.Configuration["CorsHosts"].Split(";"))
     .AllowCredentials()
     );
@@ -272,7 +305,8 @@ app.MapControllers();
     .UseMiddleware<MailAttachementVerificationMiddleware>();*/
 
 app.UseRouting();
-app.UseAuthorization(); 
+app.UseAuthorization();
+
 app.UseEndpoints(endpoint =>
 {
     endpoint.MapHub<MailHub>("/hubs/mail");

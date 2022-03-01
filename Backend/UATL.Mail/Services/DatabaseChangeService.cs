@@ -44,6 +44,8 @@ namespace UATL.MailSystem.Services
         private IDisposable? _sentMailSubscription;
         private IDisposable? _receivedMailSubscription;
         private IDisposable? _changeMailSubscription;
+        private IDisposable? _statsSubscriptions;
+        private IDisposable? _mailSubscriptions;
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
@@ -53,6 +55,7 @@ namespace UATL.MailSystem.Services
             _accountWatcher.Start(eventType, cancellation: cancellationToken);
             _draftWatcher.Start(eventType, cancellation: cancellationToken);
             _mailWatcher.Start(eventType, cancellation: cancellationToken);
+
 
             StartObservables(cancellationToken);
         }
@@ -65,6 +68,8 @@ namespace UATL.MailSystem.Services
             _sentMailSubscription?.Dispose();
             _receivedMailSubscription?.Dispose();
             _changeMailSubscription?.Dispose();
+            _statsSubscriptions?.Dispose();
+            _mailSubscriptions?.Dispose();
 
             return Task.CompletedTask;
         }
@@ -72,32 +77,58 @@ namespace UATL.MailSystem.Services
         public void StartObservables(CancellationToken ct = default)
         {
             var mailChanges = Observable
-               .FromEvent<IEnumerable<ChangeStreamDocument<MailModel>>>(x => _mailWatcher.OnChangesCSD += x, x => _mailWatcher.OnChangesCSD -= x)
-               .SelectMany(x => x);
+                .FromEvent<IEnumerable<ChangeStreamDocument<MailModel>>>(x => _mailWatcher.OnChangesCSD += x,
+                    x => _mailWatcher.OnChangesCSD -= x)
+                .SelectMany(x => x);
 
             var draftChanges = Observable
-                .FromEvent<IEnumerable<ChangeStreamDocument<Draft>>>(x => _draftWatcher.OnChangesCSD += x, x => _draftWatcher.OnChangesCSD -= x)
+                .FromEvent<IEnumerable<ChangeStreamDocument<Draft>>>(x => _draftWatcher.OnChangesCSD += x,
+                    x => _draftWatcher.OnChangesCSD -= x)
+                .SelectMany(x => x);
+
+            var accountChanges = Observable
+                .FromEvent<IEnumerable<ChangeStreamDocument<Account>>>(x => _accountWatcher.OnChangesCSD += x,
+                    x => _accountWatcher.OnChangesCSD -= x)
                 .SelectMany(x => x);
 
             _sentMailSubscription = mailChanges
                 .Where(x => x.OperationType == ChangeStreamOperationType.Insert)
                 .Where(x => x.FullDocument.From != null)
+                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.FullDocument.From.ID, "sent_mail")))
+                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.FullDocument.From.ID, "refresh_stats")))
                 .GroupBy(x => x.FullDocument.From.ID)
-                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.Key, "sent_mail", ct)))
                 .Subscribe(x => _logger.LogInformation("User: {0}, Sent {1} Mail.", x.Key, x.Count()));
 
             _receivedMailSubscription = mailChanges
                 .Where(x => x.OperationType == ChangeStreamOperationType.Insert)
                 .Where(x => x.FullDocument.To != null)
+                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.FullDocument.To.ID, "received_mail")))
+                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.FullDocument.To.ID, "refresh_stats")))
                 .GroupBy(x => x.FullDocument.To.ID)
-                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.Key, "received_mail", ct)))
                 .Subscribe(x => _logger.LogInformation("User: {0}, Received {1} Mail.", x.Key, x.Count()));
 
             _draftSubscription = draftChanges
                 .Where(x => x.FullDocument != null)
                 .GroupBy(x => x.FullDocument.From.ID)
-                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.Key, "refresh_draft", ct)))
+                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.Key, "refresh_stats")))
+                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.Key, "refresh_draft")))
                 .Subscribe();
+
+            _statsSubscriptions = mailChanges
+                .CombineLatest(draftChanges, accountChanges)
+                .Where(x => x.First.OperationType == ChangeStreamOperationType.Delete ||
+                            x.First.OperationType == ChangeStreamOperationType.Drop)
+                .Where(x => x.Second.OperationType == ChangeStreamOperationType.Delete ||
+                            x.Second.OperationType == ChangeStreamOperationType.Drop)
+                .Where(x => x.Third.OperationType == ChangeStreamOperationType.Delete ||
+                            x.Third.OperationType == ChangeStreamOperationType.Drop)
+                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.SendAll("refresh_stats")))
+                .Subscribe();
+
+            /*_mailSubscriptions = mailChanges
+                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.SendAll("refresh_mail", ct)))
+                .Subscribe(x => _logger.LogInformation("Mail Collection Changed: {0}", x.OperationType));*/
+
         }
     }
 }

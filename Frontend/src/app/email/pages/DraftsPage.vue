@@ -30,8 +30,12 @@ export default {
       console.log('refresh_draft')
       this.getDrafts({ page: 1, pageSize: 5 })
     })
-    if (this.$mailHub.state === 'Disconnected') await this.$mailHub.start()
-
+    try {
+      if (this.$mailHub.state === 'Disconnected') await this.$mailHub.start()
+    }
+    catch (err) {
+      console.log(err)
+    }
   },
   beforeDestroy() {
     this.$mailHub.off('refresh_draft')
