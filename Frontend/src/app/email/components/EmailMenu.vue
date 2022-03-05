@@ -60,11 +60,11 @@
         link
       >
         <v-list-item-icon>
-          <v-icon :color="item.color">{{ item.icon }}</v-icon>
+          <v-icon :color="item.color">fa-solid fa-tag</v-icon>
         </v-list-item-icon>
 
         <v-list-item-content>
-          <v-list-item-title>{{ $t(item.label) }}</v-list-item-title>
+          <v-list-item-title>{{ item.label }}</v-list-item-title>
         </v-list-item-content>
 
         <v-list-item-action v-if="item.count > 0">
@@ -86,8 +86,8 @@
 <script>
 import EmailCompose from './EmailCompose'
 import { mapGetters } from 'vuex'
-import { getStats } from '@/api/mails'
-
+import { getStats, getTags } from '@/api/mails'
+import seedColor from 'seed-color'
 /*
 |---------------------------------------------------------------------
 | Email Menu Component
@@ -142,27 +142,17 @@ export default {
         icon: 'fa-regular fa-star',
         link: '/mailbox/inbox-starred'
       }],
-      labels: [{
-        label: 'email.work',
-        color: 'primary',
-        icon: 'fa-regular fa-tag',
-        link: '/mailbox/inbox#work'
-      }, {
-        label: 'email.invoice',
-        color: 'green',
-        icon: 'fa-regular fa-tag',
-        link: '/mailbox/inbox#invoice'
-      }],
+      labels: [],
       stats: null
     }
   },
   async created() {
     this.$mailHub.on('refresh_stats', (x) => {
-      console.log('refresh_stats')
+      this.getTags()
       this.getStats()
     })
     this.$mailHub.on('refresh_mail', (x) => {
-      //this.getStats()
+      this.getTags()
     })
     try {
       if (this.$mailHub.state !== 'Connected') await this.$mailHub.start()
@@ -173,6 +163,7 @@ export default {
   },
   mounted() {
     this.getStats()
+    this.getTags()
   },
   beforeDestroy() {
     this.$mailHub.off('refresh_stats')
@@ -180,6 +171,24 @@ export default {
   },
   methods: {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
+    getUniqueColor(val) {
+      return seedColor(val).toHex()
+    },
+    getTags() {
+      getTags()
+        .then(res => {
+          this.labels = this.$enumerable(res.data)
+            .OrderBy(x => x)
+            .Select(x => {
+              return {
+                label: x,
+                color: seedColor(x).toHex(),
+                link: `/mailbox/tagged${x}`
+              }
+            })
+            .ToArray()
+        })
+    },
     getStats() {
       getStats(this.getToken())
         .then(res => this.stats = res.data)

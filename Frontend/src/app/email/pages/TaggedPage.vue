@@ -4,14 +4,14 @@
     :is-loading="loading"
     :page-count="pageCount"
     type="mail"
-    @refresh="getStarred"
+    @refresh="getMails"
   />
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
 import EmailList from '../components/EmailList'
-import { getStarredFull } from '@/api/mails'
+import { getTaggedMails, searchTaggedMails } from '@/api/mails'
 
 export default {
   components: {
@@ -25,7 +25,10 @@ export default {
     }
   },
   async created() {
-    this.$mailHub.on('refresh_account', (x) => {
+    this.$mailHub.on('received_mail', (x) => {
+      this.refresh()
+    })
+    this.$mailHub.on('sent_mail', (x) => {
       this.refresh()
     })
     try {
@@ -36,7 +39,8 @@ export default {
     }
   },
   beforeDestroy() {
-    this.$mailHub.off('refresh_account')
+    this.$mailHub.off('received_mail')
+    this.$mailHub.off('sent_mail')
   },
   mounted() {
     this.refresh()
@@ -46,14 +50,14 @@ export default {
     ...mapActions('app', ['showSuccess', 'showError']),
     refresh() {
       if (this.$route.hash) {
-        console.log('')
-      } else {
-        this.getStarred({ page: 1, pageSize: 5 })
+        this.getMails({ page: 1, pageSize: 5 })
       }
     },
-    getStarred(pagination) {
+    getMails(pagination) {
+      const tag = this.$route.hash
+
       this.loading = true
-      getStarredFull({
+      getTaggedMails(tag, {
         page: pagination.page,
         limit: pagination.pageSize
       }, this.getToken())

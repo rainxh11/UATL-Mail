@@ -1,5 +1,6 @@
 import inboxEmails from './content/inbox'
 import starredEmails from './content/starred'
+import { getStarred } from '@/api/mails'
 
 export default {
   getInbox: ({ commit }, label) => {
@@ -11,8 +12,10 @@ export default {
       commit('loadInbox', inboxEmails)
     }
   },
-  getStarred: ({ commit }) => {
-    commit('loadStarred', starredEmails)
+  getStarred: ({ commit }, full) => {
+    getStarred(full)
+      .then(res => commit('loadStarred', res.data))
+      .catch(err => console.log(err))
   },
   getDrafts: ({ commit }, query) => {
 

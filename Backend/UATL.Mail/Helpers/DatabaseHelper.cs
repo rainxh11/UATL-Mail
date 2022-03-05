@@ -44,7 +44,7 @@ namespace UATL.MailSystem.Helpers
                 .Key(b => b.From.UserName, KeyType.Text)
                 .Key(b => b.ID, KeyType.Text)
                 .Key(b => b.From.ID, KeyType.Text)
-                .Key(b => b.Attachements.Select(x => x.Name), KeyType.Text)
+                .Key(b => b.Attachments.Select(x => x.Name), KeyType.Text)
                 .CreateAsync();
 
             var mailIndex = DB.Index<MailModel>()
@@ -56,7 +56,7 @@ namespace UATL.MailSystem.Helpers
                 .Key(b => b.To.UserName, KeyType.Text)
                 .Key(b => b.ID, KeyType.Text)
                 .Key(b => b.From.ID, KeyType.Text)
-                .Key(b => b.Attachements.Select(x => x.Name), KeyType.Text)
+                .Key(b => b.Attachments.Select(x => x.Name), KeyType.Text)
                 .CreateAsync();
 
             var accountIndex = DB.Index<Account>()

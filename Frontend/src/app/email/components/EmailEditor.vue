@@ -28,6 +28,8 @@
       maxlength="100"
       :rules="rules.subject"
     ></v-text-field>
+    <hash-tag-input v-if="!sendLoading" :label="$t('email.tags') + ':'" @change="addTags"/>
+
     <v-divider v-if="!sendLoading" />
 
     <editor-menu-bar v-if="!sendLoading" v-slot="{ commands, isActive }" :editor="editor">
@@ -249,6 +251,7 @@
 
 <script>
 import EmailInput from './EmailInput'
+import HashTagInput from '@/app/email/components/HashTagInput'
 import { Editor, EditorContent, EditorMenuBar } from 'tiptap'
 import {
   Blockquote,
@@ -280,7 +283,8 @@ export default {
   components: {
     EditorContent,
     EditorMenuBar,
-    EmailInput
+    EmailInput,
+    HashTagInput
   },
   data() {
     return {
@@ -299,6 +303,7 @@ export default {
       editor: null,
       dragover: false,
       external: false,
+      tags: [],
       rules: {
         subject: [
           value => value.trim().length > 0 || this.$t('rules.subjectRequired'),
@@ -368,6 +373,12 @@ export default {
       this.toAddresses.length = 0
       this.dragover = false
     },
+    addTags(tags) {
+      this.tags = this.$enumerable(tags)
+        .Distinct()
+        .Where(x => this.isHashTag(x))
+        .ToArray()
+    },
     addRecipients(recipients) {
       this.toAddresses = recipients
     },
@@ -389,7 +400,8 @@ export default {
         Body: Html5Entities.encode(this.editor.getHTML()),
         Recipients: this.toAddresses,
         Tags: [],
-        Type: 'Internal'
+        Type: 'Internal',
+        HashTags: this.tags
       }
 
       this.sendLoading = true
@@ -410,7 +422,8 @@ export default {
     saveDraft() {
       const draft = {
         Subject: this.subject,
-        Body: Html5Entities.encode(this.editor.getHTML())
+        Body: Html5Entities.encode(this.editor.getHTML()),
+        HashTags: this.tags
       }
 
       this.saveLoading = true
@@ -437,6 +450,14 @@ export default {
     },
     getFiles(val) {
       this.files = val
+    },
+    isHashTag(val) {
+      if (!val) return false
+      if (val === '|') return false
+      const hashTagRegex = /(#+[a-zA-Z0-9(_)(\-)]{1,})/i
+      const whiteSpaceRegex = /[\s]/i
+      const match = val.match(hashTagRegex) !== null && val.match(whiteSpaceRegex) !== null
+      return !match
     }
   }
 }

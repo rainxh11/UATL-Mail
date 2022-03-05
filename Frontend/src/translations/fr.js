@@ -69,9 +69,12 @@ export default {
   },
   'rules': {
     'subjectRequired': 'Sujet est obligatoire',
-    'recipientsRequired': 'Pas de Recipients!'
+    'recipientsRequired': 'Pas de Recipients!',
+    'invalidHashtag': 'Hashtag Invalide!'
   },
   'email': {
+    'empty': 'Aucun élément, boîte vide!',
+    'tags': 'Tags',
     'external': 'Exterieure',
     'externalMail': 'Courrier Exterieure',
     'sending': 'En cours d\'envoi de courrier',

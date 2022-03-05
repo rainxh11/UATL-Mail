@@ -6,6 +6,7 @@ using UATL.MailSystem.Models;
 using Jetsons.JetPack;
 using Akavache;
 using System.Reactive.Linq;
+using System.Security.Principal;
 
 namespace UATL.MailSystem.Models
 {
@@ -46,6 +47,27 @@ namespace UATL.MailSystem.Models
 
             return tokenString;
         }
+        public string BuildTokenFromIdentity(IIdentity? identity)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha512Signature);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(identity),
+                //Expires = DateTime.Now.AddHours(config["Jwt:ExpireAfter"].ToInt()),
+                Expires = DateTime.Now.AddHours(_configuration["Jwt:ExpireAfter"].ToInt()),
+                SigningCredentials = credentials
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            var tokenString = tokenHandler.WriteToken(token);
+
+            return tokenString;
+        }
+
 
     }
 }

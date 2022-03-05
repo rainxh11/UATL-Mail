@@ -16,9 +16,14 @@ namespace UATL.MailSystem.Models.Models
         public AccountBase From { get; set; }
         public string Subject { get; set; }
         public string Body { get; set; } = string.Empty;
-        public List<Attachment> Attachements { get; set; } = new List<Attachment>();
+        public Many<Attachment> Attachments { get; set; }
 
         [IgnoreDefault]
         public ISet<string> HashTags { get; set; } = new HashSet<string>();
+
+        public Draft()
+        {
+            this.InitOneToMany(() => Attachments);
+        }
     }
 }

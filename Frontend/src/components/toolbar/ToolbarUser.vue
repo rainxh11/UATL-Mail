@@ -52,10 +52,9 @@
 
 <script>
 import config from '../../configs'
-import { mapActions, mapGetters, mapMutations } from 'vuex'
+import { mapGetters, mapMutations } from 'vuex'
 import Vuecookie from 'vue-cookies'
 import { signOut } from '@/api/auth'
-import { getCurrentUserAvatar } from '@/api/users'
 
 export default {
   data() {
@@ -65,11 +64,7 @@ export default {
   },
   computed: {
     avatar() {
-      const url =  `${this.$apiHost}/api/v1/account/me/avatar/${this.getToken()}`
-
-      console.log(url)
-
-      return url
+      return `${this.$apiHost}/api/v1/account/me/avatar/auth?token=${this.getToken()}`
     }
   },
   mounted() {

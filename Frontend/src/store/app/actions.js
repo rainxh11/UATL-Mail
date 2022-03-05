@@ -1,4 +1,5 @@
 import stateAuth from '@/store/auth'
+import i18n from '@/plugins/vue-i18n'
 
 const showToast = ({ state, commit }, message) => {
   if (state.toast.show) commit('hideToast')
@@ -28,11 +29,11 @@ const showError = ({ state, commit }, message) => {
 }
 const showSuccess = ({ state, commit }, message) => {
   if (state.toast.show) commit('hideToast')
-
+  message = message ? message : 'Success'
   setTimeout(() => {
     commit('showToast', {
       color: 'success',
-      message,
+      message: message,
       timeout: 3000
     })
   })

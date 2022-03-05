@@ -109,10 +109,15 @@ namespace UATL.MailSystem.Services
 
             _draftSubscription = draftChanges
                 .Where(x => x.FullDocument != null)
-                .GroupBy(x => x.FullDocument.From.ID)
-                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.Key, "refresh_stats")))
-                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.Key, "refresh_draft")))
+                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.FullDocument.From.ID, "refresh_stats")))
+                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.FullDocument.From.ID, "refresh_draft")))
                 .Subscribe();
+
+            _accountSubscription = accountChanges
+                .Where(x => x.FullDocument != null)
+                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.FullDocument.ID, "refresh_account")))
+                .Subscribe();
+
 
             _statsSubscriptions = mailChanges
                 .CombineLatest(draftChanges, accountChanges)

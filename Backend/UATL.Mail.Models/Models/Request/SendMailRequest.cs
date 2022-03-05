@@ -13,5 +13,6 @@ namespace UATL.MailSystem.Models.Models.Request
         public MailType Type { get; set; }
 
         public ISet<string> HashTags { get; set; } = new HashSet<string>();
+        public string ReplyTo { get; set; }
     }
 }

@@ -13,7 +13,7 @@ namespace UATL.MailSystem.Models.Models
         [AsObjectId]
         public string GroupId { get; set; } = null;
         [IgnoreDefault]
-        public AccountBase ReplyTo { get; set; }
+        public One<MailModel> ReplyTo { get; set; }
 
         [IgnoreDefault]
         public DateTime SentOn { get; set; }
@@ -36,7 +36,10 @@ namespace UATL.MailSystem.Models.Models
             this.ViewedOn = DateTime.Now;
         }
 
-       
+        public MailModel()
+        {
+            this.InitOneToMany(() => Attachments);
+        }
 
     }
 }

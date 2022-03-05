@@ -294,6 +294,34 @@ namespace UATL.MailSystem.Controllers
             return NotFound("User not found!");
         }
         //--------------------------------------------------------------------------------------------------------------//
+        [HttpGet]
+        [Route("login")]
+        public async Task<IActionResult> LoginBasicAuth(CancellationToken ct)
+        {
+            try
+            {
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+                if (account == null)
+                    return Unauthorized();
+
+                if (!account.Enabled)
+                {
+                    return BadRequest($"Account '{account.UserName}' is disabled, please contact system administrator!");
+                }
+                account.LastLogin = DateTime.Now;
+                await account.SaveAsync(cancellation: ct);
+
+                var token = await _tokenService.BuildToken(_config, account);
+
+                return Ok(new ResultResponse<Account, string>(account, token));
+            }
+            catch
+            {
+                return BadRequest();
+            }
+            
+        }
+        //--------------------------------------------------------------------------------------------------------------//
 
         [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
@@ -320,6 +348,47 @@ namespace UATL.MailSystem.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [HttpPost]
+        [Route("me/avatar")]
+        public async Task<IActionResult> UpdateCurrentAvatar([FromForm] IFormFile file, CancellationToken ct)
+        {
+            var transaction = DB.Transaction();
+            try
+            {
+                if (!file.ContentType.Contains("image"))
+                    return BadRequest(new MessageResponse<string>($"Content of type: '{file.ContentType}' not allowed! Only image type is allowed!"));
+
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+
+                if (account == null)
+                    return NotFound();
+
+                if (account.Avatar != null)
+                    await account.Avatar.DeleteAsync(transaction.Session, ct);
+                var avatar = new Avatar(account);
+
+                await avatar.SaveAsync(transaction.Session, ct);
+                await using (var stream = await ImageHelper.EncodeWebp(file, ct))
+                {
+                    await avatar.Data.UploadAsync(stream, cancellation: ct, session: transaction.Session);
+                }
+                var uploaded = await DB.Find<Avatar>(transaction.Session).OneAsync(avatar.ID);
+                account.Avatar = uploaded;
+                await account.SaveAsync(transaction.Session, ct);
+                await transaction.CommitAsync(ct);
+
+                return Ok(new ResultResponse<Account, string>(account, $"Avatar updated!"));
+            }
+            catch (Exception ex)
+            {
+                if (transaction.Session.IsInTransaction)
+                    await transaction.AbortAsync();
+                _logger.LogError(ex.Message);
+
+                return BadRequest(ex.Message);
+            }
+        }
         //--------------------------------------------------------------------------------------------------------------//
         [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
@@ -328,6 +397,7 @@ namespace UATL.MailSystem.Controllers
         {
             try
             {
+
                 var account = await _identityService.GetCurrentAccount(HttpContext);
                 if (account is null)
                     return NotFound("Token Invalid or Account not found.");
@@ -349,7 +419,7 @@ namespace UATL.MailSystem.Controllers
         }
 
         [HttpGet]
-        [Route("me/avatar/{token}")]
+        [Route("me/avatar/auth")]
         public async Task<IActionResult> GetCurrentAvatarQueryToken(string token, CancellationToken ct)
         {
             try

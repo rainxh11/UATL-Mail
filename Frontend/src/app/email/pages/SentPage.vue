@@ -25,9 +25,8 @@ export default {
     }
   },
   async created() {
-    this.$mailHub.on('received_mail', (x) => {
-      console.log('received_mail')
-      this.getDrafts({ page: 1, pageSize: 5 })
+    this.$mailHub.on('sent_mail', (x) => {
+      this.refresh()
     })
     try {
       if (this.$mailHub.state === 'Disconnected') await this.$mailHub.start()
@@ -37,7 +36,7 @@ export default {
     }
   },
   beforeDestroy() {
-    this.$mailHub.off('refresh_draft')
+    this.$mailHub.off('sent_mail')
   },
   mounted() {
     this.refresh()

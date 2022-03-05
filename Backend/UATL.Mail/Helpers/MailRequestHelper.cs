@@ -35,6 +35,12 @@ namespace UATL.Mail.Helpers
                     HashTags = request.HashTags,
                     CreatedOn = DateTime.Now
                 };
+                if (!string.IsNullOrEmpty(request.ReplyTo))
+                {
+                    var replyMail = await DB.Find<MailModel>(session).MatchID(request.ReplyTo).ExecuteSingleAsync(ct);
+                    mail.ReplyTo = replyMail;
+                }
+
                 mails.Add(mail);
             }
             return mails;

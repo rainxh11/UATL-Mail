@@ -10,6 +10,7 @@
       v-model="drawer"
       app
       floating
+      width="230"
       class="elevation-1"
       :right="$vuetify.rtl"
       :light="menuTheme === 'light'"
@@ -21,8 +22,8 @@
           <v-img
             src="/images/logo/uatl.svg"
             class="mb-1"
-            max-height="64"
-            max-width="64"
+            max-height="48"
+            max-width="48"
           ></v-img>
           <p class="text-h6  font-weight-bold text-uppercase px-2" >
             {{ product.name }}</p>
@@ -32,7 +33,7 @@
       <!-- Navigation menu -->
       <main-menu  :menu="navigation.menu" />
 
-    </v-navigation-drawer>
+    </v-navigation-drawer >
 
     <!-- Toolbar -->
     <v-app-bar

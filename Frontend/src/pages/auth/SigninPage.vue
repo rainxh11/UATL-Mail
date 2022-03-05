@@ -110,7 +110,7 @@ export default {
         console.log(res.data.Data)
         this.retrieveToken({ token : res.data.Results, userInfo: res.data.Data })
         Vuecookie.set('T', res.data.Results)
-        this.showSuccess('Success')
+        this.showSuccess()
         this.$router.push('/')
 
       }).catch( (err) => {

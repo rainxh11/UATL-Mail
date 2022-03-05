@@ -4,6 +4,11 @@ export default [
     redirect: 'inbox-received/internal'
   },
   {
+    path: 'tagged',
+    name: 'apps-email-tagged',
+    component: () => import(/* webpackChunkName: "apps-email-inbox" */ '@/app/email/pages/TaggedPage.vue')
+  },
+  {
     path: 'inbox-:direction(received)/:internal(.*)',
     name: 'apps-email-inbox',
     component: () => import(/* webpackChunkName: "apps-email-inbox" */ '@/app/email/pages/InboxPage.vue')

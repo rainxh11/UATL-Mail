@@ -137,8 +137,6 @@ namespace UATL.MailSystem.Models
                 catch (Exception ex)
                 {
                     _logger.LogError(ex.Message);
-
-                    
                 }
             }
             return null;

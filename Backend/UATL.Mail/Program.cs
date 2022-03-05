@@ -41,7 +41,17 @@ using System.Reactive.Concurrency;
 using System.Security.Claims;
 using FluentEmail;
 using FluentEmail.Smtp;
+using Hangfire.Dashboard;
 using Hangfire.Storage.SQLite;
+using HotChocolate.Subscriptions;
+using HotChocolate.Types;
+using HotChocolate.AspNetCore;
+using HotChocolate.AspNetCore.Subscriptions;
+using Microsoft.AspNetCore.Authentication;
+using UATL.Mail.GraphQL.Queries;
+using UATL.Mail;
+using UATL.Mail.Helpers;
+using UATL.Mail.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -147,10 +157,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 {
                     context.Token = accessToken;
                 }
+
                 return Task.CompletedTask;
             }
         };
     });
+
+
+
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(JwtBearerDefaults.AuthenticationScheme, policy =>
@@ -221,6 +236,9 @@ builder.Services
     //.AddScoped<SakonyConsoleMiddleware>()
     .AddScoped<MailAttachementVerificationMiddleware>();*/
 
+builder.Services
+    .AddScoped<BasicAuthMiddleware>();
+
 //---------- Attachments Limits ---------------//
 builder.Services.Configure<FormOptions>(x =>
 {
@@ -267,11 +285,23 @@ builder.Services.AddResponseCompression(options =>
 });
 builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.SmallestSize);
 builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.SmallestSize);
+//---------- GraphQL Test ---------------//
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<MailQuery>();
 
 //---------------------------------------------------------------------------------------------------------//
+//------------- Hosting SPA App ------------------------------------------------------------------------//
+
+builder.Services.AddSpaStaticFilesWithUrlRewrite(config =>
+{
+    config.RootPath = @"D:\WebProjects\University-APP\uatl-mail\Frontend\dist";
+});
+
 //---------------------------------------------------------------------------------------------------------//
 builder.WebHost
-    .UseKestrel(o => {
+    .UseKestrel(o =>
+    {
         o.ListenAnyIP(builder.Configuration["Port"].ToInt());
         o.Limits.MaxRequestBodySize = int.MaxValue;
     });
@@ -297,14 +327,17 @@ app.UseCors(config => config
     .AllowCredentials()
     );
 app.UseAuthentication();
-app.UseHttpLogging();
 
+//app.UseHttpLogging();
 app.MapControllers();
+
 /*app
     //.UseMiddleware<SakonyConsoleMiddleware>()
     .UseMiddleware<MailAttachementVerificationMiddleware>();*/
 
 app.UseRouting();
+app.UseMiddleware<BasicAuthMiddleware>();
+app.UseWebSockets();
 app.UseAuthorization();
 
 app.UseEndpoints(endpoint =>
@@ -313,10 +346,25 @@ app.UseEndpoints(endpoint =>
     endpoint.MapHub<ChatHub>("/hubs/chat");
 });
 
+
 app.UseHangfireDashboard("/backgroundjobs", new DashboardOptions()
 {
     DashboardTitle = "UATL Mail Server - Background Jobs Dashboard",
-    IsReadOnlyFunc = ctx => true,
+    IsReadOnlyFunc = ctx => true,    
+    AsyncAuthorization = new []
+    {
+        new DashboardAuthFilter()
+    },
+    AppPath = "/"
 });
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseSpaStaticFiles();
+    app.UseSpa(config =>
+    {
+    });
+}
+
 
 app.Run();

@@ -36,7 +36,7 @@ export default {
     }
   },
   beforeDestroy() {
-    this.$mailHub.off('refresh_draft')
+    this.$mailHub.off('received_mail')
   },
   mounted() {
     this.refresh()

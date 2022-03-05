@@ -12,7 +12,7 @@ namespace UATL.MailSystem
             {
                 if (context.Request.Form.Files.Any(file => file.Length > 200_000_000))
                 {
-                    await context.Response.WriteAsJsonAsync(new { Message = "File Attachements cannot exceed 200 MB per file." });
+                    await context.Response.WriteAsJsonAsync(new { Message = "File Attachments cannot exceed 200 MB per file." });
                     context.Response.StatusCode = 403;
                     await context.Response.CompleteAsync();
                 }

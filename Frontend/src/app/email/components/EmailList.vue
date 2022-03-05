@@ -1,5 +1,17 @@
 <template>
-  <v-card class="min-w-0">
+  <v-card v-if="emails.length === 0" class="pa-2 pa-md-4 flex-grow-1 align-center justify-center d-flex flex-column">
+    <v-card-text>
+      <v-row class="d-flex flex-column" dense align="center" justify="center">
+        <v-icon color="blue" size="128">
+          fa-solid fa-circle-exclamation
+        </v-icon>
+        <p>
+          {{ $t('email.empty') }}
+        </p>
+      </v-row>
+    </v-card-text>
+  </v-card>
+  <v-card v-else class="min-w-0">
     <div class="email-app-top px-2 py-1 d-flex align-center">
       <v-checkbox :value="selectAll" :indeterminate="selectAlmostAll" @click.stop="onSelectAll(selectAll)"></v-checkbox>
       <v-menu offset-y>
@@ -43,9 +55,27 @@
       ></v-pagination>
     </div>
 
+    <v-card-title >
+
+      <v-row no-gutters dense>
+        <v-col cols="12" lg="6" md="0" sm="0">
+        </v-col>
+        <v-col cols="12" lg="6" md="12" sm="12">
+          <v-text-field
+            append-icon="mdi-magnify"
+            class="flex-grow-1 mr-md-2"
+            outlined
+            dense
+            hide-details
+            clearable
+            :placeholder="$t('common.search')"
+          ></v-text-field>
+        </v-col>
+      </v-row>
+    </v-card-title>
     <v-divider/>
     <v-list
-      v-for="group in $enumerable(emails).GroupBy(x => Date(type === 'mail' ? x.SentOn : x.CreatedOn).toString('YYYY/MM/DD'), x => x).ToArray()"
+      v-for="group in $enumerable(emails).GroupBy(x => new Date(x.SentOn ? x.SentOn : x.CreatedOn).toString('yyyy/MM/dd'), x => x).ToArray()"
       :key="group"
       class="py-0"
     >
@@ -56,7 +86,7 @@
           </v-list-item-action>
           <v-list-item-action-text>
             <span class="text--primary text-h6">
-              {{ Date(group.key) | formatDate('dddd, DD MMMM YYYY') | uppercase }}
+              {{ new Date(group.key) | formatDate('dddd, DD MMMM yyyy') | uppercase }}
             </span>
           </v-list-item-action-text>
         </v-list-item-action></v-subheader>
@@ -73,16 +103,16 @@
           <v-list-item-action class="d-flex flex-row align-center">
             <v-checkbox v-model="selected" :value="item.ID"></v-checkbox>
 
-            <v-btn icon class="ml-1" @click="item.Starred = !item.Starred">
-              <v-icon v-if="!item.Starred" color="grey lighten-1">
+            <v-btn v-if="type !== 'draft'" icon class="ml-1" @click="toggleStarred(item.ID)">
+              <v-icon v-if="!isStarred(item.ID)" color="grey lighten-1">
                 fa-regular fa-star
               </v-icon>
               <v-icon v-else color="yellow darken-2">
                 fa-solid fa-star
               </v-icon>
             </v-btn>
-            <v-icon v-if="type === 'sent'" small color="info">fa-solid fa-inbox-out</v-icon>
-            <v-icon v-if="type === 'draft'" small>fa-solid fa-pencil</v-icon>
+            <v-icon v-if="type === 'mail'" small color="info" class="px-2">fa-solid fa-inbox-out</v-icon>
+            <v-icon v-if="type === 'draft'" small class="px-2">fa-solid fa-pencil</v-icon>
           </v-list-item-action>
           <v-list-item-avatar v-if="item.To" class="d-flex flex-row">
             <v-img :src="avatar(item.To.ID)" />
@@ -106,12 +136,12 @@
                 {{ getLabelTitle(label) }}
               </v-chip>
             </v-list-item-subtitle>
-            <v-list-item-subtitle v-if="item.Attachements.length !== 0">
+            <v-list-item-subtitle v-if="item.Attachments.length !== 0">
               <v-list-item-title>
                 <v-icon small>fa-solid fa-paperclip</v-icon>
-                {{ `${item.Attachements.length} ${$t('email.attachments')}: ` }}
+                {{ `${item.Attachments.length} ${$t('email.attachments')}: ` }}
                 <v-chip
-                  v-for="file in $enumerable(item.Attachements).Take(3).ToArray()"
+                  v-for="file in $enumerable(item.Attachments).Take(3).ToArray()"
                   :key="file"
                   small
                   label
@@ -119,7 +149,22 @@
                 >
                   {{ file.Name }} <b>({{ file.FileSize | formatByte }})</b>
                 </v-chip>
-                <span v-if="item.Attachements.length > 3">...</span>
+                <span v-if="item.Attachments.length > 3">...</span>
+              </v-list-item-title>
+            </v-list-item-subtitle>
+            <v-list-item-subtitle v-if="item.HashTags.length !== 0">
+              <v-list-item-title>
+                <v-chip
+                  v-for="tag in $enumerable(item.HashTags).Take(5).ToArray()"
+                  :key="tag"
+                  class="font-italic"
+                  :dark="getUniqueColor(tag).dark"
+                  :light="getUniqueColor(tag).light"
+                  :color="getUniqueColor(tag).color"
+                >
+                  {{ tag }}
+                </v-chip>
+                <span v-if="item.HashTags.length > 5">...</span>
               </v-list-item-title>
             </v-list-item-subtitle>
           </v-list-item-content>
@@ -167,6 +212,9 @@
 */
 import { searchDrafts } from '@/api/drafts'
 import { mapGetters } from 'vuex'
+import { getStarred, addStarred, deleteStarred } from '@/api/mails'
+import seedColor from 'seed-color'
+import isDarkColor from 'is-dark-color'
 
 export default {
   props: {
@@ -209,6 +257,7 @@ export default {
     }
   },
   data() {
+    this.getStarred(false)
     return {
       value:null,
       page: 1,
@@ -229,13 +278,13 @@ export default {
         title: 'Starred',
         key: 'starred'
       }],
-      search: null
+      search: null,
+      starred: []
     }
   },
   computed: {
   },
   watch: {
-
     search (val) {
 
     },
@@ -253,8 +302,47 @@ export default {
       })
     }
   },
+  async created() {
+    this.$mailHub.on('refresh_account', (x) => {
+      this.getStarred()
+    })
+    try {
+      if (this.$mailHub.state === 'Disconnected') await this.$mailHub.start()
+    }
+    catch (err) {
+      console.log(err)
+    }
+  },
+  beforeDestroy() {
+    this.$mailHub.off('refresh_account')
+  },
   methods: {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
+    async getStarred() {
+      try {
+        const result = await getStarred(false)
+        this.starred = result.data
+      } catch (err) {
+        console.log(err)
+      }
+    },
+    async toggleStarred(id) {
+      try {
+        let res = null
+        if (this.isStarred(id)) {
+          res = await deleteStarred(id)
+        } else {
+          res = await addStarred([id])
+        }
+        this.starred = res.data
+      } catch (err) {
+        console.log(err)
+      }
+    },
+    isStarred(id) {
+      return this.$enumerable(this.starred)
+        .Any(x => x === id)
+    },
     onMenuSelection(key) {
       switch (key) {
       case 'all':
@@ -267,7 +355,7 @@ export default {
       if (this.selectAll) {
         this.selected = []
       } else {
-        this.selected = this.emails.map((i) => i.id)
+        this.selected = this.emails.map((i) => i.ID)
       }
 
       this.selectAlmostAll = false
@@ -295,6 +383,13 @@ export default {
     },
     avatar(val) {
       return `${this.$apiHost}/api/v1/account/${val}/avatar`
+    },
+    getUniqueColor(val) {
+      return {
+        color: seedColor(val).toHex(),
+        dark: isDarkColor(seedColor(val).toHex()) && !this.$vuetify.theme.dark,
+        light: !isDarkColor(seedColor(val).toHex()) && this.$vuetify.theme.dark
+      }
     }
   }
 }

@@ -72,10 +72,10 @@ namespace UATL.Mail.Controllers
             try
             {
                 var drafts = DB.Find<Draft>(session: transaction.Session)
-                    .ManyAsync(filter => filter.ElemMatch(x => x.Attachements, x => x.ID == id) & filter.Eq(x => x.From.ID, account.ID), ct);
+                    .ManyAsync(filter => filter.ElemMatch(x => x.Attachments, x => x.ID == id) & filter.Eq(x => x.From.ID, account.ID), ct);
 
                 var mails = DB.Find<MailModel>(session: transaction.Session)
-                    .ManyAsync(filter => filter.ElemMatch(x => x.Attachements, x => x.ID == id) & ( filter.Eq(x => x.From.ID, account.ID) | filter.Eq(x => x.To.ID, account.ID) ), ct);
+                    .ManyAsync(filter => filter.ElemMatch(x => x.Attachments, x => x.ID == id) & ( filter.Eq(x => x.From.ID, account.ID) | filter.Eq(x => x.To.ID, account.ID) ), ct);
 
                 var attachments = DB.Find<Attachment>(session: transaction.Session)
                     .ManyAsync(filter => filter.Eq(x => x.UploadedBy.ID, account.ID));

@@ -149,7 +149,7 @@ namespace UATL.MailSystem.Controllers
                     if (exist)
                     {
                         var attachement = await query.ExecuteFirstAsync(ct);
-                        draft.Attachements.Add(attachement);
+                        await draft.Attachments.AddAsync(attachement, transaction.Session, ct);
                     }
                     else
                     {
@@ -166,7 +166,7 @@ namespace UATL.MailSystem.Controllers
                             await attachement.Data.UploadAsync(stream, cancellation: ct, session: transaction.Session);
                         }
                         var uploaded = await DB.Find<Attachment>(transaction.Session).OneAsync(attachement.ID);
-                        draft.Attachements.Add(uploaded);
+                        await draft.Attachments.AddAsync(uploaded, transaction.Session, ct);
                     }
                 }
                 await draft.SaveAsync(transaction.Session);
@@ -205,7 +205,7 @@ namespace UATL.MailSystem.Controllers
                     if (exist)
                     {
                         var attachement = await query.ExecuteFirstAsync();
-                        draft.Attachements.Add(attachement);
+                        await draft.Attachments.AddAsync(attachement, transaction.Session, ct);
                     }
                     else
                     {
@@ -222,7 +222,7 @@ namespace UATL.MailSystem.Controllers
                             await attachement.Data.UploadAsync(stream, cancellation: ct, session: transaction.Session);
                         }
                         var uploaded = await DB.Find<Attachment>(transaction.Session).OneAsync(attachement.ID);
-                        draft.Attachements.Add(uploaded);
+                        await draft.Attachments.AddAsync(uploaded, transaction.Session, ct);
                     }
                 }
                 await draft.SaveAsync(transaction.Session);

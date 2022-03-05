@@ -26,7 +26,7 @@ const getAllMails = async (params, token) =>  {
     limit: -1,
     direction: 'Received',
     type: 'Internal',
-    sort: 'CreatedOn',
+    sort: 'SentOn',
     desc: true
   }
   return await axios.get('/mail',
@@ -45,7 +45,7 @@ const searchMails = async (search, params, token) =>  {
     limit: -1,
     direction: 'Received',
     type: 'Internal',
-    sort: 'CreatedOn',
+    sort: 'SentOn',
     desc: true
   }
   return await axios.get('/mail/search', {
@@ -69,6 +69,103 @@ const sendMail = async (mail, files, onProgress, token, ct) => {
 
 const getStats = async (token) => await axios.get('/mail/stats', headerAuth(token))
 
+const getStarred = async (full) => await axios.get('/mail/starred?full=' + full)
+
+const addStarred = async (ids) => await axios.post('/mail/starred', ids)
+
+const updateStarred = async (ids) => await axios.patch('/mail/starred', ids)
+
+const deleteStarred = async (id) => await axios.delete('/mail/starred/' + id)
+
+const getStarredFull = async (params, token) =>  {
+  const defaultParams = {
+    full: true,
+    page: 1,
+    limit: -1,
+    sort: 'SentOn',
+    desc: true
+  }
+  return await axios.get('/mail/starred',
+    {
+      ...headerAuth(token),
+      params: {
+        ...defaultParams,
+        ...params
+      }
+    })
+}
+
+const searchStarredFull = async (search, params, token) =>  {
+  const defaultParams = {
+    search: search,
+    full: true,
+    page: 1,
+    limit: -1,
+    sort: 'SentOn',
+    desc: true
+  }
+  return await axios.get('/mail/starred',
+    {
+      ...headerAuth(token),
+      params: {
+        ...defaultParams,
+        ...params
+      }
+    })
+}
+
+const getTags = async () => await axios.get('/mail/tags')
+const searchTags = async (search = '') => await axios.get('/mail/tags?search=' + search)
+
+const getTaggedMails = async (tag, params, token) =>  {
+  const defaultParams = {
+    page: 1,
+    limit: -1,
+    sort: 'SentOn',
+    desc: true
+  }
+  return await axios.get('/mail/tagged',
+    {
+      ...headerAuth(token),
+      params: {
+        ...defaultParams,
+        ...params,
+        tag: tag
+      }
+    })
+}
+
+const searchTaggedMails = async (tag, search, params, token) =>  {
+  const defaultParams = {
+    page: 1,
+    limit: -1,
+    sort: 'SentOn',
+    desc: true
+  }
+  return await axios.get('/mail/tagged/search', {
+    ...headerAuth(token),
+    params: {
+      ...defaultParams,
+      ...params,
+      tag: tag,
+      search: search ?? '|'
+    } })
+}
+
 export {
-  searchMails, sendMail, getMail, getAllMails, getStats
+  searchMails,
+  sendMail,
+  getMail,
+  getAllMails,
+  getStats,
+  getStarred,
+  updateStarred,
+  addStarred,
+  deleteStarred,
+  getStarredFull,
+  searchStarredFull,
+  getTags,
+  searchTags,
+  getTaggedMails,
+  searchTaggedMails
 }
