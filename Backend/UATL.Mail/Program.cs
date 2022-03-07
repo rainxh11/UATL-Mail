@@ -43,12 +43,7 @@ using FluentEmail;
 using FluentEmail.Smtp;
 using Hangfire.Dashboard;
 using Hangfire.Storage.SQLite;
-using HotChocolate.Subscriptions;
-using HotChocolate.Types;
-using HotChocolate.AspNetCore;
-using HotChocolate.AspNetCore.Subscriptions;
 using Microsoft.AspNetCore.Authentication;
-using UATL.Mail.GraphQL.Queries;
 using UATL.Mail;
 using UATL.Mail.Helpers;
 using UATL.Mail.Models;
@@ -237,6 +232,7 @@ builder.Services
     .AddScoped<MailAttachementVerificationMiddleware>();*/
 
 builder.Services
+    .AddScoped<TokenInjectionMiddleware>()
     .AddScoped<BasicAuthMiddleware>();
 
 //---------- Attachments Limits ---------------//
@@ -286,16 +282,14 @@ builder.Services.AddResponseCompression(options =>
 builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.SmallestSize);
 builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.SmallestSize);
 //---------- GraphQL Test ---------------//
-builder.Services
-    .AddGraphQLServer()
-    .AddQueryType<MailQuery>();
+
 
 //---------------------------------------------------------------------------------------------------------//
 //------------- Hosting SPA App ------------------------------------------------------------------------//
 
 builder.Services.AddSpaStaticFilesWithUrlRewrite(config =>
 {
-    config.RootPath = @"D:\WebProjects\University-APP\uatl-mail\Frontend\dist";
+    config.RootPath = Path.Combine(AppContext.BaseDirectory, "dist");
 });
 
 //---------------------------------------------------------------------------------------------------------//
@@ -326,9 +320,13 @@ app.UseCors(config => config
     .WithOrigins(builder.Configuration["CorsHosts"].Split(";"))
     .AllowCredentials()
     );
+
+app
+    .UseMiddleware<TokenInjectionMiddleware>()
+    .UseMiddleware<BasicAuthMiddleware>();
 app.UseAuthentication();
 
-//app.UseHttpLogging();
+app.UseHttpLogging();
 app.MapControllers();
 
 /*app
@@ -336,9 +334,13 @@ app.MapControllers();
     .UseMiddleware<MailAttachementVerificationMiddleware>();*/
 
 app.UseRouting();
-app.UseMiddleware<BasicAuthMiddleware>();
+
 app.UseWebSockets();
 app.UseAuthorization();
+
+/*app.MapGraphQL();
+app.MapGraphQLSchema();
+app.MapBananaCakePop();*/
 
 app.UseEndpoints(endpoint =>
 {

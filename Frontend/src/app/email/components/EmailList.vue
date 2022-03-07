@@ -93,12 +93,13 @@
       <v-divider/>
       <template v-for="(item, index) in group.values()">
         <v-list-item
-          :key="item.Subject"
+          :key="item.ID"
           :class="{
             'grey lighten-5': item.read && !$vuetify.theme.dark,
             'v-list-item--active primary--text': selected.indexOf(item.ID) !== -1
           }"
           link
+          :to="`/mailbox/mail/${item.ID}`"
         >
           <v-list-item-action class="d-flex flex-row align-center">
             <v-checkbox v-model="selected" :value="item.ID"></v-checkbox>
@@ -111,7 +112,9 @@
                 fa-solid fa-star
               </v-icon>
             </v-btn>
-            <v-icon v-if="type === 'mail'" small color="info" class="px-2">fa-solid fa-inbox-out</v-icon>
+            <v-icon v-if="type === 'mail'" small :color="getMailIcon(item).color" class="px-2">
+              {{ getMailIcon(item).icon }}
+            </v-icon>
             <v-icon v-if="type === 'draft'" small class="px-2">fa-solid fa-pencil</v-icon>
           </v-list-item-action>
           <v-list-item-avatar v-if="item.To" class="d-flex flex-row">
@@ -377,12 +380,13 @@ export default {
       const user = this.getUserInfo()
       if (item.From.ID === user.ID) {
         if (item.To) return `${item.To.Name}`
+        else return this.$t('email.externalMail')
       }
       if (item.To.ID === user.ID) return `${item.From.Name}`
       return ''
     },
     avatar(val) {
-      return `${this.$apiHost}/api/v1/account/${val}/avatar`
+      return `${this.$apiHost}/api/v1/account/${val}/avatar?token=${this.getToken()}`
     },
     getUniqueColor(val) {
       return {
@@ -390,6 +394,13 @@ export default {
         dark: isDarkColor(seedColor(val).toHex()) && !this.$vuetify.theme.dark,
         light: !isDarkColor(seedColor(val).toHex()) && this.$vuetify.theme.dark
       }
+    },
+    getMailIcon(item) {
+      const user = this.getUserInfo()
+      const internal = item.Type === 'Internal' ? 'fa-regular' : 'fa-solid'
+      if (!item.To) return { icon: `${internal} fa-inbox-out`, color: 'blue' }
+      if (item.To.ID === user.ID) return { icon: `${internal} fa-inbox-in`, color: 'green' }
+      else return { icon: `${internal} fa-inbox-out`, color: 'blue' }
     }
   }
 }

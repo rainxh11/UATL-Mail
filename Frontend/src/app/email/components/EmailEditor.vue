@@ -8,7 +8,7 @@
     @dragstart.prevent="dragover = true"
   >
 
-    <email-input v-if="!sendLoading && !external" :label="$t('email.to') + ':'" :addresses="toAddresses" @change="addRecipients($event)"/>
+    <email-input v-if="!sendLoading && !external" :label="$t('email.to')" :addresses="toAddresses" @change="addRecipients($event)"/>
     <v-checkbox
       v-if="!sendLoading"
       v-model="external"
@@ -156,7 +156,7 @@
 
       </div>
     </editor-menu-bar>
-    <editor-content v-if="!sendLoading" class="editor__content pa-3 py-4" :editor="editor" />
+    <editor-content v-if="!sendLoading" class="editor__content pa-3 py-4" :editor="editor"/>
 
     <v-divider v-if="!sendLoading"/>
     <v-card-text
@@ -209,7 +209,7 @@
 
     <v-divider v-if="!sendLoading"/>
     <v-card-title v-if="!sendLoading" class="d-flex align-center pa-2">
-      <v-btn :disabled="toAddresses.length === 0 || subject.length === 0" color="primary" :loading="sendLoading" @click="sendMail">
+      <v-btn :disabled="(toAddresses.length === 0 && !external) || subject.length === 0 " color="primary" :loading="sendLoading" @click="sendMail">
         <v-icon small class="pa-1">fa-solid fa-paper-plane-top</v-icon>
         {{ $t('email.send') }}
       </v-btn>
@@ -285,6 +285,12 @@ export default {
     EditorMenuBar,
     EmailInput,
     HashTagInput
+  },
+  props:{
+    replyTo: {
+      type: String,
+      default: null
+    }
   },
   data() {
     return {
@@ -398,10 +404,10 @@ export default {
       const mail = {
         Subject: this.subject,
         Body: Html5Entities.encode(this.editor.getHTML()),
-        Recipients: this.toAddresses,
-        Tags: [],
-        Type: 'Internal',
-        HashTags: this.tags
+        Recipients: this.external ? [] : this.toAddresses,
+        Type: this.external ? 'External' : 'Internal',
+        HashTags: this.tags,
+        ReplyTo: this.replyTo ? this.replyTo : undefined
       }
 
       this.sendLoading = true

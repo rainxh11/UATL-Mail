@@ -24,8 +24,14 @@ namespace UATL.MailSystem.Models.Models
         [IgnoreDefault]
         public List<MailFlag> Flags { get; set; } = new List<MailFlag>();
 
+        [JsonIgnore]
         [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
         public MailType Type { get; set; } = MailType.Internal;
+        [JsonProperty("Type")]
+        public string TypeName
+        {
+            get => Type.ToString();
+        }
 
         [IgnoreDefault]
         public DateTime ViewedOn { get; set; }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Net.Http.Headers;
 using MongoDB.Entities;
 using UATL.Mail.Hubs;
 using UATL.MailSystem.Models;
@@ -32,7 +33,7 @@ namespace UATL.Mail.Controllers
             _mailHub = mailHub;
         }
 
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        //[Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
         [Route("{id}")]
         public async Task<IActionResult> DownloadAttachment(string id, CancellationToken ct)
@@ -40,6 +41,12 @@ namespace UATL.Mail.Controllers
             try
             {
                 var account = await _identityService.GetCurrentAccount(HttpContext);
+                if (account == null)
+                {
+                    HttpContext.Response.Headers.Add("WWW-Authenticate", "Basic realm=\"\"");
+                    await HttpContext.Response.CompleteAsync();
+                }
+
                 var allowed = await HaveAccessToFile(id, account, ct);
 
                 if (!allowed)

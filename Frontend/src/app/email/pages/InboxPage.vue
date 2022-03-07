@@ -12,6 +12,7 @@
 import { mapActions, mapGetters } from 'vuex'
 import EmailList from '../components/EmailList'
 import { getAllMails, searchMails } from '@/api/mails'
+import { Html5Entities } from 'html-entities'
 
 export default {
   components: {
@@ -62,7 +63,11 @@ export default {
         type: internal
       }, this.getToken())
         .then(res => {
-          this.mails = res.data.Data
+          this.mails = res.data.Data.map((x) => {
+            x.Body = Html5Entities.decode(x.Body)
+
+            return x
+          })
           this.pageCount = res.data.PageCount
         }).catch(err => this.showError(err))
         .finally(() => this.loading = false)

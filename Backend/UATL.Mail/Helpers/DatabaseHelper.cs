@@ -15,10 +15,10 @@ namespace UATL.MailSystem.Helpers
         public static async Task InitDb(string dbName, string connectionString)
         {
             var clientSettings = MongoClientSettings.FromConnectionString(connectionString);
-            clientSettings.Compressors = new List<CompressorConfiguration>() 
+            /*clientSettings.Compressors = new List<CompressorConfiguration>() 
             {
                 new CompressorConfiguration(CompressorType.ZStandard)
-            };
+            };*/
             clientSettings.ApplicationName = "UATL Mail Server";
 
             await DB.InitAsync(dbName, clientSettings);

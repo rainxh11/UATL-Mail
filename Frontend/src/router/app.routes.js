@@ -7,5 +7,12 @@ export default [
     component: () => import(/* webpackChunkName: "landing-home" */ '@/app/email/EmailApp'),
     children: [
       ...MailRoutes
-    ]  }
+    ]  
+  },
+  {
+    path: '/files',
+    name: 'files-viewer',
+    component: () => import(/* webpackChunkName: "landing-home" */ '../layouts/ErrorLayout'),
+    children: []  
+  }
 ]

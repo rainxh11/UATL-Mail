@@ -35,7 +35,7 @@
       </v-chip>
     </template>
 
-    <template v-slot:item="{ index, item }">
+    <template v-slot:item="{ item }">
       <v-list-item-content>
         <v-list-item-title>{{ item }}</v-list-item-title>
       </v-list-item-content>

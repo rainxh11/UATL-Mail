@@ -73,13 +73,15 @@ export default {
     'invalidHashtag': 'Hashtag Invalide!'
   },
   'email': {
+    'forward': 'Transférer le courrier',
     'empty': 'Aucun élément, boîte vide!',
     'tags': 'Tags',
     'external': 'Exterieure',
     'externalMail': 'Courrier Exterieure',
     'sending': 'En cours d\'envoi de courrier',
     'attachments' : 'Attachements',
-    'to': 'Vers',
+    'to': 'Vers :',
+    'from': 'De :',
     'compose': 'Composer un courrier',
     'send': 'Envoyer',
     'subject': 'Sujet',
@@ -233,6 +235,8 @@ export default {
     'signin': 'Se connecter'
   },
   'menu': {
+    'setting': 'Configurations',
+    'fileExplorer' : 'Fichiers jointes',
     'mailbox':'Boite des courriers',
     'search': 'Recherche (appuyez sur \'ctrl + /\' pour faire la mise au point)',
     'dashboard': 'Tableau de Bord',

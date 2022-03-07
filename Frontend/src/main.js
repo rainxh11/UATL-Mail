@@ -42,6 +42,10 @@ import './assets/scss/theme.scss'
 // Animation library - https://animate.style/
 import 'animate.css/animate.min.css'
 
+// V-Viewer
+import VueViewer from 'v-viewer'
+import 'viewerjs/dist/viewer.css'
+
 // vue editor
 import Vue2Editor from 'vue2-editor'
 
@@ -53,8 +57,9 @@ import VueCookies from 'vue-cookies'
 Vue.use(VueCookies)
 
 // Enumerable
-import { AsEnumerable } from 'linq-es5'
+import { AsEnumerable, Range } from 'linq-es5'
 Vue.prototype.$enumerable = AsEnumerable
+Vue.prototype.$range = Range
 
 // V-mask As a plugin
 import VueMask from 'v-mask'
@@ -63,8 +68,10 @@ Vue.use(VueMask)
 
 // mask only as a filter
 Vue.filter('VMask', VueMaskFilter)
+const prod = process.env.NODE_ENV === 'production'
 
-const apiHost = process.env.VUE_APP_API || '127.0.0.1:5000'
+let apiHost =  process.env.VUE_APP_API || '127.0.0.1:5000'
+if (prod) apiHost = ''
 
 Vue.prototype.$apiHost = apiHost
 // Connect Websockets
@@ -83,7 +90,6 @@ Vue.config.productionTip = false
 | https://vuejs.org/v2/guide/instance.html
 |
 */
-const prod = process.env.NODE_ENV === 'production'
 const shouldSW = 'serviceWorker' in navigator && prod
 const shouldSWDev = 'serviceWorker' in navigator && !prod
 
@@ -108,6 +114,11 @@ Vue.use(VueNativeNotification, {
 Vue.use(VueRx)
 Vue.use(VueIframe)
 Vue.use(Tinybox)
+Vue.use(VueViewer, {
+  defaultOptions: {
+    zIndex: 9999
+  }
+})
 
 // Local Browser Storage init
 Vue.use(Plugin, {

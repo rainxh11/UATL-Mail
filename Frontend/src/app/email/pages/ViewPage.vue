@@ -1,37 +1,17 @@
 <template>
   <v-card class="min-w-0">
-    <div class="email-app-top px-2 py-1 d-flex align-center">
-      <v-btn icon @click="$router.go(-1)">
-        <v-icon>mdi-arrow-left</v-icon>
-      </v-btn>
-
-      <div class="mx-3">
-        <v-btn icon>
-          <v-icon>bx-archive</v-icon>
-        </v-btn>
-        <v-btn icon>
-          <v-icon>mdi-email-mark-as-unread</v-icon>
-        </v-btn>
-        <v-btn icon>
-          <v-icon>bx-trash-alt</v-icon>
-        </v-btn>
-      </div>
-
-      <v-spacer></v-spacer>
-
-      <div class="caption mr-1">1 - 20 of 428</div>
-      <v-btn icon disabled>
-        <v-icon>mdi-chevron-left</v-icon>
-      </v-btn>
-      <v-btn icon>
-        <v-icon>mdi-chevron-right</v-icon>
-      </v-btn>
-    </div>
 
     <v-divider></v-divider>
 
-    <div class="d-flex pa-2">
-      <div class="text-h6">Do you have Paris recommendations? Have you ever been?</div>
+    <div class="d-flex pa-2 align-center">
+      <v-avatar>
+        <v-img :src="getAvatar(current.user)"/>
+      </v-avatar>
+      <div>
+        <div class="px-1 text-h6"><b>{{ mail.Subject }}</b></div>
+        <div v-if="current.sent" class="px-1 text-h6">{{ `${$t('email.to')} ` }}<b>{{ `${current.sender}` }}</b></div>
+        <div v-else class="px-1 text-lg-body1">{{ `${$t('email.from')} ` }}<b>{{ `${current.sender}` }}</b></div>
+      </div>
 
       <v-spacer></v-spacer>
 
@@ -41,22 +21,29 @@
         </v-btn>
       </div>
     </div>
+    <body-content
+      class="px-4"
+      :body="mail.Body"
+      :files="mail.Attachments"
+      :hash-tags="mail.HashTags"
+      files-height="500"
+    />
 
-    <div class="pa-2">
+    <div class="pa-2 align-center">
       <v-expansion-panels v-model="emailsExpanded" multiple>
-        <v-expansion-panel v-for="(item, index) in emails" :key="index">
+        <v-expansion-panel v-for="item in replies" :key="item.ID"> 
           <v-expansion-panel-header>
             <template v-slot:default="{ open }">
 
               <div class="d-flex">
                 <v-avatar size="36px">
-                  <img :src="item.avatar" alt="">
+                  <v-img :src="getAvatar(item.From.ID)" placeholder="/images/avatars/avatar1.svg"/>
                 </v-avatar>
 
                 <div class="mx-3 min-w-0">
                   <div class="font-weight-bold mb-1">{{ item.name }}</div>
 
-                  <div v-show="open">
+                  <div v-show="!open">
                     <v-menu offset-y right transition="slide-y-transition">
                       <template v-slot:activator="{ on }">
                         <v-btn text class="pa-0" v-on="on">
@@ -70,7 +57,8 @@
                       </v-card>
                     </v-menu>
                   </div>
-                  <div v-show="!open" class="text-truncate">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non ut, soluta temporibus, culpa magnam harum quod asperiores excepturi iste veniam possimus dignissimos laboriosam ipsum voluptas repellat consequuntur vitae debitis consequatur.</div>
+                  <div v-show="!open" class="text-truncate" v-html="item.Subject">
+                  </div>
                 </div>
 
                 <v-spacer></v-spacer>
@@ -83,10 +71,7 @@
                   </template>
                   <v-list dense nav>
                     <v-list-item link>
-                      <v-list-item-title>Forward</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item link>
-                      <v-list-item-title>Delete</v-list-item-title>
+                      <v-list-item-title>{{ $t('email.forward') }}</v-list-item-title>
                     </v-list-item>
                   </v-list>
                 </v-menu>
@@ -97,15 +82,18 @@
             </template>
           </v-expansion-panel-header>
           <v-expansion-panel-content>
-            <p>Hello,</p>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-            <p>Best regards</p>
+            <body-content
+              class="px-4"
+              :body="item.Body"
+              :files="item.Attachments"
+              :hash-tags="item.HashTags"
+            />          
           </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
 
       <v-card class="mt-4">
-        <email-editor></email-editor>
+        <email-editor :reply-to="{ mail: $route.params.id, user: mail.From.ID }"></email-editor>
       </v-card>
     </div>
 
@@ -114,27 +102,72 @@
 
 <script>
 import EmailEditor from '../components/EmailEditor'
+import BodyContent from '../components/BodyContent'
+import { getMailWithReplies } from '@/api/mails'
+import { mapGetters } from 'vuex'
+import { Html5Entities } from 'html-entities'
 
 export default {
   components: {
-    EmailEditor
+    EmailEditor,
+    BodyContent
+  },
+  async setup() {
+    
+    await this.refresh()
   },
   data() {
+    if (this.$route.params.id === 'undefined') this.$router.push('/')
     return {
+      mail: null,
       emailsExpanded: [3],
-      emails: [{
-        name: 'Ubaldo Romaguera',
-        avatar: '/images/avatars/avatar1.svg'
-      }, {
-        name: 'Ruben Breitenberg',
-        avatar: '/images/avatars/avatar2.svg'
-      }, {
-        name: 'Blaze Carter',
-        avatar: '/images/avatars/avatar3.svg'
-      }, {
-        name: 'Bernita Lehner',
-        avatar: '/images/avatars/avatar4.svg'
-      }]
+      replies: []
+    }
+  },
+  computed: {
+    current() {
+      const user = this.getUserInfo()
+      if (!this.mail) return { user: null, sent: null }
+      if (this.mail.To.ID === user.ID) {
+        return {
+          user: this.mail.From.ID,
+          sent: false,
+          sender: this.mail.From.Name
+        }
+      } else {
+        return {
+          user: this.mail.To.ID,
+          sent: true,
+          sender: this.mail.To.Name
+        }
+      }
+    }
+  },
+  async created() {
+    await this.refresh()
+  },
+  methods: {
+    ...mapGetters('auth', ['getToken', 'getUserInfo']),
+    async refresh() {
+      await this.getMail(this.$route.params.id)
+    },
+    async getMail(id) {
+      try {
+        const res = await getMailWithReplies(id)
+        this.mail = res.data.Mail
+        this.mail.Body = Html5Entities.decode(this.mail.Body)
+
+        this.replies = res.data.Replies.map((x) => {
+          x.Body = Html5Entities.decode(x.Body)
+
+          return x
+        })
+      } catch (err) {
+        console.log(err)
+      }   
+    },
+    getAvatar(id) {
+      return `${this.$apiHost}/api/v1/account/${id}/avatar?token=${this.getToken()}`
     }
   }
 }

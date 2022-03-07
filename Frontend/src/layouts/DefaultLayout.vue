@@ -31,7 +31,7 @@
       </template>
 
       <!-- Navigation menu -->
-      <main-menu  :menu="navigation.menu" />
+      <main-menu :menu="navigation.menu" />
 
     </v-navigation-drawer >
 

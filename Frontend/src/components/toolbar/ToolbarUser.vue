@@ -64,7 +64,7 @@ export default {
   },
   computed: {
     avatar() {
-      return `${this.$apiHost}/api/v1/account/me/avatar/auth?token=${this.getToken()}`
+      return `${this.$apiHost}/api/v1/account/me/avatar?token=${this.getToken()}`
     }
   },
   mounted() {

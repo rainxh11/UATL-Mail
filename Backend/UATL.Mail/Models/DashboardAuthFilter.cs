@@ -25,6 +25,8 @@ namespace UATL.Mail.Models
         public async Task<bool> AuthorizeAsync([NotNull] DashboardContext context)
         {
             var httpContext = context.GetHttpContext();
+            if (httpContext.User.IsInRole("Admin")) return true;
+
             if (httpContext.Request.Cookies.Any(x => x.Key == "T"))
             {
                 var token = httpContext.Request.Cookies["T"];

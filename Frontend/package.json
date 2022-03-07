@@ -8,9 +8,15 @@
     "lint": "vue-cli-service lint",
     "dev": "npm run serve"
   },
+  "eslintConfig": {
+    "parserOptions": {
+      "ecmaVersion": 2020
+    }
+  },
   "dependencies": {
     "@mdi/font": "^5.9.55",
     "@microsoft/signalr": "^6.0.2",
+    "@uifabric-vue/file-type-icons": "^8.1.1",
     "animate.css": "^4.1.0",
     "apexcharts": "^3.28.3",
     "arrayjs": "^1.0.0",
@@ -27,6 +33,7 @@
     "html-to-text": "^8.0.0",
     "is-dark-color": "^1.2.0",
     "javascript-time-ago": "^2.3.13",
+    "jshint": "^2.13.4",
     "linq-es5": "^1.11.15",
     "lodash": "^4.17.15",
     "moment": "^2.26.0",
@@ -35,11 +42,13 @@
     "prettysize": "^2.0.0",
     "rxjs": "^6.6.7",
     "seed-color": "^2.0.1",
+    "string": "^3.3.3",
     "stylus": "^0.54.8",
     "stylus-loader": "^6.1.0",
     "tiptap": "^1.27.1",
     "tiptap-extensions": "^1.29.1",
     "v-mask": "^2.2.4",
+    "v-viewer": "^1.6.4",
     "vite": "^2.8.3",
     "vue": "^2.6.14",
     "vue-apexcharts": "^1.6.2",
@@ -86,7 +95,7 @@
     "@vue/cli-plugin-eslint": "^4.5.11",
     "@vue/cli-service": "^4.5.11",
     "babel-eslint": "^10.1.0",
-    "core-js": "^3.18.0",
+    "core-js": "^3.21.1",
     "eslint": "^6.8.0",
     "eslint-plugin-vue": "^6.2.2",
     "raw-loader": "^4.0.1",

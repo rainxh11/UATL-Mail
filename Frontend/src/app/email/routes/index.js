@@ -40,8 +40,8 @@ export default [
   },
   {
     path: ':type(mail|draft)/:id',
-    name: 'apps-email-view',
-    component: () => import(/* webpackChunkName: "apps-email-view" */ '@/app/email/pages/ViewPage.vue')
+    name: 'apps-email-inbox',
+    component: () => import(/* webpackChunkName: "apps-email-inbox" */ '@/app/email/pages/ViewPage.vue')
   },
   {
     path: 'inbox',

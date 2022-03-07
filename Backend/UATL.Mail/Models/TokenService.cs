@@ -34,16 +34,15 @@ namespace UATL.MailSystem.Models
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                //Expires = DateTime.Now.AddHours(config["Jwt:ExpireAfter"].ToInt()),
                 Expires = DateTime.Now.AddHours(config["Jwt:ExpireAfter"].ToInt()),
                 SigningCredentials = credentials
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
             var tokenString = tokenHandler.WriteToken(token);
-            await BlobCache.InMemory.InsertObject<Account>(tokenString, account, DateTime.Now.AddHours(config["Jwt:ExpireAfter"].ToInt()));
-            //await BlobCache.LocalMachine.InsertObject<Account>(tokenString, account, TimeSpan.FromSeconds(30));
+            await BlobCache.LocalMachine.InsertObject<Account>(tokenString, account, DateTime.Now.AddHours(config["Jwt:ExpireAfter"].ToInt()));
 
+            var tokens = await BlobCache.LocalMachine.GetAllKeys();
 
             return tokenString;
         }

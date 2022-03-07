@@ -34,7 +34,7 @@
       </v-chip>
     </template>
 
-    <template v-slot:item="{ index, item }">
+    <template v-slot:item="{ item }">
       <v-list-item-avatar>
         <v-img :src="avatar(item.Avatar)" />
       </v-list-item-avatar>
@@ -110,7 +110,7 @@ export default {
   methods: {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
     avatar(val) {
-      return `${this.$apiHost}/api/v1${val}`
+      return `${this.$apiHost}/api/v1${val}?token=${this.getToken()}`
     },
     filter (item, queryText, itemText) {
       if (!item) return false

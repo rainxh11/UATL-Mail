@@ -152,6 +152,8 @@ const searchTaggedMails = async (tag, search, params, token) =>  {
     } })
 }
 
+const getMailWithReplies = async(id) => await axios.get(`/mail/${id}/replies`)
+
 export {
   searchMails,
   sendMail,
@@ -167,5 +169,6 @@ export {
   getTags,
   searchTags,
   getTaggedMails,
-  searchTaggedMails
+  searchTaggedMails,
+  getMailWithReplies
 }

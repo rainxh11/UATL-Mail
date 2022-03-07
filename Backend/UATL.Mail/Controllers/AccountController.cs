@@ -129,7 +129,7 @@ namespace UATL.MailSystem.Controllers
             }
         }
         //--------------------------------------------------------------------------------------------------------------//
-        //[Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
         [Route("{id}/avatar")]
         public async Task<IActionResult> GetAvatar(string id, CancellationToken ct)
@@ -138,7 +138,7 @@ namespace UATL.MailSystem.Controllers
             {
                 var avatar = await DB.Find<Avatar>().Match(x => x.Account.ID == id).ExecuteFirstAsync();
                 if (avatar == null)
-                    return File(new byte[] { }, "image/webp");
+                    return NotFound();
 
                 var stream = new MemoryStream();               
                 await avatar.Data.DownloadAsync(stream, cancellation: ct).ConfigureAwait(false);
@@ -410,33 +410,6 @@ namespace UATL.MailSystem.Controllers
                 await avatar.Data.DownloadAsync(stream, cancellation: ct).ConfigureAwait(false);
                 stream.Position = 0;
                 return File(stream, "image/webp");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                return BadRequest();
-            }
-        }
-
-        [HttpGet]
-        [Route("me/avatar/auth")]
-        public async Task<IActionResult> GetCurrentAvatarQueryToken(string token, CancellationToken ct)
-        {
-            try
-            {
-                var account = await _identityService.GetAccountFromToken(token);
-                if (account is null)
-                    return NotFound("Token Invalid or Account not found.");
-
-                var avatar = await DB.Find<Avatar>().Match(x => x.Account.ID == account.ID).ExecuteFirstAsync();
-                if (avatar == null)
-                    return NotFound();
-
-                using (var stream = new MemoryStream())
-                {
-                    await avatar.Data.DownloadAsync(stream, cancellation: ct).ConfigureAwait(false);
-                    return File(stream.ToArray(), "image/webp");
-                }
             }
             catch (Exception ex)
             {
