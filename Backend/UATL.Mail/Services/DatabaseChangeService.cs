@@ -114,6 +114,7 @@ namespace UATL.MailSystem.Services
                 .Subscribe();
 
             _accountSubscription = accountChanges
+                .Where(x => x.OperationType == ChangeStreamOperationType.Insert || x.OperationType == ChangeStreamOperationType.Update || x.OperationType == ChangeStreamOperationType.Replace)
                 .Where(x => x.FullDocument != null)
                 .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.FullDocument.ID, "refresh_account")))
                 .Subscribe();

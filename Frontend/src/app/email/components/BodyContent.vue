@@ -15,12 +15,13 @@
     </div>
     <v-divider/>
 
-    <viewer :images="images">
+    <viewer>
       <v-tooltip v-for="(src, index) in images" :key="src" bottom>
         <template v-slot:activator="{ on, attrs }">
           <img
             v-bind="attrs"
             height="200"
+            width="200"
             :src="src.url"
             class="cursor-pointer column-flex"
             v-on="on"
@@ -32,42 +33,37 @@
     </viewer>
     <v-container v-if="files.length > 0">
       <v-subheader class="text-h6">{{ $t('email.attachments') }}</v-subheader>
-      <v-virtual-scroll      
-        :items="$enumerable(files).OrderByDescending(x => x.FileSize).ToArray()"
-        :max-height="filesHeight"
-        item-height="30"
-      >
-        <template v-slot:default="{ item }">
-          <v-list-item :key="item.ID">
-            <v-list-item-icon> 
-              <v-icon small :color="getIcon(item).color">{{ getIcon(item).icon }}</v-icon>
-            </v-list-item-icon>
-            <v-list-item-action v-if="getIcon(item).type === 'audio'">
-              <v-btn icon color="primary" @click="playAudio(item)">
-                <v-icon>{{ getPlayIcon(item) }}</v-icon>
-              </v-btn>
-            </v-list-item-action>
-            <v-list-item-content>
-              <v-list-item-title>
-                <a :href="getFileUrl(item)"> {{ item.Name }}</a>
-              </v-list-item-title>
-            </v-list-item-content>
+      <v-list>
+        <v-list-item 
+          v-for="item in files" 
+          :key="item.ID"
+        >
+          <v-list-item-icon> 
+            <v-icon small :color="getIcon(item).color">{{ getIcon(item).icon }}</v-icon>
+          </v-list-item-icon>
+          <v-list-item-action v-if="getIcon(item).type === 'audio'">
+            <v-btn icon color="primary" @click="playAudio(item)">
+              <v-icon>{{ getPlayIcon(item) }}</v-icon>
+            </v-btn>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>
+              <a :href="getFileUrl(item)"> {{ item.Name }}</a>
+            </v-list-item-title>
+          </v-list-item-content>
 
-            <v-list-item-action-text>
-              <span class="ml-1 text-lg-body-1 text--secondary">
-                {{ item.FileSize | formatByte }}
-              </span>
-            </v-list-item-action-text>
-            <v-list-item-action v-if="canEdit">
-              <v-btn icon @click.stop="removeFile(item.ID)">
-                <v-icon color="red">fa-solid fa-circle-xmark</v-icon>
-              </v-btn>
-            </v-list-item-action>
-          </v-list-item>
-
-          <v-divider></v-divider>
-        </template>
-      </v-virtual-scroll>
+          <v-list-item-action-text>
+            <span class="ml-1 text-lg-body-1 text--secondary">
+              {{ item.FileSize | formatByte }}
+            </span>
+          </v-list-item-action-text>
+          <v-list-item-action v-if="canEdit">
+            <v-btn icon @click.stop="removeFile(item.ID)">
+              <v-icon color="red">fa-solid fa-circle-xmark</v-icon>
+            </v-btn>
+          </v-list-item-action>
+        </v-list-item>
+      </v-list>
     </v-container> 
   </div>
 </template>
@@ -132,10 +128,14 @@ export default {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
     show(index) {
       this.$viewerApi({
-        images: this.images
-          .map(x => x.url),
+        images: this.images,
         options: {
-          initialViewIndex: index
+          initialViewIndex: index,
+          fullscreen: false,
+          url: 'src',
+          backdrop: true,
+          inline: true,
+          loop: true
         }     
       })
     },

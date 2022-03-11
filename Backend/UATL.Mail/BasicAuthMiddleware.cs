@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using MongoDB.Entities;
 using UATL.Mail.Helpers;
 using UATL.MailSystem.Models;
 
@@ -10,10 +11,12 @@ namespace UATL.Mail
     {
         private readonly ILogger<BasicAuthMiddleware> _logger;
         private ITokenService _tokenService;
-        public BasicAuthMiddleware(ILogger<BasicAuthMiddleware> logger, ITokenService tokenService)
+        private LoginInfoSaver _loginSaver;
+        public BasicAuthMiddleware(ILogger<BasicAuthMiddleware> logger, ITokenService tokenService, LoginInfoSaver loginSaver)
         {
             _logger = logger;
             _tokenService = tokenService;
+            _loginSaver = loginSaver;
         }
         public async Task InvokeAsync(HttpContext context, RequestDelegate next)
         {
@@ -37,6 +40,19 @@ namespace UATL.Mail
                         var password = credentials[1];
 
                         var account = await BasicAuthenticationHelper.Login(username, password).ConfigureAwait(false);
+                        try
+                        {
+                            var accountModel = await DB.Find<Account>()
+                                .MatchID(account.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value)
+                                .ExecuteSingleAsync();
+
+                            await _loginSaver.AddLogin(context, accountModel);
+                        }
+                        catch
+                        {
+
+                        }
+                        
 
                         // authenticate credentials with user service and attach user to http context
                         context.User = account;

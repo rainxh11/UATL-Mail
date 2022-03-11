@@ -19,58 +19,89 @@ function avatarHeaderAuth(token) {
   }
 }
 
-// GET Api for { User }
-const getAllUser = async (query) =>  {
-  query ??= '?page=1&limit=-1&sort=CreatedOn&desc=true'
-
-  return await axios.get('/account' + query)
+const getAllUsers = async (params) =>  {
+  const defaultParams = {
+    page: 1,
+    limit: 10,
+    sort: 'CreatedOn',
+    desc: true
+  }
+  return await axios.get('/account',
+    {
+      params: {
+        ...defaultParams,
+        ...params
+      }
+    })
 }
 
-const createUser = async (user ,token) => {
-  return await axios.post('/account', user, headerAuth(token) )
-}
-const deleteUser = async (id, token) => {
-  return await axios.delete('/account/' + id, headerAuth(token) )
-}
-const updateUser = async (id, userInfo, token) => {
-  return await axios.patch('/account/' + id, userInfo, headerAuth(token) )
-}
-
-const updateMe = async (userInfo, token) => {
-  return await axios.patch('/account/me', userInfo, headerAuth(token) )
-}
-
-const getOneUser = async (id, token) => {
-  return await axios.get('/account/' + id, headerAuth(token) )
-}
-
-const checkMyPassword = async (currentPassword, token) => {
-  return await axios.post('/account/me/checkpassword', currentPassword, headerAuth(token) )
+const searchUsers = async (search, params) =>  {
+  const defaultParams = {
+    page: 1,
+    limit: 10,
+    sort: 'CreatedOn',
+    desc: true
+  }
+  return await axios.get('/account/search',
+    {
+      params: {
+        ...defaultParams,
+        ...params,
+        search: search
+      }
+    })
 }
 
-const updateMyPassword = async (passwordModel, token) => {
-  return await axios.patch('/account/me/updatepassword', passwordModel, headerAuth(token) )
+const createUser = async (user) => {
+  return await axios.post('/account', user, {  })
+}
+const deleteUser = async (id) => {
+  return await axios.delete('/account/' + id, {  })
+}
+
+const deleteUsers = async (ids) => {
+  return await axios.delete('/account',id, {  })
+}
+
+const updateUser = async (id, userInfo) => {
+  return await axios.patch('/account/' + id, userInfo, {  })
+}
+
+const updateMe = async (userInfo) => {
+  return await axios.patch('/account/me', userInfo, {  })
+}
+
+const getOneUser = async (id) => {
+  return await axios.get('/account/' + id , {  })
+}
+
+const checkMyPassword = async (currentPassword) => {
+  return await axios.post('/account/me/checkpassword', currentPassword, {  })
+}
+
+const updateMyPassword = async (passwordModel) => {
+  return await axios.patch('/account/me/updatepassword', passwordModel, {  })
 }
 
 const getCurrentUser = async (token) => {
   return await axios.get('/account/me' , headerAuth(token))
 }
 
-const getCurrentUserAvatar = async (token) => {
-  return await axios.get('/account/me/avatar', avatarHeaderAuth(token))
+const getCurrentUserAvatar = async () => {
+  return await axios.get('/account/me/avatar')
 }
 
-const getUserAvatar = async (id, token) => {
-  return await axios.get('/account/me/' + id , avatarHeaderAuth(token))
+const getUserAvatar = async (id) => {
+  return await axios.get('/account/me/' + id )
 }
 
-const searchRecipients = async (search, token) => {
-  return await axios.get('/account/recipients?search=' + search, headerAuth(token))
+const searchRecipients = async (search) => {
+  return await axios.get('/account/recipients?search=' + search, {  })
 }
 
 export {
   getCurrentUser,
-  getAllUser ,
+  getAllUsers ,
   getOneUser ,
   createUser,
   deleteUser,
@@ -80,5 +111,7 @@ export {
   updateMe,
   getUserAvatar,
   getCurrentUserAvatar,
-  searchRecipients
+  searchRecipients,
+  searchUsers,
+  deleteUsers
 }

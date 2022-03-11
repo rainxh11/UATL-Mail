@@ -225,17 +225,17 @@ const FileTypeMap = {
   }
 }
 
-const findExtensionMimeType = (extension) => {
-  const type = AsEnumerable(Object.keys(FileTypeMap))
-    .GroupBy(x => x, x => FileTypeMap[x].extensions.flat())
-    .FirstOrDefault(x => x.flat().includes(extension))
+const fileTypes = AsEnumerable(Object.keys(FileTypeMap))
+  .GroupBy(x => x, x => FileTypeMap[x].extensions.flat())
 
-  return type === null ? 'generic' : type.key
+const findExtensionMimeType = (extension) => {
+  const type = fileTypes.FirstOrDefault(x => x.flat().includes(extension))
+
+  return !type ? 'generic' : type.key
 }
 
 export const getMimeIcon = (extension) => {
   const type = findExtensionMimeType(extension)
-  
   switch (type) {
   default: 
   case 'generic':

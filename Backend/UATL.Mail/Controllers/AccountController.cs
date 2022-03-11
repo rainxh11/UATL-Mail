@@ -17,9 +17,13 @@ using UATL.Mail.Helpers;
 using UATL.Mail.Models.Models.Response;
 using Microsoft.AspNetCore.SignalR;
 using System.Linq;
+using System.Reactive.Linq;
+using System.Reactive.Threading.Tasks;
+using Akavache;
 using FluentEmail.Core;
 using UATL.Mail.Hubs;
 using Hangfire;
+using UATL.Mail.Models;
 using UATL.Mail.Services;
 
 namespace UATL.MailSystem.Controllers
@@ -35,6 +39,7 @@ namespace UATL.MailSystem.Controllers
         private readonly IHubContext<MailHub> _mailHub;
         private IBackgroundJobClient _backgroundJobs;
         private NotificationService _notificationSerivce;
+        private LoginInfoSaver _loginSaver;
 
         public AccountController(
             ILogger<AccountController> logger,
@@ -43,6 +48,7 @@ namespace UATL.MailSystem.Controllers
             IHubContext<MailHub> mailHub,
             IBackgroundJobClient bgJobs,
             NotificationService nservice,
+            LoginInfoSaver loginSaver,
             IConfiguration config)
         {
             _logger = logger;
@@ -52,6 +58,7 @@ namespace UATL.MailSystem.Controllers
             _mailHub = mailHub;
             _backgroundJobs = bgJobs;
             _notificationSerivce = nservice;
+            _loginSaver = loginSaver;
         }
         //--------------------------------------------------------------------------------------------------------------//
         [AllowAnonymous]
@@ -289,6 +296,7 @@ namespace UATL.MailSystem.Controllers
                 var token = await _tokenService.BuildToken(_config, account);
                 //_backgroundJobs.Enqueue(() => _notificationSerivce.SendEmail("rainxh11@gmail.com", "UATL MAIL Test",$"Account {account.Name} Logged in.", ct));
 
+                await _loginSaver.AddLogin(HttpContext, account).ConfigureAwait(false);
                 return Ok(new ResultResponse<Account, string>(account, token));
             }
             return NotFound("User not found!");
@@ -470,6 +478,7 @@ namespace UATL.MailSystem.Controllers
                 account.Enabled = model.Enabled ?? account.Enabled;
                 account.Name = model.Name ?? account.Name;
                 account.Role = model.Role ?? account.Role;
+                account.Description = model.Description ?? account.Description;
                 account.ModifiedOn = DateTime.Now;
 
                 var update = await DB.Update<Account>(transaction.Session).MatchID(account.ID).ModifyWith(account).ExecuteAsync(ct);
@@ -611,6 +620,45 @@ namespace UATL.MailSystem.Controllers
                 return Ok(new ResultResponse<IEnumerable<Recipient>, int>(recipients, recipients.Count()));
             }
             catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------//
+        //--------------------------------------------------------------------------------------------------------------//
+        //--------------------------------------------------------------------------------------------------------------//
+
+        [Authorize(Roles = $"{AccountRole.Admin}")]
+        [HttpGet]
+        [Route("stats/login")]
+        public async Task<IActionResult> GetLoginStats()
+        {
+            try
+            {
+                var logins = await Akavache.BlobCache.LocalMachine.GetAllObjects<AccountLogin>();
+                //var accounts = logins.Select(x => x.Account.ID).Distinct();
+
+                return Ok(logins);
+
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        [Route("{id}/checkpassword")]
+        public async Task<IActionResult> CheckAccountPassword(string id)
+        {
+            try
+            {
+                return Ok();
+            }
+            catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 return BadRequest();

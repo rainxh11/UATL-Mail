@@ -7,8 +7,8 @@
     @keydown.enter.prevent="agree"
   >
     <v-card>
-      <v-toolbar dense flat :color="titleColor">
-        <v-toolbar-title class="align-center pa-1 text--right text-lg-h5 font-weight-bold d-flex">
+      <v-toolbar dark dense flat :color="titleColor">
+        <v-toolbar-title class="align-center pa-1 text--right text-lg-h6 font-weight-bold d-flex">
           <v-icon class="px-1" :color="iconColor">{{ icon }}</v-icon> {{ title }}
         </v-toolbar-title>
       </v-toolbar>

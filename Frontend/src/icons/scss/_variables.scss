@@ -1,13 +1,15 @@
 // variables
 // --------------------------
 
+@use "sass:math";
+
 $fa-css-prefix          : fa !default;
 $fa-style               : 900 !default;
 $fa-style-family        : "Font Awesome 6 Pro" !default;
 
 $fa-display             : inline-block !default;
 
-$fa-fw-width            : (20em / 16);
+$fa-fw-width            : math.div(20em, 16);
 $fa-inverse             : #fff !default;
 
 $fa-border-color        : #eee !default;
@@ -34,7 +36,7 @@ $fa-sizes: (
 ) !default;
 
 $fa-li-width            : 2em !default;
-$fa-li-margin           : ($fa-li-width * 5/4) !default;
+$fa-li-margin           : ($fa-li-width * 5*0.25) !default;
 
 $fa-pull-margin         : .3em !default;
 

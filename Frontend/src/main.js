@@ -1,13 +1,22 @@
+import VueCompositionAPI from '@vue/composition-api'
 import Vue from 'vue'
 import VueRx from 'vue-rx'
 import App from './App.vue'
 import VueIframe from 'vue-iframes'
+import { AsEnumerable, Range } from 'linq-es5'
+Array.prototype.AsEnumerable = function () {
+  return AsEnumerable(this)
+} 
+import PerfectScrollbar from 'vue2-perfect-scrollbar'
+import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
 
+Vue.use(PerfectScrollbar)
+
+Vue.use(VueCompositionAPI)
 // register vue-auth-image directive
 
 // VUEX - https://vuex.vuejs.org/
 import store from './store'
-import Tinybox from 'vue-tinybox'
 import { Plugin } from 'vue2-storage'
 
 // VUE-ROUTER - https://router.vuejs.org/
@@ -17,12 +26,8 @@ import { mailHub } from '@/plugins/sockets'
 import './icons/css/all.css'
 import vuetify from './plugins/vuetify'
 import i18n from './plugins/vue-i18n'
-import './plugins/vue-google-maps'
 import './plugins/vue-shortkey'
 import './plugins/vue-head'
-import './plugins/vue-gtag'
-import './plugins/apexcharts'
-import './plugins/echarts'
 import './plugins/animate'
 import './plugins/clipboard'
 import './plugins/moment'
@@ -57,7 +62,6 @@ import VueCookies from 'vue-cookies'
 Vue.use(VueCookies)
 
 // Enumerable
-import { AsEnumerable, Range } from 'linq-es5'
 Vue.prototype.$enumerable = AsEnumerable
 Vue.prototype.$range = Range
 
@@ -69,9 +73,10 @@ Vue.use(VueMask)
 // mask only as a filter
 Vue.filter('VMask', VueMaskFilter)
 const prod = process.env.NODE_ENV === 'production'
-
-let apiHost =  process.env.VUE_APP_API || '127.0.0.1:5000'
+let apiHost = process.env.VUE_APP_API || '127.0.0.1:5000'
 if (prod) apiHost = ''
+
+console.log(apiHost, 'apiHost', prod, 'prod')
 
 Vue.prototype.$apiHost = apiHost
 // Connect Websockets
@@ -113,7 +118,6 @@ Vue.use(VueNativeNotification, {
 })
 Vue.use(VueRx)
 Vue.use(VueIframe)
-Vue.use(Tinybox)
 Vue.use(VueViewer, {
   defaultOptions: {
     zIndex: 9999

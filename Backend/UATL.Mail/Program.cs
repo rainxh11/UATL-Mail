@@ -38,37 +38,38 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
 using System.Reactive.Concurrency;
+using System.Security.Authentication;
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 using FluentEmail;
 using FluentEmail.Smtp;
 using Hangfire.Dashboard;
 using Hangfire.Storage.SQLite;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using UATL.Mail;
 using UATL.Mail.Helpers;
 using UATL.Mail.Models;
+using Ng.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 //---------- Logging ---------------//
 Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Verbose)
-            .Enrich.FromLogContext()
-            .Enrich.WithClientIp()
-            .Enrich.WithClientAgent()
-            .Enrich.WithExceptionData()
-            .Enrich.WithMemoryUsage()
-            .Enrich.WithProcessName()
-            .Enrich.WithThreadName()
-            .WriteTo.Seq(builder.Configuration["SeqUrl"])
-            .WriteTo.Console(theme: Serilog.Sinks.SystemConsole.Themes.SystemConsoleTheme.Colored, restrictedToMinimumLevel: LogEventLevel.Information)
-            .WriteTo.File(AppContext.BaseDirectory + @"\Log\[DEBUG]_UATLMail_Log_.log", 
-                rollingInterval: RollingInterval.Day, 
-                rollOnFileSizeLimit: true, 
-                retainedFileCountLimit:365,
-                shared: true,
-                restrictedToMinimumLevel: LogEventLevel.Debug)
-            .WriteTo.File(AppContext.BaseDirectory + @"\Log\[VERBOSE]_UATLMail_Log_.log",
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Verbose)
+    .Enrich.FromLogContext()
+    .Enrich.WithClientIp()
+    .Enrich.WithClientAgent()
+    .Enrich.WithExceptionData()
+    .Enrich.WithMemoryUsage()
+    .Enrich.WithProcessName()
+    .Enrich.WithThreadName()
+    .Enrich.WithDemystifiedStackTraces()
+    .Enrich.WithRequestUserId()
+    .WriteTo.Seq(builder.Configuration["SeqUrl"])
+    .WriteTo.Console(theme: Serilog.Sinks.SystemConsole.Themes.SystemConsoleTheme.Colored, restrictedToMinimumLevel: LogEventLevel.Information)
+    .WriteTo.File(AppContext.BaseDirectory + @"\Log\[VERBOSE]_UATLMail_Log_.log",
                 rollingInterval: RollingInterval.Day,
                 rollOnFileSizeLimit: true,
                 retainedFileCountLimit: 365,
@@ -80,13 +81,7 @@ Log.Logger = new LoggerConfiguration()
                 retainedFileCountLimit: 365,
                 shared: true,
                 restrictedToMinimumLevel: LogEventLevel.Error)
-            .WriteTo.File(AppContext.BaseDirectory + @"\Log\[WARNING]_UATLMail_Log_.log",
-                rollingInterval: RollingInterval.Day,
-                rollOnFileSizeLimit: true,
-                retainedFileCountLimit: 365,
-                shared: true,
-                restrictedToMinimumLevel: LogEventLevel.Warning)
-            .WriteTo.File(AppContext.BaseDirectory + @"\Log\[INFO]_UATLMail_Log_.log",
+    .WriteTo.File(AppContext.BaseDirectory + @"\Log\[INFO]_UATLMail_Log_.log",
                 rollingInterval: RollingInterval.Day,
                 rollOnFileSizeLimit: true,
                 retainedFileCountLimit: 365,
@@ -257,6 +252,9 @@ builder.Services.AddSignalR(x =>
 
 //---------- NotificationService ---------------//
 builder.Services
+    .AddUserAgentService();
+builder.Services
+    .AddSingleton<LoginInfoSaver>()
     .AddSingleton<NotificationService>();
 
 //---------- Email Notifications ---------------//
@@ -296,9 +294,22 @@ builder.Services.AddSpaStaticFilesWithUrlRewrite(config =>
 builder.WebHost
     .UseKestrel(o =>
     {
-        o.ListenAnyIP(builder.Configuration["Port"].ToInt());
+        o.ListenAnyIP(builder.Configuration["Port"].ToInt(), listenOptions =>
+        {
+            /*listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+            listenOptions.UseHttps(cnxAdapter =>
+            {
+                /*cnxAdapter.SslProtocols = SslProtocols.Tls13;
+
+                var certPath = Path.Combine(AppContext.BaseDirectory, builder.Configuration["Https:CertPemFile"]);
+                var password = builder.Configuration["Https:Password"];
+                cnxAdapter.ServerCertificate = X509Certificate2.CreateFromPemFile(certPath);
+            });*/
+        });
         o.Limits.MaxRequestBodySize = int.MaxValue;
-    });
+    })
+    .UseUrls();
+
 var app = builder.Build();
 //---------------------------------------------------------------------------------------------------------//
 //---------------------------------------------------------------------------------------------------------//
@@ -310,9 +321,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    //app.UseHttpsRedirection();
+    //app.UseHsts();
 }
 
-var hosts = builder.Configuration["CorsHosts"];
+
+
 app.UseCors(config => config
     .AllowAnyHeader()
     .AllowAnyMethod()
@@ -325,6 +339,7 @@ app
     .UseMiddleware<TokenInjectionMiddleware>()
     .UseMiddleware<BasicAuthMiddleware>();
 app.UseAuthentication();
+app.UseDeveloperExceptionPage();
 
 app.UseHttpLogging();
 app.MapControllers();

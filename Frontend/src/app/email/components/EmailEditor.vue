@@ -8,7 +8,7 @@
     @dragstart.prevent="dragover = true"
   >
 
-    <email-input v-if="!sendLoading && !external" :label="$t('email.to')" :addresses="toAddresses" @change="addRecipients($event)"/>
+    <email-input v-if="!sendLoading" :label="$t('email.to')" :addresses="toAddresses" @change="addRecipients($event)"/>
     <v-checkbox
       v-if="!sendLoading"
       v-model="external"

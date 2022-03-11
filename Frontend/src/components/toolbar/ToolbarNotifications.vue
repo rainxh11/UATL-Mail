@@ -8,7 +8,7 @@
         offset-y="22"
       >
         <v-btn icon v-on="on">
-          <v-icon>mdi-bell-outline</v-icon>
+          <v-icon>fa-bell</v-icon>
         </v-btn>
       </v-badge>
     </template>

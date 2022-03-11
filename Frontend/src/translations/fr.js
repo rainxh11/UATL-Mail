@@ -1,4 +1,12 @@
 export default {
+  'validator': {
+    'required': 'Champ Obligatoire',
+    'password': 'Mot de pass invalide! doit contenir des caractères alphanumériques et une majuscule',
+    'confirmPassword': 'Mot de passes différents',
+    'maxMin': 'Longeur entre #MIN et #MAX caracters!',
+    'alphaWhiteSpace': 'Uniquement les caractères alpha et blancs!',
+    'userName': 'Nom d\'utilisateur invalide'
+  },
   'utility':{
     'externalLink': 'Vous êtes sur le point d\'être redirigé vers un lien externe!'
   },
@@ -16,6 +24,11 @@ export default {
     'header': 'Centre d\'Imagerie Médicale',
     'welcome': 'Bienvenue',
     'signinSubheader': 'Connectez-vous à votre compte'
+  },
+  'roles': {
+    'User': 'Utilisateur',
+    'Admin': 'Administrateur',
+    'OrderOffice': 'Bureau d\'Ordre'
   },
   'common': {
     'requestCancelled':'Annulé par l\'utilisateur',
@@ -112,6 +125,10 @@ export default {
     'verifyPassword': 'Vérifier',
     'newPasswordLabel': 'Nouveau Mot de passe'
   },
+  'users':{
+    'users':'Comptes d\'Utilisateurs',
+    'createUser': 'Créer un Compte'
+  },
   'setting': {
     'General': 'Paramètres Générale',
     'settingMenuHeader': 'Paramètres',
@@ -120,29 +137,6 @@ export default {
     'reportList': 'Référentiel de Rapports',
     'userList': 'Comptes d\'Utilisateurs',
     'disabledUsers': 'Comptes Désactivée',
-    'examList': {
-      'prices': 'Tarrifes',
-      'pricesConvention': 'Tarrifes des Conventions',
-      'normalPrice': 'Tarrife des Clients Particulier',
-      'examName': 'Nom d\'Examen',
-      'modalityName': 'Nom de Modalité',
-      'exam': 'Examen',
-      'exams': 'Examens',
-      'modality': 'Modalité (Groupe)',
-      'modalities': 'Modalities (Groupes)',
-      'convention': 'Convention',
-      'conventions': 'Conventions',
-      'priceTotal': 'Tarrife Totale HT',
-      'priceClient': 'Tarrife de Bénéficiaire',
-      'priceCompany': 'Tarrife de Convention',
-      'percentageIndividual': '(%) Payant par le bénéficiaire',
-      'percentageCompany': '(%) Payant par l\'entreprise',
-      'conventionStatus': 'Etat de Convention',
-      'conventionEnabled': 'Convention Activée',
-      'newPrice': 'Nouveau Tarrife',
-      'newPriceConvention': 'Nouveau Tarrife de Convention',
-      'nonConvention': 'NON CONVENTION'
-    },
     'userDialog': {
       'passwordMatchError': 'Le mot de passe est différent',
       'minimum': '# Caractères minimum',
@@ -155,11 +149,10 @@ export default {
       'roleLabel': 'Rôle',
       'passwordLabel': 'Mot de Passe',
       'confirmPasswordLabel': 'Confimer',
-      'spaceRequired':'Ajouter un espace entre le Nom & Prénom!'
-    },
-    'roles': {
-      'user': 'Utilisateur',
-      'admin': 'Administrateur'
+      'spaceRequired':'Ajouter un espace entre le Nom & Prénom!',
+      'description': 'Description',
+      'userEnabled': 'Compte Activé',
+      'userDisabled': 'Compte Désactivée'
     },
     'userListHeaders': {
       'name': 'Nom et Prénom',

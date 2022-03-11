@@ -14,7 +14,9 @@ module.exports = {
     'import/newline-after-import': 'off',
     'no-unused-vars': 'off',
     'padding-line-between-statements': 'off',
-    'newline-before-return': 'off'
+    'newline-before-return': 'off',
+    'no-extend-native': 'off',
+    'no-useless-escape': 'off'
   }
 }
 /* eslint-disable */

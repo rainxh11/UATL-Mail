@@ -77,130 +77,133 @@
     <v-list
       v-for="group in $enumerable(emails).GroupBy(x => new Date(x.SentOn ? x.SentOn : x.CreatedOn).toString('yyyy/MM/dd'), x => x).ToArray()"
       :key="group"
-      class="py-0"
+      class="px-2"
     >
-      <v-subheader>
-        <v-list-item-action class="d-flex flex-row align-center">
+      <perfect-scrollbar>
+        <v-subheader>
           <v-list-item-action class="d-flex flex-row align-center">
-            <v-icon>fa-regular fa-calendar-day</v-icon>
-          </v-list-item-action>
-          <v-list-item-action-text>
-            <span class="text--primary text-h6">
-              {{ new Date(group.key) | formatDate('dddd, DD MMMM yyyy') | uppercase }}
-            </span>
-          </v-list-item-action-text>
-        </v-list-item-action></v-subheader>
-      <v-divider/>
-      <template v-for="(item, index) in group.values()">
-        <v-list-item
-          :key="item.ID"
-          :class="{
-            'grey lighten-5': item.read && !$vuetify.theme.dark,
-            'v-list-item--active primary--text': selected.indexOf(item.ID) !== -1
-          }"
-          link
-          :to="`/mailbox/mail/${item.ID}`"
-        >
-          <v-list-item-action class="d-flex flex-row align-center">
-            <v-checkbox v-model="selected" :value="item.ID"></v-checkbox>
-
-            <v-btn v-if="type !== 'draft'" icon class="ml-1" @click="toggleStarred(item.ID)">
-              <v-icon v-if="!isStarred(item.ID)" color="grey lighten-1">
-                fa-regular fa-star
-              </v-icon>
-              <v-icon v-else color="yellow darken-2">
-                fa-solid fa-star
-              </v-icon>
-            </v-btn>
-            <v-icon v-if="type === 'mail'" small :color="getMailIcon(item).color" class="px-2">
-              {{ getMailIcon(item).icon }}
-            </v-icon>
-            <v-icon v-if="type === 'draft'" small class="px-2">fa-solid fa-pencil</v-icon>
-          </v-list-item-action>
-          <v-list-item-avatar v-if="item.To" class="d-flex flex-row">
-            <v-img :src="avatar(item.To.ID)" />
-          </v-list-item-avatar>
-          <v-list-item-content class="pa-2" @click="$router.push(`/mailbox/${type}/${item.id}`)">
-            <v-list-item-title>{{ getTitle(item) }}</v-list-item-title>
-            <v-list-item-title v-text="item.Subject"></v-list-item-title>
-            <v-list-item-subtitle v-show="type === 'draft'" class="font-weight-bold">
-              {{ getTitle(item) }}
-            </v-list-item-subtitle>
-            <v-list-item-subtitle @click.stop v-html="item.Body.slice(0,500) + '...'"></v-list-item-subtitle>
-            <v-list-item-subtitle>
-              <v-chip
-                v-for="label in item.labels"
-                :key="label"
-                :color="getLabelColor(label)"
-                class="font-weight-bold mt-1 mr-1"
-                outlined
-                small
-              >
-                {{ getLabelTitle(label) }}
-              </v-chip>
-            </v-list-item-subtitle>
-            <v-list-item-subtitle v-if="item.Attachments.length !== 0">
-              <v-list-item-title>
-                <v-icon small>fa-solid fa-paperclip</v-icon>
-                {{ `${item.Attachments.length} ${$t('email.attachments')}: ` }}
-                <v-chip
-                  v-for="file in $enumerable(item.Attachments).Take(3).ToArray()"
-                  :key="file"
-                  small
-                  label
-                  class="font-italic"
-                >
-                  {{ file.Name }} <b>({{ file.FileSize | formatByte }})</b>
-                </v-chip>
-                <span v-if="item.Attachments.length > 3">...</span>
-              </v-list-item-title>
-            </v-list-item-subtitle>
-            <v-list-item-subtitle v-if="item.HashTags.length !== 0">
-              <v-list-item-title>
-                <v-chip
-                  v-for="tag in $enumerable(item.HashTags).Take(5).ToArray()"
-                  :key="tag"
-                  class="font-italic"
-                  :dark="getUniqueColor(tag).dark"
-                  :light="getUniqueColor(tag).light"
-                  :color="getUniqueColor(tag).color"
-                >
-                  {{ tag }}
-                </v-chip>
-                <span v-if="item.HashTags.length > 5">...</span>
-              </v-list-item-title>
-            </v-list-item-subtitle>
-          </v-list-item-content>
-
-          <v-list-item-action>
+            <v-list-item-action class="d-flex flex-row align-center">
+              <v-icon>fa-regular fa-calendar-day</v-icon>
+            </v-list-item-action>
             <v-list-item-action-text>
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on, attrs }">
-                  <span v-bind="attrs" class="text--primary text-lg-body-2" v-on="on">
-                    {{ type === 'mail' ? item.SentOn : item.CreatedOn | formatTimeAgo }}
-                    <v-icon color="primary" x-small>fa-regular fa-clock</v-icon>
-                  </span>
-                </template>
-                <span >{{ type === 'mail' ? item.SentOn : item.CreatedOn | formatDate('HH:mm | DD MMMM YYYY') }}</span>
-              </v-tooltip>
+              <span class="text--primary text-h6">
+                {{ new Date(group.key) | formatDate('dddd, DD MMMM yyyy') | uppercase }}
+              </span>
             </v-list-item-action-text>
-          </v-list-item-action>
-        </v-list-item>
+          </v-list-item-action></v-subheader>
+        <v-divider/>
+        <template v-for="(item, index) in group.values()">
+          <v-list-item
+            :key="item.ID"
+            :class="{
+              'grey lighten-5': item.read && !$vuetify.theme.dark,
+              'v-list-item--active primary--text': selected.indexOf(item.ID) !== -1
+            }"
+            link
+            :to="`/mailbox/mail/${item.ID}`"
+          >
+            <v-list-item-action class="d-flex flex-row align-center">
+              <v-checkbox v-model="selected" :value="item.ID"></v-checkbox>
 
-        <v-divider
-          v-if="index + 1 < emails.length"
-          :key="index"
-        ></v-divider>
-      </template>
-      <template v-if="!isLoading && emails.length === 0">
-        <div class="px-1 py-6 text-center">{{ $t('email.emptyList') }}</div>
-      </template>
+              <v-btn v-if="type !== 'draft'" icon class="ml-1" @click.prevent="toggleStarred(item.ID)">
+                <v-icon v-if="!isStarred(item.ID)" color="grey lighten-1">
+                  fa-regular fa-star
+                </v-icon>
+                <v-icon v-else color="yellow darken-2">
+                  fa-solid fa-star
+                </v-icon>
+              </v-btn>
+              <v-icon v-if="type === 'mail'" small :color="getMailIcon(item).color" class="px-2">
+                {{ getMailIcon(item).icon }}
+              </v-icon>
+              <v-icon v-if="type === 'draft'" small class="px-2">fa-solid fa-pencil</v-icon>
+            </v-list-item-action>
+            <v-list-item-avatar v-if="item.To" class="d-flex flex-row">
+              <v-img :src="avatar(item.To.ID)" />
+            </v-list-item-avatar>
+            <v-list-item-content class="pa-2" @click="$router.push(`/mailbox/${type}/${item.id}`)">
+              <v-list-item-title>{{ getTitle(item) }}</v-list-item-title>
+              <v-list-item-title v-text="item.Subject"></v-list-item-title>
+              <v-list-item-subtitle v-show="type === 'draft'" class="font-weight-bold">
+                {{ getTitle(item) }}
+              </v-list-item-subtitle>
+              <v-list-item-subtitle @click.stop v-html="item.Body.slice(0,500) + '...'"></v-list-item-subtitle>
+              <v-list-item-subtitle>
+                <v-chip
+                  v-for="label in item.labels"
+                  :key="label"
+                  :color="getLabelColor(label)"
+                  class="font-weight-bold mt-1 mr-1"
+                  outlined
+                  small
+                >
+                  {{ getLabelTitle(label) }}
+                </v-chip>
+              </v-list-item-subtitle>
+              <v-list-item-subtitle v-if="item.Attachments.length !== 0">
+                <v-list-item-title>
+                  <v-icon small>fa-solid fa-paperclip</v-icon>
+                  {{ `${item.Attachments.length} ${$t('email.attachments')}: ` }}
+                  <v-chip
+                    v-for="file in $enumerable(item.Attachments).Take(10).ToArray()"
+                    :key="file"
+                    small
+                    label
+                    class="font-italic"
+                  >
+                    <v-icon small :color="getFileIcon(file).color">{{ getFileIcon(file).icon }}</v-icon>
+                    {{ file.Name.substr(0,5) + '...'+ file.Name.substr(-5) }} <b>({{ file.FileSize | formatByte }})</b>
+                  </v-chip>
+                  <v-chip v-if="item.Attachments.length > 10" small>...</v-chip>
+                </v-list-item-title>
+              </v-list-item-subtitle>
+              <v-list-item-subtitle v-if="item.HashTags.length !== 0">
+                <v-list-item-title>
+                  <v-chip
+                    v-for="tag in $enumerable(item.HashTags).Take(5).ToArray()"
+                    :key="tag"
+                    class="font-italic"
+                    :dark="getUniqueColor(tag).dark"
+                    :light="getUniqueColor(tag).light"
+                    :color="getUniqueColor(tag).color"
+                  >
+                    {{ tag }}
+                  </v-chip>
+                  <v-chip v-if="item.HashTags.length > 5">...</v-chip>
+                </v-list-item-title>
+              </v-list-item-subtitle>
+            </v-list-item-content>
+
+            <v-list-item-action>
+              <v-list-item-action-text>
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on, attrs }">
+                    <span v-bind="attrs" class="text--primary text-lg-body-2" v-on="on">
+                      {{ type === 'mail' ? item.SentOn : item.CreatedOn | formatTimeAgo }}
+                      <v-icon color="primary" x-small>fa-regular fa-clock</v-icon>
+                    </span>
+                  </template>
+                  <span >{{ type === 'mail' ? item.SentOn : item.CreatedOn | formatDate('HH:mm | DD MMMM YYYY') }}</span>
+                </v-tooltip>
+              </v-list-item-action-text>
+            </v-list-item-action>
+          </v-list-item>
+
+          <v-divider
+            v-if="index + 1 < emails.length"
+            :key="index"
+          ></v-divider>
+        </template>
+        <template v-if="!isLoading && emails.length === 0">
+          <div class="px-1 py-6 text-center">{{ $t('email.emptyList') }}</div>
+        </template>
+      </perfect-scrollbar>
     </v-list>
 
     <v-overlay :value="isLoading" absolute>
       <v-progress-circular indeterminate size="32"></v-progress-circular>
     </v-overlay>
-
+    
   </v-card>
 </template>
 
@@ -218,6 +221,7 @@ import { mapGetters } from 'vuex'
 import { getStarred, addStarred, deleteStarred } from '@/api/mails'
 import seedColor from 'seed-color'
 import isDarkColor from 'is-dark-color'
+import { getMimeIcon } from '@/plugins/mimeToIcon'
 
 export default {
   props: {
@@ -401,6 +405,11 @@ export default {
       if (!item.To) return { icon: `${internal} fa-inbox-out`, color: 'blue' }
       if (item.To.ID === user.ID) return { icon: `${internal} fa-inbox-in`, color: 'green' }
       else return { icon: `${internal} fa-inbox-out`, color: 'blue' }
+    },
+    getFileIcon(file) {
+      const icon =  getMimeIcon(file.Extension)
+      console.log(file, icon, 'icon')
+      return icon
     }
   }
 }

@@ -39,7 +39,7 @@
 
         <v-list-item link>
           <v-list-item-icon>
-            <v-icon small>mdi-logout-variant</v-icon>
+            <v-icon small>fa-right-from-bracket</v-icon>
           </v-list-item-icon>
           <v-list-item-content @click="logout()">
             <v-list-item-title>{{ $t('menu.logout') }}</v-list-item-title>

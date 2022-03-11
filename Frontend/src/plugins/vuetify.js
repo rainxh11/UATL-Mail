@@ -8,7 +8,7 @@ import Vuetify from 'vuetify/lib/framework'
 import * as directives from 'vuetify/lib/directives'
 import i18n from './vue-i18n'
 import config from '../configs'
-import '@mdi/font/css/materialdesignicons.css' // Ensure you are using css-loader
+//import '@mdi/font/css/materialdesignicons.css' // Ensure you are using css-loader
 
 /**
  * Vuetify Plugin
@@ -23,7 +23,7 @@ Vue.use(Vuetify, {
 
 export default new Vuetify({
   icons: {
-    iconfont: 'mdi'
+    iconfont: 'fa'
   },
   rtl: config.theme.isRTL,
   theme: {

@@ -14,5 +14,11 @@ export default [
     name: 'files-viewer',
     component: () => import(/* webpackChunkName: "landing-home" */ '../layouts/ErrorLayout'),
     children: []  
+  },
+  {
+    path: '/setting/users',
+    name: 'user-list',
+    component: () => import(/* webpackChunkName: "landing-home" */ '@/app/user/UserList'),
+    children: []  
   }
 ]

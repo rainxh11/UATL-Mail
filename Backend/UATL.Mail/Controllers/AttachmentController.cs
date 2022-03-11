@@ -73,7 +73,7 @@ namespace UATL.Mail.Controllers
             }
         }
         ///---------------------------------------------------------------------------------------------------------///
-        public async Task<bool> HaveAccessToFile(string id, Account account, CancellationToken ct)
+        private async Task<bool> HaveAccessToFile(string id, Account account, CancellationToken ct)
         {
             var transaction = DB.Transaction();
             try

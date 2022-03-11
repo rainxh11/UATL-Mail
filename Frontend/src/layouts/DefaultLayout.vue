@@ -184,6 +184,7 @@ export default {
   },
   mounted() {
     this.loadConfig()
+
   },
   beforeDestroy() {
     this.$mailHub.off('received_mail')
