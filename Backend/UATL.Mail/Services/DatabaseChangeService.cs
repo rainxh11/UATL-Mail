@@ -71,6 +71,7 @@ namespace UATL.MailSystem.Services
             _statsSubscriptions?.Dispose();
             _mailSubscriptions?.Dispose();
 
+
             return Task.CompletedTask;
         }
 
@@ -117,6 +118,33 @@ namespace UATL.MailSystem.Services
                 .Where(x => x.OperationType == ChangeStreamOperationType.Insert || x.OperationType == ChangeStreamOperationType.Update || x.OperationType == ChangeStreamOperationType.Replace)
                 .Where(x => x.FullDocument != null)
                 .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.FullDocument.ID, "refresh_account")))
+                .Subscribe();
+
+            _changeMailSubscription = mailChanges
+                .Where(x => x.OperationType == ChangeStreamOperationType.Insert || x.OperationType == ChangeStreamOperationType.Update || x.OperationType == ChangeStreamOperationType.Replace)
+                .Where(x => x.FullDocument != null)
+                .Do(x =>
+                {
+                    if (x.OperationType != ChangeStreamOperationType.Insert)
+                    {
+                        if (x.FullDocument.From != null)
+                        {
+                            _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.FullDocument.From.ID, "sent_mail"));
+                        }
+                        if (x.FullDocument.To != null)
+                        {
+                            if (x.FullDocument.Type == MailType.Internal ||
+                                (x.FullDocument.Type == MailType.External && x.FullDocument.Approved))
+                            {
+                                _backgroundJobs.Enqueue(() => _notificationSerivce.Send(x.FullDocument.To.ID, "sent_mail"));
+                            }
+                        }
+                    }
+
+                })
+                .Where(x => x.FullDocument.Type == MailType.External)
+                .Sample(TimeSpan.FromSeconds(5))
+                .Do(x => _backgroundJobs.Enqueue(() => _notificationSerivce.SendAll("refresh_orders")))
                 .Subscribe();
 
 

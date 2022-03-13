@@ -23,7 +23,7 @@ namespace UATL.Mail
             if (context.Request.Path.StartsWithSegments("/backgroundjobs") || context.Request.Path.StartsWithSegments("/api"))
             {
 
-                if (context.Request.Cookies.ContainsKey("T"))
+                if (context.Request.Cookies.ContainsKey("T") && !context.Request.Headers["Authorization"].Any(x => x.Contains("Bearer")))
                 {
                     var token = context.Request.Cookies["T"];
                     context.Request.Headers["Authorization"] = $"Bearer {token}";

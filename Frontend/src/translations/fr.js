@@ -86,11 +86,22 @@ export default {
     'invalidHashtag': 'Hashtag Invalide!'
   },
   'email': {
+    'headers': {
+      'sentOn': 'Envoyé le',
+      'sender': 'Expéditeur',
+      'destination': 'Vers',
+      'status': 'Etat',
+      'subject': 'Sujet'
+    },
+    'approve': 'Approver',
+    'approved': 'Approuvé',
+    'unApproved': 'Non Approuvé',
     'forward': 'Transférer le courrier',
     'empty': 'Aucun élément, boîte vide!',
     'tags': 'Tags',
     'external': 'Exterieure',
     'externalMail': 'Courrier Exterieure',
+    'externalMails': 'Courriers Exterieure',
     'sending': 'En cours d\'envoi de courrier',
     'attachments' : 'Attachements',
     'to': 'Vers :',
@@ -283,7 +294,8 @@ export default {
     'clientDebtPage': 'Dettes',
     'radioManagement':'Gestion de l\'imagerie radio',
     'archivePage':'Archive d\'Imagerie',
-    'reports':'Gestion des Rapports'
+    'reports':'Gestion des Rapports',
+    'orderList': 'Gestion d\'Ordres'
   },
   '$vuetify': {
     'badge': 'Badge',

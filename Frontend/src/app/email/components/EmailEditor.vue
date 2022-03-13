@@ -404,7 +404,7 @@ export default {
       const mail = {
         Subject: this.subject,
         Body: Html5Entities.encode(this.editor.getHTML()),
-        Recipients: this.external ? [] : this.toAddresses,
+        Recipients: this.toAddresses,
         Type: this.external ? 'External' : 'Internal',
         HashTags: this.tags,
         ReplyTo: this.replyTo ? this.replyTo : undefined

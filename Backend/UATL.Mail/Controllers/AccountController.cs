@@ -88,7 +88,7 @@ namespace UATL.MailSystem.Controllers
         }
 
         //--------------------------------------------------------------------------------------------------------------//
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
         [HttpPost]
         [Route("{id}/avatar")]
         public async Task<IActionResult> AddAvatar(string id, [FromForm] IFormFile file, CancellationToken ct)
@@ -136,7 +136,7 @@ namespace UATL.MailSystem.Controllers
             }
         }
         //--------------------------------------------------------------------------------------------------------------//
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
         [HttpGet]
         [Route("{id}/avatar")]
         public async Task<IActionResult> GetAvatar(string id, CancellationToken ct)
@@ -159,7 +159,7 @@ namespace UATL.MailSystem.Controllers
             }
         }
         //--------------------------------------------------------------------------------------------------------------//
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [Authorize(Roles = $"{AccountRole.Admin}")]
         [HttpDelete]
         [Route("{id}/avatar")]
         public async Task<IActionResult> DeleteAvatar(string id, CancellationToken ct)
@@ -279,27 +279,39 @@ namespace UATL.MailSystem.Controllers
         public async Task<IActionResult> Login([FromBody] LoginModel model, CancellationToken ct)
         {
             var account = await Authenticate(x => x.UserName == model.UserName);
-
-            if(account != null)
+            var transaction = DB.Transaction();
+            try
             {
-                if (!VerifyPassword(account, model.Password))
+                if (account != null)
                 {
-                    return BadRequest($"Password of Account '{account.UserName}' is incorrect!");
-                }
-                if (!account.Enabled)
-                {
-                    return BadRequest($"Account '{account.UserName}' is disabled, please contact system administrator!");
-                }
-                account.LastLogin = DateTime.Now;
-                await account.SaveAsync();
+                    if (!VerifyPassword(account, model.Password))
+                    {
+                        return BadRequest($"Password of Account '{account.UserName}' is incorrect!");
+                    }
+                    if (!account.Enabled)
+                    {
+                        return BadRequest($"Account '{account.UserName}' is disabled, please contact system administrator!");
+                    }
+                    account.LastLogin = DateTime.Now;
+                    await account.SaveAsync(transaction.Session, ct);
+                    await transaction.CommitAsync();
 
-                var token = await _tokenService.BuildToken(_config, account);
-                //_backgroundJobs.Enqueue(() => _notificationSerivce.SendEmail("rainxh11@gmail.com", "UATL MAIL Test",$"Account {account.Name} Logged in.", ct));
+                    var token = await _tokenService.BuildToken(_config, account);
+                    //_backgroundJobs.Enqueue(() => _notificationSerivce.SendEmail("rainxh11@gmail.com", "UATL MAIL Test",$"Account {account.Name} Logged in.", ct));
 
-                await _loginSaver.AddLogin(HttpContext, account).ConfigureAwait(false);
-                return Ok(new ResultResponse<Account, string>(account, token));
+                    await _loginSaver.AddLogin(HttpContext, account).ConfigureAwait(false);
+                    return Ok(new ResultResponse<Account, string>(account, token));
+                }
+                return NotFound("User not found!");
             }
-            return NotFound("User not found!");
+            catch(Exception ex)
+            {
+                if (transaction.Session.IsInTransaction)
+                    await transaction.AbortAsync();
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+            
         }
         //--------------------------------------------------------------------------------------------------------------//
         [HttpGet]
@@ -331,7 +343,7 @@ namespace UATL.MailSystem.Controllers
         }
         //--------------------------------------------------------------------------------------------------------------//
 
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
         [HttpGet]
         [Route("me")]
         public async Task<IActionResult> GetCurrentAccount()
@@ -356,7 +368,7 @@ namespace UATL.MailSystem.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
         [HttpPost]
         [Route("me/avatar")]
         public async Task<IActionResult> UpdateCurrentAvatar([FromForm] IFormFile file, CancellationToken ct)
@@ -398,7 +410,7 @@ namespace UATL.MailSystem.Controllers
             }
         }
         //--------------------------------------------------------------------------------------------------------------//
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
         [HttpGet]
         [Route("me/avatar")]
         public async Task<IActionResult> GetCurrentAvatar(CancellationToken ct)
@@ -426,7 +438,7 @@ namespace UATL.MailSystem.Controllers
             }
         }
         //--------------------------------------------------------------------------------------------------------------//
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
         [HttpDelete]
         [Route("me/avatar")]
         public async Task<IActionResult> DeleteCurrentAvatar(CancellationToken ct)
@@ -587,7 +599,7 @@ namespace UATL.MailSystem.Controllers
         }
 
         //--------------------------------------------------------------------------------------------------------------//
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
         [HttpGet]
         [Route("recipients")]
         public async Task<IActionResult> GetRecipients(string? search = "")

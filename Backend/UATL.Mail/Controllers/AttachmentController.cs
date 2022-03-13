@@ -75,6 +75,8 @@ namespace UATL.Mail.Controllers
         ///---------------------------------------------------------------------------------------------------------///
         private async Task<bool> HaveAccessToFile(string id, Account account, CancellationToken ct)
         {
+            if (account.Role == AccountType.OrderOffice) 
+                return false;
             var transaction = DB.Transaction();
             try
             {

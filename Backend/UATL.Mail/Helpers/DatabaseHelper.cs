@@ -66,6 +66,14 @@ namespace UATL.MailSystem.Helpers
                 .Key(b => b.Description, KeyType.Text)
                 .CreateAsync();
 
+            var attachments = DB.Index<Attachment>()
+                .Key(b => b.Name, KeyType.Text)
+                .Key(b => b.UploadedBy.Name, KeyType.Text)
+                .Key(b => b.UploadedBy.UserName, KeyType.Text)
+                .Key(b => b.UploadedBy.ID, KeyType.Text)
+                .Key(b => b.MD5, KeyType.Text)
+                .CreateAsync();
+
             await DB.Index<Account>()
                 .Key(b => b.UserName, KeyType.Ascending)
                 .Option(x => x.Unique = true)
@@ -73,7 +81,7 @@ namespace UATL.MailSystem.Helpers
 
 
 
-            await Task.WhenAll(draftIndex, accountIndex);
+            await Task.WhenAll(draftIndex, accountIndex, mailIndex, attachments);
         }
     }
 }

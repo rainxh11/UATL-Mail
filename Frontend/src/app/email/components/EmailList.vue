@@ -119,7 +119,7 @@
               <v-icon v-if="type === 'draft'" small class="px-2">fa-solid fa-pencil</v-icon>
             </v-list-item-action>
             <v-list-item-avatar v-if="item.To" class="d-flex flex-row">
-              <v-img :src="avatar(item.To.ID)" />
+              <v-img :src="avatar(item.To.ID)" lazy-src="/images/avatars/generic.jpg"/>
             </v-list-item-avatar>
             <v-list-item-content class="pa-2" @click="$router.push(`/mailbox/${type}/${item.id}`)">
               <v-list-item-title>{{ getTitle(item) }}</v-list-item-title>

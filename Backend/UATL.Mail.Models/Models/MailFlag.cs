@@ -5,7 +5,8 @@
         Important,
         RequireTask,
         Acknowledged,
-        Approved,
+        Approved, // Order Office 
+        Reviewed, // Order Office
         Archived
     }
 }

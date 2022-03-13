@@ -9,6 +9,7 @@ import Vuecookie from 'vue-cookies'
 // Routes
 import Routes from './app.routes'
 import Pages from './pages.routes'
+import OrderOffice from '../app/email/routes/orderoffice'
 // Api
 import { getMyInfo } from '@/api/auth'
 
@@ -20,6 +21,7 @@ export const routes = [{
 },
 ...Pages,
 ...Routes,
+...OrderOffice,
 {
   path: '/blank',
   name: 'blank',
@@ -78,18 +80,27 @@ router.beforeEach((to, from, next) => {
 
 // eslint-disable-next-line consistent-return
 const routerCheck = (to ,next) => {
+
   switch (store.getters['auth/getUserInfo'].Role) {
   case 'Admin':
     return next()
+  case 'OrderOffice':
+    if (to.path.startsWith('/orders')) {
+      return next()
+    } else {
+      return next({
+        path : '/orders'
+      })
+    }
   case 'User':
     if (to.path.startsWith('/mailbox')) {
       return next()
     } else {
       return next({
-        path : '/clients'
+        path : '/mailbox'
       })
     }
-
+    
   }
 }
 

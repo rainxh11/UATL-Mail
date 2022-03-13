@@ -22,7 +22,6 @@ namespace UATL.MailSystem.Models
         public DateTime ModifiedOn { get; set; }
         public DateTime LastLogin { get; set; }
         public DateTime PasswordUpdatedOn { get; set; }
-        public string Description { get; set; }
         [IgnoreDefault]
         public AccountBase CreatedBy { get; set; }
 

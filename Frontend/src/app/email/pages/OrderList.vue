@@ -1,200 +1,228 @@
 <template>
-  <div class="d-flex flex-column flex-grow-1">
-    <div class="d-flex align-center py-3">
-      <div>
-        <div class="display-1">
-          <v-icon>fa-users-gear</v-icon>
-          {{ $t('users.users') }}
-        </div>
-        <v-breadcrumbs :items="breadcrumbs" class="pa-0 py-2"></v-breadcrumbs>
-      </div>
-      <v-spacer></v-spacer>
-      <v-btn color="primary" @click="edit = undefined; dialog = true"> 
-        {{ $t('users.createUser') }}
-        <v-icon small class="px-1">fa-user-plus</v-icon>
-      </v-btn>
-    </div>
-
-    <v-card>
-
-      <v-data-table
-        v-model="selected"
-        show-select
-        :headers="headers"
-        :items="users"
-        :search="search"
-        :loading="loading"
-        class="flex-grow-1"
-      >
-
-        <template v-slot:item.Name="{ item }">
-          <div class="d-flex align-center py-1">
-            <v-avatar size="32" class="elevation-1 grey lighten-3">
-              <v-img :src="getAvatar(item)" />
-            </v-avatar>
-            <div class="ml-2 font-weight-bold">
-              <div class="text-">{{ item.Name }}</div>
-              <copy-label :text="item.UserName" />
-            </div>
-          </div>
-        </template>
-
-        <template v-slot:item.Enabled="{ item }">
-          <v-icon v-if="item.Enabled" color="success">
-            fa-solid fa-circle-check
-          </v-icon>
-          <v-icon v-else color="error">
-            fa-solid fa-circle-xmark
-          </v-icon>
-        </template>
-
-        <template v-slot:item.Role="{ item }">
-          <v-chip
-            label
-            small
-            dark
-            class="font-weight-bold"
-            :color="getRoleColor(item.Role)"
+  <v-card class="d-flex flex-grow-1 flex-column" :loading="loading">
+    <v-card-title >
+      <v-row no-gutters dense>
+        <v-col
+          cols="12"
+          lg="8"
+          md="11"
+          sm="11"
+          xs="11"
+        >
+          <v-text-field
+            append-icon="mdi-magnify"
+            class="flex-grow-1 mr-md-2"
+            outlined
+            dense
+            hide-details
+            clearable
+            :placeholder="$t('common.search')"
+          ></v-text-field>
+        </v-col>
+        <v-col cols="1">
+          <v-btn
+            v-show="selected.length === 0"
+            icon
+            :loading="loading"
+            @click="page = 1; refresh({ page: page, limit: pageSize })"
           >
-            {{ $t(`roles.${item.Role}`) }}
-          </v-chip>
-        </template>
+            <v-icon>mdi-refresh</v-icon>
+          </v-btn>
+        </v-col>
+        <v-col
+          cols="12"
+          lg="3"
+          md="12"
+          sm="12"
+        >
+          <v-pagination
+            v-model="page"
+            circle
+            dense
+            color="primary"
+            :length="orders.PageCount"
+            :total-visible="5"
+            @input="refresh({ page: page, limit: pageSize })"
+          ></v-pagination>
+        </v-col>
+      </v-row>
+    </v-card-title>
+    <v-divider/>
+    <v-list
+      v-for="group in orders.Data
+        .AsEnumerable()
+        .GroupBy(x => new Date(x.SentOn ? x.SentOn : x.CreatedOn) .toString('yyyy/MM/dd'), x => x)
+        .ToArray()"
+      :key="group"
+      class="px-2"
+    >
+      <v-subheader>
+        <v-list-item-action class="d-flex flex-row align-center">
+          <v-list-item-action class="d-flex flex-row align-center">
+            <v-icon>fa-regular fa-calendar-day</v-icon>
+          </v-list-item-action>
+          <v-list-item-action-text>
+            <span class="text--primary text-h6">
+              {{ new Date(group.key) | formatDate('dddd, DD MMMM yyyy') | uppercase }}
+            </span>
+          </v-list-item-action-text>
+        </v-list-item-action></v-subheader>
+      <v-divider/>
+      <template v-for="(item, index) in group.values()">
+        <v-list-item
+          :key="item.ID"
+          two-line
+          link
+          :class="{
+            'v-list-item--active warning--text': item.Reviewed && !item.Approved,
+            'v-list-item--active success--text': item.Approved,
+            'v-list-item--active primary--text': selected.indexOf(item.ID) !== -1
+          }"
+          @click.stop
+        >
 
-        <template v-slot:item.CreatedOn="{ item }">
-          <div>{{ item.CreatedOn | formatDate('HH:mm | DD MMMM yyyy') }}</div>
-        </template>
+          <v-list-item-avatar v-if="item.From" class="d-flex flex-row ma-1">
+            <v-img :src="getAvatar(item.From.ID)" lazy-src="/images/avatars/generic.jpg"/>
+          </v-list-item-avatar>        
+          <v-list-item-avatar v-if="item.To" class="d-flex flex-row ma-1">
+            <v-img :src="getAvatar(item.To.ID)" lazy-src="/images/avatars/generic.jpg"/>
+          </v-list-item-avatar>
 
-        <template v-slot:item.LastLogin="{ item }">
-          <div v-if="new Date(item.LastLogin).year() > 1">{{ item.LastLogin | formatDate('HH:mm | DD MMMM yyyy') }}</div>
-        </template>
+          <v-list-item-action class="align-rigth d-flex flex-row" >
+            <v-list-item-action-text v-if="item.From" class="px-1 text-lg-body-1">
+              {{ $t('email.from') }}<b>{{ item.From.Name }}</b>
+              <span v-if="item.From.Description" class="px-1">({{ item.From.Description }})</span>
+            </v-list-item-action-text>
+            <v-list-item-action-text v-if="item.To" class="px-1 text-lg-body-1">
+              {{ $t('email.to') }}<b>{{ item.To.Name }}</b>
+              <span v-if="item.To.Description" class="px-1">({{ item.To.Description }})</span>
+            </v-list-item-action-text>
+          </v-list-item-action>
 
-        <template v-slot:item.action="{ item }">
-          <div class="actions">
-            <v-btn icon @click="user = item; edit = true; dialog = true">
-              <v-icon>fa-pencil</v-icon>
+          <v-list-item-content class="pa-2 align-rigth d-flex flex-row">
+            <v-list-item-title class="text-h6 black--text">{{ item.Subject }}</v-list-item-title>
+          </v-list-item-content>
+          <v-list-item-action>
+            <v-btn v-if="!item.Approved" rounded class="success" @click="approve(item)">
+              {{ $t('email.approve') }}
             </v-btn>
-          </div>
-        </template>
-        <template v-slot:item.delete="{ item }">
-          <div class="actions">
-            <v-btn icon @click="deleteConfirmation(item)">
-              <v-icon>fa-trash</v-icon>
-            </v-btn>
-          </div>
-        </template>
-      </v-data-table>
-    </v-card>
-    <user-dialog v-model="user" :show="dialog" :edit="edit" @close-dialog="closeDialog"/>
-    <confirmation-dialog ref="confirmdialog" title-color="red" icon-color="red lighten-4"></confirmation-dialog>
-  </div>
+            <v-chip
+              v-else
+              outlined
+              color="success"
+            >
+              {{ $t('email.approved') }}
+              <v-icon small class="px-1">fa-check</v-icon>
+            </v-chip>
+          </v-list-item-action>
+
+          <v-list-item-action>
+            <v-list-item-action-text>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <span v-bind="attrs" class="text--primary text-lg-body-2" v-on="on">
+                    {{ item.SentOn | formatTimeAgo }}
+                    <v-icon color="primary" x-small>fa-regular fa-clock</v-icon>
+                  </span>
+                </template>
+                <span >{{ item.SentOn | formatDate('HH:mm | DD MMMM YYYY') }}</span>
+              </v-tooltip>
+            </v-list-item-action-text>
+          </v-list-item-action>
+        </v-list-item>
+
+        <v-divider
+          v-if="index + 1 < orders.Data.length > 0"
+          :key="index"
+        ></v-divider>
+      </template>
+      <template v-if="orders.Data.length === 0">
+        <div class="px-1 py-6 text-center">{{ $t('email.emptyList') }}</div>
+      </template>
+    </v-list>
+  </v-card>
 </template>
 
 <script>
-import CopyLabel from '../../components/common/CopyLabel'
-import { getAllUsers, deleteUser, searchUsers } from '@/api/users'
-import UserDialog from './UserDialog.vue'
-import ConfirmationDialog from '@/components/common/ConfirmationDialog'
+import { getAllOrders, searchOrders, reviewOrder, approveOrder } from '@/api/orders'
 
 export default {
-  components: {
-    CopyLabel,
-    UserDialog,
-    ConfirmationDialog
-  },
+
   data() {
     return {
       loading: false,
-      breadcrumbs: [{
-        text: 'Users',
-        disabled: false,
-        href: '#'
-      }, {
-        text: 'List'
-      }],
       search: '',
       selected: [],
       headers: [
-        { text: 'Name', align: 'left', value: 'Name' },
-        { text: 'Description', align: 'left', value: 'Description' },
-        { text: 'Role', value: 'Role' },
-        { text: 'CreatedOn', value: 'CreatedOn' },
-        { text: 'LastLogin', value: 'LastLogin' },
-        { text: 'Enabled', value: 'Enabled' },
-        { text: '', sortable: false, align: 'right', value: 'action' },
-        { text: '', sortable: false, align: 'right', value: 'delete' }
+        { text: this.$t('email.headers.subject'), align: 'left', value: 'Subject' },
+        { text: this.$t('email.headers.sender'), align: 'left', value: 'From' },
+        { text: this.$t('email.headers.destination'), align: 'left', value: 'To' },
+        { text: this.$t('email.headers.status'), value: 'Approved' },
+        { text: this.$t('email.headers.sentOn'), value: 'SentOn' },
+        { text: '', sortable: false, align: 'right', value: 'action' }
       ],
-      users: [],
-      dialog: false,
-      edit: false,
-      user: null
+      orders: [],
+      starred: [],
+      page:1,
+      pageSize: 10
+    }
+  },
+  watch: {
+    page(val) {
+      this.refresh()
+    }
+  },
+  async created() {
+    this.$mailHub.on('refresh_orders', (x) => {
+      if (this.search.length > 0) {
+        this.refresh()
+      }
+    })
+    try {
+      if (this.$mailHub.state === 'Disconnected') await this.$mailHub.start()
+    }
+    catch (err) {
+      console.log(err)
     }
   },
   mounted() {
     this.refresh()
   },
   methods: {
-    getRoleColor(role) {
-      switch (role) {
-      default:
-        return ''
-      case 'User': 
-        return 'green'
-      case 'Admin':
-        return 'blue'
-      case 'OrderOffice':
-        return 'orange'
+    refresh(params =  { page: this.page, limit: this.pageSize }) {
+      if (this.search.length > 0) {
+        this.searchOrders(search, params)
+      } else {
+        this.getOrders(params)
       }
     },
-    closeDialog(refresh = false) {
-      this.dialog = false
-      this.edit = false
-      if (refresh) this.refresh()
+    getAvatar(id) {
+      return `${this.$apiHost}/api/v1/account/${id}/avatar`
     },
-    refresh() {
-      this.getUsers({ page: 1, limit: 10 })
-    },
-    getAvatar(user) {
-      return `${this.$apiHost}/api/v1/account/${user.ID}/avatar`
-    },
-    getUsers(params) {
+    getOrders(params) {
       this.loading = true
-      getAllUsers(params)
+      getAllOrders(params)
         .then(res => {
-          console.log(res.data.Data)
-          this.users = res.data.Data
+          this.orders = res.data
+          console.log(res.data)
         })
         .catch(err => console.log(err))
         .finally(() => this.loading = false)
     },
-    deleteUser(id) {
-      deleteUser(id)
-        .then(() => {
-          this.refresh()
-          this.showSuccess()
+    searchOrders(search, params) {
+      this.loading = true
+      searchOrders(search, params)
+        .then(res => {
+          this.orders = res.data
         })
-        .catch(err => this.showError(err))
+        .catch(err => console.log(err))
+        .finally(() => this.loading = false)
     },
-    async deleteConfirmation(user) {
-      if (await this.$refs.confirmdialog.open(
-        this.$t('confirmation.delete').replace('#', user.Name),  this.$t('confirmation.title'))
-      ) {
-        this.deleteUser(user.ID)
-      }
+    approve(item) {
+      approveOrder(item.ID)
+        .then(res => this.refresh())
+        .catch(err => console.log(err))
     }
   }
 }
 </script>
-
-<style lang="scss" scoped>
-.slide-fade-enter-active {
-  transition: all 0.3s ease;
-}
-.slide-fade-leave-active {
-  transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
-}
-.slide-fade-enter,
-.slide-fade-leave-to {
-  transform: translateX(10px);
-  opacity: 0;
-}
-</style>

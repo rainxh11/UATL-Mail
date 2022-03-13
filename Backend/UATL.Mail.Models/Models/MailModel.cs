@@ -1,6 +1,7 @@
 ﻿using MongoDB.Entities;
 using System;
 using System.Collections.Generic;
+using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -36,6 +37,43 @@ namespace UATL.MailSystem.Models.Models
         [IgnoreDefault]
         public DateTime ViewedOn { get; set; }
         public bool Viewed { get; set; } = false;
+
+        public bool Approved
+        {
+            get
+            {
+                if (Type == MailType.External)
+                {
+                    return Flags.Contains(MailFlag.Approved);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        [IgnoreDefault] public AccountBase ApprovedBy { get; set; } = null;
+
+
+        public bool Acknowledged
+        {
+            get => Flags.Contains(MailFlag.Acknowledged);
+        }
+        public bool RequireTask
+        {
+            get => Flags.Contains(MailFlag.RequireTask);
+        }
+
+        public bool Important
+        {
+            get => Flags.Contains(MailFlag.Important);
+        }
+
+        public bool Reviewed
+        {
+            get => Flags.Contains(MailFlag.Reviewed);
+        }
         public void SetViewed()
         {
             this.Viewed = true;

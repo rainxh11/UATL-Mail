@@ -14,8 +14,11 @@ namespace UATL.MailSystem.Models.Models
         public DateTime ModifiedOn { get; set; }
         [BsonRequired]
         public AccountBase From { get; set; }
+        [IgnoreDefault]
         public string Subject { get; set; }
+        [IgnoreDefault]
         public string Body { get; set; } = string.Empty;
+        [IgnoreDefault]
         public Many<Attachment> Attachments { get; set; }
 
         [IgnoreDefault]

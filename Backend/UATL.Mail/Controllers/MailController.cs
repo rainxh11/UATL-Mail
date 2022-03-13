@@ -73,10 +73,19 @@ namespace UATL.Mail.Controllers
                 {
                     default:
                     case MailDirection.Both:
-                        query = query.Match(mail => mail.From.ID == account.ID || mail.To.ID == account.ID);
+                        query = query.Match(mail => mail.From.ID == account.ID || mail.To.ID == account.ID)
+                            .Match(mail =>
+                                (mail.AnyEq(x => x.Flags, MailFlag.Approved) &
+                                 mail.Eq(x => x.Type, MailType.External)) |
+                                mail.Eq(x => x.From.ID, account.ID) |
+                                mail.Eq(x => x.Type, MailType.Internal));
+
                         break;
                     case MailDirection.Received:
-                        query = query.Match(mail => mail.From.ID != account.ID && mail.To.ID == account.ID);
+                        query = query.Match(mail => mail.From.ID != account.ID && mail.To.ID == account.ID)
+                            .Match(mail =>
+                                (mail.AnyEq(x => x.Flags, MailFlag.Approved) &
+                                 mail.Eq(x => x.Type, MailType.External)) | mail.Eq(x => x.Type, MailType.Internal));
                         break;
                     case MailDirection.Sent:
                         query = query.Match(mail => mail.From.ID == account.ID && mail.To.ID != account.ID);
@@ -113,7 +122,11 @@ namespace UATL.Mail.Controllers
             {
                 var account = await _identityService.GetCurrentAccount(HttpContext);
 
-                var draft = await DB.Find<MailModel>().Match(mail => mail.From.ID == account.ID || mail.To.ID == account.ID).OneAsync(id);
+                var draft = await DB.Find<MailModel>()
+                    .Match(mail => (mail.Eq(x => x.From.ID, account.ID) | mail.Eq(x => x.To.ID, account.ID)) & 
+                        (( mail.AnyEq(x => x.Flags, MailFlag.Approved) & mail.Eq(x => x.Type, MailType.External) ) | mail.Eq(x => x.Type, MailType.Internal))
+                        )
+                    .OneAsync(id);
                 if (draft == null) return NotFound();
 
                 return Ok(draft); ;
@@ -145,10 +158,18 @@ namespace UATL.Mail.Controllers
                 {
                     default:
                     case MailDirection.Both:
-                        pipeline = pipeline.Match(mail => mail.From.ID == account.ID || mail.To.ID == account.ID);
+                        pipeline = pipeline.Match(mail => mail.From.ID == account.ID || mail.To.ID == account.ID)
+                            .Match(mail =>
+                                (mail.AnyEq(x => x.Flags, MailFlag.Approved) &
+                                 mail.Eq(x => x.Type, MailType.External)) |
+                                mail.Eq(x => x.From.ID, account.ID) |
+                                mail.Eq(x => x.Type, MailType.Internal));
                         break;
                     case MailDirection.Received:
-                        pipeline = pipeline.Match(mail => mail.From.ID != account.ID && mail.To.ID == account.ID);
+                        pipeline = pipeline.Match(mail => mail.From.ID != account.ID && mail.To.ID == account.ID)
+                            .Match(mail =>
+                                (mail.AnyEq(x => x.Flags, MailFlag.Approved) &
+                                 mail.Eq(x => x.Type, MailType.External)) | mail.Eq(x => x.Type, MailType.Internal));
                         break;
                     case MailDirection.Sent:
                         pipeline = pipeline.Match(mail => mail.From.ID == account.ID && mail.To.ID != account.ID);
@@ -156,7 +177,9 @@ namespace UATL.Mail.Controllers
                 }
 
                 var mails = await DB.PagedSearch<MailModel>()
-                    .WithFluent(pipeline.Match(x => x.Type == type || type == null))
+                    .WithFluent(pipeline
+                        .Match(x => x.Type == type || type == null)
+                    )
                     .Sort(s => desc ? s.Descending(sort) : s.Ascending(sort))
                     .PageNumber(page)
                     .PageSize(limit < 0 ? int.MaxValue : limit)
@@ -218,23 +241,25 @@ namespace UATL.Mail.Controllers
                 await mail.SaveAsync(transaction.Session);
                 mail = await DB.Find<MailModel>(transaction.Session).OneAsync(mail.ID, ct);
 
-                mails = mails
-                    .Where(x => x.ID != mail.ID)
-                    .Select(x =>
+                if (files.Count > 0)
+                {
+                    var attachments = await mail.Attachments.ChildrenFluent(transaction.Session).ToListAsync(ct);
+
+                    foreach (var sent in mails.Where(x => x.ID != mail.ID))
                     {
-                        x.Attachments = mail.Attachments;
+                        await sent.SaveAsync(transaction.Session, ct);
+                        await sent.Attachments.AddAsync(attachments, transaction.Session, ct);
+                    }
+                }
 
-                        return x;
-                    })
-                    .ToList();
 
-                if(mails.Count != 0 && mails != null)
+                /*if(mails.Count != 0 && mails != null)
                 {
                     var bulkWrite = await DB.InsertAsync<MailModel>(mails, transaction.Session, ct);
 
                     if (!bulkWrite.IsAcknowledged)
                         return BadRequest();
-                }
+                }*/
                 await transaction.CommitAsync();
 
 
@@ -251,7 +276,7 @@ namespace UATL.Mail.Controllers
             }
         }
         //---------------------------------------------------------------------------------------------------------------------------------------------//
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
         [HttpGet]
         [Route("stats")]
         public async Task<IActionResult> GetStats()
@@ -265,8 +290,8 @@ namespace UATL.Mail.Controllers
 
                 var internalSentCount = DB.Queryable<MailModel>().Count(x => x.From.ID == account.ID && x.Type == MailType.Internal);
 
-                var externalReceivedCount = DB.Queryable<MailModel>().Count(x => x.To.ID == account.ID && x.Type == MailType.External);
-                var externalUnreadReceivedCount = DB.Queryable<MailModel>().Count(x => x.To.ID == account.ID && x.Type == MailType.External && !x.Viewed);
+                var externalReceivedCount = DB.Queryable<MailModel>().Count(x => x.To.ID == account.ID && x.Type == MailType.External && x.Flags.Any(f => f == MailFlag.Approved));
+                var externalUnreadReceivedCount = DB.Queryable<MailModel>().Count(x => x.To.ID == account.ID && x.Type == MailType.External && !x.Viewed && x.Flags.Any(f => f == MailFlag.Approved));
 
                 var externalSentCount = DB.Queryable<MailModel>().Count(x => x.From.ID == account.ID && x.Type == MailType.External);
 
@@ -297,7 +322,7 @@ namespace UATL.Mail.Controllers
         }
 
         //---------------------------------------------------------------------------------------------------------------------------------------------//
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
         [Route("starred")]
         public async Task<IActionResult> GetStarred(bool full = false, int page = 1, int limit = 10, string ? sort = "SentOn", bool desc = true)
@@ -339,7 +364,7 @@ namespace UATL.Mail.Controllers
             }
         }
 
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
         [Route("starred/search")]
         public async Task<IActionResult> SearchStarred(int page = 1, int limit = 10, string? sort = "SentOn", bool desc = true, string search = "")
@@ -385,7 +410,7 @@ namespace UATL.Mail.Controllers
         }
         //---------------------------------------------------------------------------------------------------------------------------------------------//
 
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpPost]
         [Route("starred")]
         public async Task<IActionResult> AddStarred([FromBody] IEnumerable<string> ids, CancellationToken ct)
@@ -415,7 +440,7 @@ namespace UATL.Mail.Controllers
             }
         }
 
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpPatch]
         [Route("starred")]
         public async Task<IActionResult> UpdateStarred([FromBody] IEnumerable<string> ids, CancellationToken ct)
@@ -445,7 +470,7 @@ namespace UATL.Mail.Controllers
             }
         }
 
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpDelete]
         [Route("starred/{id}")]
         public async Task<IActionResult> DeleteStarred(string id, CancellationToken ct)
@@ -474,7 +499,7 @@ namespace UATL.Mail.Controllers
             }
         }
 
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
         [Route("{id}/replies")]
         public async Task<IActionResult> GetReplies(string id, CancellationToken ct)
@@ -499,7 +524,7 @@ namespace UATL.Mail.Controllers
             }
         }
         //---------------------------------------------------------------------------------------------------------------------------------------------//
-        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
         [HttpGet]
         [Route("tags")]
         public async Task<IActionResult> GetTags(string? search = "")
