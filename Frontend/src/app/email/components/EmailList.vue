@@ -1,5 +1,5 @@
 <template>
-  <v-card v-if="emails.length === 0" class="pa-2 pa-md-4 flex-grow-1 align-center justify-center d-flex flex-column">
+  <v-card v-if="emails.length === 0" class="pa-2 flex-row pa-md-4 flex-grow-1 align-center justify-center d-flex flex-column">
     <v-card-text>
       <v-row class="d-flex flex-column" dense align="center" justify="center">
         <v-icon color="blue" size="128">
@@ -12,57 +12,21 @@
     </v-card-text>
   </v-card>
   <v-card v-else class="min-w-0">
-    <div class="email-app-top px-2 py-1 d-flex align-center">
-      <v-checkbox :value="selectAll" :indeterminate="selectAlmostAll" @click.stop="onSelectAll(selectAll)"></v-checkbox>
-      <v-menu offset-y>
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn icon v-bind="attrs" v-on="on">
-            <v-icon>mdi-menu-down</v-icon>
-          </v-btn>
-        </template>
-
-        <v-list>
-          <v-list-item v-for="item in menuSelection" :key="item.key" link @click="onMenuSelection(item.key)">
-            <v-list-item-title>{{ item.title }}</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
-      <v-btn
-        v-show="selected.length === 0"
-        icon
-        :loading="isLoading"
-        @click="$emit('refresh', { page: 1, pageSize: pageSize }); page = 1;"
-      >
-        <v-icon>mdi-refresh</v-icon>
-      </v-btn>
-      <div v-show="selected.length > 0" >
-        <v-btn icon>
-          <v-icon>fa-solid fa-envelope</v-icon>
-        </v-btn>
-        <v-btn icon>
-          <v-icon color="red">fa-solid fa-trash-can</v-icon>
-        </v-btn>
-      </div>
-      <v-spacer/>
-      <v-pagination
-        v-model="page"
-        circle
-        color="primary"
-        :length="pageCount"
-        :total-visible="maxPages"
-        class="col-md-4 col-sm-12"
-        @input="$emit('refresh', { page: page, pageSize: pageSize })"
-      ></v-pagination>
-    </div>
-
-    <v-card-title >
-
+    <v-card-title class="d-flex align-center justify-center flex-row flex-grow-1">
       <v-row no-gutters dense>
-        <v-col cols="12" lg="6" md="0" sm="0">
+        <v-col cols="1">
+          <v-checkbox :value="selectAll" :indeterminate="selectAlmostAll" @click.stop="onSelectAll(selectAll)"/>
         </v-col>
-        <v-col cols="12" lg="6" md="12" sm="12">
+        <v-col
+          cols="12"
+          lg="6"
+          md="9"
+          sm="9"
+          xs="9"
+        >
           <v-text-field
-            append-icon="mdi-magnify"
+            v-model="search"
+            append-icon="fa-regular fa-magnifying-glass"
             class="flex-grow-1 mr-md-2"
             outlined
             dense
@@ -70,6 +34,32 @@
             clearable
             :placeholder="$t('common.search')"
           ></v-text-field>
+        </v-col>
+        <v-col cols="1">
+          <v-btn
+            v-show="selected.length === 0"
+            icon
+            :loading="loading"
+            @click="$emit('refresh', { page: 1, pageSize: pageSize }); page = 1;"
+          >
+            <v-icon>fa-regular fa-refresh</v-icon>
+          </v-btn>
+        </v-col>
+        <v-col
+          cols="12"
+          lg="4"
+          md="12"
+          sm="12"
+        >
+          <v-pagination
+            v-model="page"
+            circle
+            dense
+            color="primary"
+            :length="pageCount"
+            :total-visible="maxPages"
+            @input="$emit('refresh', { page: page, pageSize: pageSize })"
+          ></v-pagination>
         </v-col>
       </v-row>
     </v-card-title>
@@ -408,7 +398,6 @@ export default {
     },
     getFileIcon(file) {
       const icon =  getMimeIcon(file.Extension)
-      console.log(file, icon, 'icon')
       return icon
     }
   }

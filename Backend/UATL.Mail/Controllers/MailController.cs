@@ -251,15 +251,17 @@ namespace UATL.Mail.Controllers
                         await sent.Attachments.AddAsync(attachments, transaction.Session, ct);
                     }
                 }
-
-
-                /*if(mails.Count != 0 && mails != null)
+                else
                 {
-                    var bulkWrite = await DB.InsertAsync<MailModel>(mails, transaction.Session, ct);
+                    if (mails.Count(x => x.ID != mail.ID) > 0)
+                    {
+                        var bulkWrite = await DB.InsertAsync(mails.Where(x => x.ID != mail.ID), transaction.Session, ct);
 
-                    if (!bulkWrite.IsAcknowledged)
-                        return BadRequest();
-                }*/
+                        if (!bulkWrite.IsAcknowledged)
+                            return BadRequest();
+                    }
+                }
+
                 await transaction.CommitAsync();
 
 

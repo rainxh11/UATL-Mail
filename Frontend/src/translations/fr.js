@@ -93,6 +93,8 @@ export default {
       'status': 'Etat',
       'subject': 'Sujet'
     },
+    'markReceived':'Marquer comme reçu',
+    'orderReceived':'Reçu',
     'approve': 'Approver',
     'approved': 'Approuvé',
     'unApproved': 'Non Approuvé',

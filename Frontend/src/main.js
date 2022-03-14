@@ -31,6 +31,7 @@ import './plugins/vue-head'
 import './plugins/animate'
 import './plugins/clipboard'
 import './plugins/moment'
+import 'vue-group-avatar/dist/vue-group-avatar.css'
 
 // FILTERS
 import './filters/capitalize'
@@ -39,6 +40,7 @@ import './filters/uppercase'
 import './filters/formatCurrency'
 import './filters/formatDate'
 import './filters/formatMisc'
+import './assets/highlight.css'
 
 // STYLES
 // Main Theme SCSS

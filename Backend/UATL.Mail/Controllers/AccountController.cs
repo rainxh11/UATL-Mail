@@ -145,7 +145,7 @@ namespace UATL.MailSystem.Controllers
             {
                 var avatar = await DB.Find<Avatar>().Match(x => x.Account.ID == id).ExecuteFirstAsync();
                 if (avatar == null)
-                    return NotFound();
+                    return Redirect(HttpContext.Request.Headers.Referer.First() + "images/avatars/generic.jpg");
 
                 var stream = new MemoryStream();               
                 await avatar.Data.DownloadAsync(stream, cancellation: ct).ConfigureAwait(false);
@@ -613,17 +613,17 @@ namespace UATL.MailSystem.Controllers
                 if (string.IsNullOrEmpty(search))
                 {
                     query = await DB.Find<Account>()
-                        .Match(x => x.ID != account.ID)
+                        .Match(x => x.Ne(account => account.ID, account.ID) & x.Ne(account => account.Role, AccountType.OrderOffice))
                         .ExecuteAsync();
                 }
                 else
                 {
                     query = await DB.Find<Account>()
-                        .Match(x => x.ID != account.ID)
+                        .Match(x => x.Ne(account => account.ID, account.ID) & x.Ne(account => account.Role, AccountType.OrderOffice))
                         .ManyAsync(f => f.Regex(x => x.Name, new BsonRegularExpression($"/{search}/i")) |
-                            f.Regex(x => x.UserName, new BsonRegularExpression($"/{search}/i")) |
-                            f.Regex(x => x.ID, new BsonRegularExpression($"/{search}/i")) |
-                            f.Regex(x => x.Description, new BsonRegularExpression($"/{search}/i"))
+                                        f.Regex(x => x.UserName, new BsonRegularExpression($"/{search}/i")) |
+                                        f.Regex(x => x.ID, new BsonRegularExpression($"/{search}/i")) |
+                                        f.Regex(x => x.Description, new BsonRegularExpression($"/{search}/i"))
                         );
                 }
 

@@ -47,37 +47,41 @@
         </v-list-item-action>
       </v-list-item>
     </v-list>
+    <div class="overline pa-1 mt-2">{{ $t('email.labels') }}</div>
+    <v-virtual-scroll 
+      class="mt-2 pa-0"
+      item-height="30"
+      :items="labels"
+      height="300"
+    >
+      <template v-slot:default="{ item }">
+        <v-list-item
+          :to="item.link"
+          exact
+          active-class="primary--text"
+          link
+        >
+          <v-list-item-icon>
+            <v-icon :color="item.color">fa-solid fa-tag</v-icon>
+          </v-list-item-icon>
 
-    <v-list dense nav class="mt-2 pa-0">
-      <div class="overline pa-1 mt-2">{{ $t('email.labels') }}</div>
+          <v-list-item-content>
+            <v-list-item-title>{{ item.label }}</v-list-item-title>
+          </v-list-item-content>
 
-      <v-list-item
-        v-for="(item, index) in labels"
-        :key="index"
-        :to="item.link"
-        exact
-        active-class="primary--text"
-        link
-      >
-        <v-list-item-icon>
-          <v-icon :color="item.color">fa-solid fa-tag</v-icon>
-        </v-list-item-icon>
+          <v-list-item-action v-if="item.count > 0">
+            <v-badge
+              inline
+              :content="item.count"
+              :color="item.color"
+              class="font-weight-bold"
+            >
+            </v-badge>
+          </v-list-item-action>
+        </v-list-item>
 
-        <v-list-item-content>
-          <v-list-item-title>{{ item.label }}</v-list-item-title>
-        </v-list-item-content>
-
-        <v-list-item-action v-if="item.count > 0">
-          <v-badge
-            inline
-            :content="item.count"
-            :color="item.color"
-            class="font-weight-bold"
-          >
-          </v-badge>
-        </v-list-item-action>
-      </v-list-item>
-    </v-list>
+      </template>
+    </v-virtual-scroll>
 
     <email-compose class="elevation-12" :show-compose="showCompose" @close-dialog="showCompose = false" />
   </div>

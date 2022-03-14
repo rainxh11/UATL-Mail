@@ -62,7 +62,9 @@ namespace UATL.Mail.Controllers
                 stream.Position = 0;
                 this.HttpContext.Response.ContentLength = attachment.FileSize;
 
-                var contentType = string.IsNullOrEmpty(attachment.ContentType) ?  "application/octet-stream" : attachment.ContentType;
+                var contentType = string.IsNullOrEmpty(attachment.ContentType)
+                    ? "application/octet-stream"
+                    : attachment.ContentType;
 
                 return File(stream, contentType, attachment.Name, true);
             }

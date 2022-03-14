@@ -14,7 +14,8 @@ const getAllOrders = async (params) =>  {
     page: 1,
     limit: 10,
     sort: 'SentOn',
-    desc: true
+    desc: true,
+    grouped: true
   }
   return await axios.get('/order',
     {
@@ -43,9 +44,14 @@ const searchOrders = async (search, params) =>  {
 const approveOrder = async (id) => await axios.patch('/order/' + id + '/approve')
 const reviewOrder = async (id) => await axios.patch('/order/' + id + '/review')
 
+const approveOrders = async (groupId) => await axios.patch('/order/group/' + groupId + '/approve')
+const reviewOrders = async (groupId) => await axios.patch('/order/group/' + groupId + '/review')
+
 export {
   getAllOrders,
   searchOrders,
   approveOrder,
-  reviewOrder
+  reviewOrder,
+  approveOrders,
+  reviewOrders
 }

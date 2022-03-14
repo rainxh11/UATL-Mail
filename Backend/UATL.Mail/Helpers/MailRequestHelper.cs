@@ -22,6 +22,8 @@ namespace UATL.Mail.Helpers
                     var destinationAccount = await DB.Find<Account>(session).OneAsync(recipient, ct);
                     if (destinationAccount == null)
                         throw new Exception($"Recipient with id:'{recipient}' not found!");
+                    if (destinationAccount.Role == AccountType.OrderOffice)
+                        break;
 
                     var mail = new MailModel()
                     {

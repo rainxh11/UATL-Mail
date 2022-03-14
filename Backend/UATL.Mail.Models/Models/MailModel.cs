@@ -7,6 +7,7 @@ using Newtonsoft.Json.Converters;
 
 namespace UATL.MailSystem.Models.Models
 {
+
     [Collection("Mail")]
     public class MailModel : Draft
     {
@@ -84,6 +85,7 @@ namespace UATL.MailSystem.Models.Models
         {
             this.InitOneToMany(() => Attachments);
         }
-
+        [BsonIgnore]
+        public IEnumerable<AccountBase>? Recipients { get; set; }
     }
 }

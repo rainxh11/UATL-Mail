@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Jetsons.JetPack;
+using Mapster;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -19,6 +21,16 @@ namespace UATL.Mail.Controllers
                 return String.Empty;
             return input.First().ToString().ToUpper() + input.Substring(1);
         }
+        public static int Scale(int OldValue, int OldMin, int OldMax, int NewMin, int NewMax)
+        {
+
+            int OldRange = (OldMax - OldMin);
+            int NewRange = (NewMax - NewMin);
+            int NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin;
+
+            return (NewValue);
+        }
+
 
         private readonly ILogger<OrderController> _logger;
         private IConfiguration _config;
@@ -41,11 +53,42 @@ namespace UATL.Mail.Controllers
         [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.OrderOffice}")]
         [HttpGet]
         [Route("")]
-        public async Task<IActionResult> GetMails(int page = 1, int limit = 10, string? sort = "SentOn", bool desc = true)
+        public async Task<IActionResult> GetMails(int page = 1, int limit = 10, string? sort = "SentOn", bool desc = true, bool grouped = false)
         {
             try
             {
                 sort = FirstCharToUpper(sort.Replace("-", "").Trim());
+                long totalCount = 0;
+
+                if (grouped)
+                {
+                    var skip = (page <= 1 ? 0 : page - 1) * limit;
+
+                    var sortDef = new SortDefinitionBuilder<MailModel>();
+                    var total = await DB.Fluent<MailModel>()
+                        .Match(x => x.Type == MailType.External)
+                        .Group(x => x.GroupId, z => new {GroupId = z.Key})
+                        .Count()
+                        .FirstOrDefaultAsync();
+                    totalCount = total.Count;
+
+                    var count = await DB.Fluent<MailModel>()
+                        .Match(x => x.Type == MailType.External)
+                        .Sort(desc ? sortDef.Descending(sort) : sortDef.Ascending(sort))
+                        .Skip(skip)
+                        .Limit(limit)
+                        .Group(x => x.GroupId, z => new { GroupId = z.Key })
+                        //.ToListAsync();
+                        .Count()
+                        .FirstOrDefaultAsync();
+
+                    if (count.Count < limit)
+                    {
+                        var resultCount = count.Count <= 0 ? 1 : count.Count.ToInt();
+                        limit = Scale(limit, resultCount, limit, 0, (limit / resultCount) * limit);
+                    }
+                }
+                
 
                 var mails = await DB.PagedSearch<MailModel>()
                     .Match(x => x.Type == MailType.External)
@@ -55,14 +98,33 @@ namespace UATL.Mail.Controllers
                     .PageSize(limit < 0 ? int.MaxValue : limit)
                     .ExecuteAsync();
 
-                return Ok(new PagedResultResponse<IEnumerable<MailModel>>(
-                    mails.Results.Select(x =>
+                IEnumerable<object> results = !grouped
+                    ? mails.Results.Select(x =>
                     {
                         x.Body = null;
                         x.Attachments = null;
                         return x;
-                    }),
-                    mails.TotalCount, 
+                    })
+                    : mails.Results
+
+                        .GroupBy(x => x.GroupId ?? x.ID, x => x)
+                        .Select(x =>
+                        {
+                            var mail = x.First();
+                            mail.Recipients = x.Select(z => z.To).DefaultIfEmpty().Where(x => x!=null);
+                            return mail;
+                        })
+                        .Select(x =>
+                        {
+                            x.Body = null;
+                            x.To = x.Recipients == null || x.Recipients.Count() <= 1 ? x.To : null;
+                            x.Attachments = null;
+                            return x;
+                        });
+
+                return Ok(new PagedResultResponse<IEnumerable<object>>(
+                    results,
+                    grouped ? totalCount : mails.TotalCount, 
                     mails.PageCount, 
                     limit, 
                     page));
@@ -121,7 +183,7 @@ namespace UATL.Mail.Controllers
             {
                 var account = await _identityService.GetCurrentAccount(HttpContext);
                 var update = await DB.Find<MailModel>(transaction.Session)
-                    .MatchID(id)
+                    .Match(x => x.Eq(mail => mail.ID, id))
                     .ExecuteSingleAsync(ct);
                 if (update == null)
                     return NotFound();
@@ -149,6 +211,56 @@ namespace UATL.Mail.Controllers
         //------------------------------------------------------------------------------------------------------------//
         [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.OrderOffice}")]
         [HttpPatch]
+        [Route("group/{groupId}/approve")]
+        public async Task<IActionResult> ApproveExternalMails(string groupId, CancellationToken ct)
+        {
+            var transaction = DB.Transaction();
+            try
+            {
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+                var update = await DB.Find<MailModel>(transaction.Session)
+                    .Match(x => x.Eq(mail => mail.GroupId, groupId) & x.Eq(mail => mail.Type, MailType.External))
+                    .ExecuteAsync(ct);
+
+                if (update == null)
+                    return NotFound();
+
+                if (update.All(x => x.Approved))
+                    return BadRequest();
+
+                update = update.Select(mail =>
+                {
+                    mail.Flags = mail.Flags.Append(MailFlag.Approved).Append(MailFlag.Reviewed).Distinct().ToList();
+                    mail.ApprovedBy = account.ToBaseAccount();
+                    return mail;
+                }).ToList();
+
+
+                var bulkUpdate = DB.Update<MailModel>(transaction.Session);
+
+                foreach (var mail in update)
+                {
+                    bulkUpdate.MatchID(mail.ID).ModifyWith(mail).AddToQueue();
+                }
+
+                await bulkUpdate.ExecuteAsync(ct);
+
+                await transaction.CommitAsync();
+
+                return Ok();
+
+            }
+            catch (Exception ex)
+            {
+                if (transaction.Session.IsInTransaction)
+                    await transaction.AbortAsync();
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+        }
+        //------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.OrderOffice}")]
+        [HttpPatch]
         [Route("{id}/review")]
         public async Task<IActionResult> ReviewOrder(string id, CancellationToken ct)
         {
@@ -157,7 +269,7 @@ namespace UATL.Mail.Controllers
             {
                 var account = await _identityService.GetCurrentAccount(HttpContext);
                 var update = await DB.Find<MailModel>(transaction.Session)
-                    .MatchID(id)
+                    .Match(x => x.Eq(mail => mail.ID, id))
                     .ExecuteSingleAsync(ct);
 
                 if (update == null)
@@ -166,6 +278,52 @@ namespace UATL.Mail.Controllers
                 update.Flags = update.Flags.Append(MailFlag.Reviewed).Distinct().ToList();
 
                 await update.SaveAsync(transaction.Session, ct);
+                await transaction.CommitAsync();
+
+                return Ok();
+
+            }
+            catch (Exception ex)
+            {
+                if (transaction.Session.IsInTransaction)
+                    await transaction.AbortAsync();
+                _logger.LogError(ex.Message);
+                return BadRequest();
+            }
+        }
+        //------------------------------------------------------------------------------------------------------------//
+        [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.OrderOffice}")]
+        [HttpPatch]
+        [Route("group/{groupId}/review")]
+        public async Task<IActionResult> ReviewOrders(string groupId, CancellationToken ct)
+        {
+            var transaction = DB.Transaction();
+            try
+            {
+                var account = await _identityService.GetCurrentAccount(HttpContext);
+                var update = await DB.Find<MailModel>(transaction.Session)
+                    .Match(x => x.Eq(mail => mail.GroupId, groupId) & x.Eq(mail => mail.Type, MailType.External))
+                    .ExecuteAsync(ct);
+
+                if (update == null)
+                    return NotFound();
+
+                update = update.Select(mail =>
+                {
+                    mail.Flags = mail.Flags.Append(MailFlag.Reviewed).Distinct().ToList();
+                    mail.ApprovedBy = account.ToBaseAccount();
+                    return mail;
+                }).ToList();
+
+
+                var bulkUpdate = DB.Update<MailModel>(transaction.Session);
+
+                foreach (var mail in update)
+                {
+                    bulkUpdate.MatchID(mail.ID).ModifyWith(mail).AddToQueue();
+                }
+
+                await bulkUpdate.ExecuteAsync(ct);
                 await transaction.CommitAsync();
 
                 return Ok();
