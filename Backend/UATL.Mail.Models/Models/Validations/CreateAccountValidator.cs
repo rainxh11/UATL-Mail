@@ -1,11 +1,11 @@
 ﻿using FluentValidation;
-using UATL.MailSystem.Models.Request;
+using UATL.MailSystem.Common.Request;
 
-namespace UATL.MailSystem.Models.Validations;
+namespace UATL.MailSystem.Common.Validations;
 
 public class CreateAccountValidator : AbstractValidator<CreateAccountModel>
 {
-    public CreateAccountValidator() : base()
+    public CreateAccountValidator()
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Account Name cannot be empty!")

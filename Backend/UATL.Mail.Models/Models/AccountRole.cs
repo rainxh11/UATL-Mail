@@ -1,9 +1,8 @@
-﻿namespace UATL.MailSystem.Models
+﻿namespace UATL.MailSystem.Common;
+
+public class AccountRole
 {
-    public class AccountRole
-    {
-        public const string Admin = "Admin";
-        public const string User = "User";
-        public const string OrderOffice = "OrderOffice";
-    }
+    public const string Admin = "Admin";
+    public const string User = "User";
+    public const string OrderOffice = "OrderOffice";
 }

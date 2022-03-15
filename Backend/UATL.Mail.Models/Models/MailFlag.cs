@@ -1,12 +1,11 @@
-﻿namespace UATL.MailSystem.Models.Models
+﻿namespace UATL.MailSystem.Common.Models;
+
+public enum MailFlag
 {
-    public enum MailFlag
-    {
-        Important,
-        RequireTask,
-        Acknowledged,
-        Approved, // Order Office 
-        Reviewed, // Order Office
-        Archived
-    }
+    Important,
+    RequireTask,
+    Acknowledged,
+    Approved, // Order Office 
+    Reviewed, // Order Office
+    Archived
 }

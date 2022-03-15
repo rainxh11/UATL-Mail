@@ -1,9 +1,8 @@
-﻿namespace UATL.MailSystem.Models.Models
+﻿namespace UATL.MailSystem.Common.Models;
+
+public enum MailDirection
 {
-    public enum MailDirection
-    {
-        Both,
-        Sent,
-        Received
-    }
+    Both,
+    Sent,
+    Received
 }

@@ -1,8 +1,7 @@
-﻿namespace UATL.MailSystem.Models.Response
+﻿namespace UATL.MailSystem.Common.Response;
+
+public interface IResultResponse<TData, T>
 {
-    public interface IResultResponse<TData,T>
-    {
-        public T Results { get; }
-        public TData Data { get; }
-    }
+    public T Results { get; }
+    public TData Data { get; }
 }

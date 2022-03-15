@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
-namespace UATL.MailSystem.Models.Models.Request
+namespace UATL.MailSystem.Common.Models.Request;
+
+public class DraftRequest
 {
-    public class DraftRequest
-    {
-        public string Subject { get; set; }
-        public string Body { get; set; }
-        public ISet<string> HashTags { get; set; } = new HashSet<string>();
-    }
+    public string Subject { get; set; }
+    public string Body { get; set; }
+    public ISet<string> HashTags { get; set; } = new HashSet<string>();
 }

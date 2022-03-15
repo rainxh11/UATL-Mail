@@ -5,11 +5,11 @@
       :app="$vuetify.breakpoint.mdAndDown"
       :permanent="$vuetify.breakpoint.lgAndUp"
       floating
-      class="elevation-1 rounded flex-shrink-0"
+      class="elevation-1 rounded flex-shrink-0 pa-2 position-sticky"
       :class="[$vuetify.rtl ? 'ml-3' : 'mr-3']"
       width="350"
     >
-      <email-menu class="pa-2"></email-menu>
+      <email-menu></email-menu>
     </v-navigation-drawer>
 
     <div class="d-flex flex-grow-1 flex-column">

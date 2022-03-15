@@ -1,16 +1,13 @@
-﻿using MongoDB.Entities;
-using MongoDB.Bson.Serialization.Attributes;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Entities;
 
-namespace UATL.MailSystem.Models
+namespace UATL.MailSystem.Common;
+
+public class AccountBase : Entity
 {
-    public class AccountBase : Entity
-    {
-        [BsonRequired]
-        public string Name { get; set; }
+    [BsonRequired] public string Name { get; set; }
 
-        [BsonRequired]
-        public string UserName { get; set; }
-        public string Description { get; set; }
+    [BsonRequired] public string UserName { get; set; }
 
-    }
+    public string Description { get; set; }
 }

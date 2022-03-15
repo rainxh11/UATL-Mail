@@ -95,6 +95,7 @@ export default {
     },
     'markReceived':'Marquer comme reçu',
     'orderReceived':'Reçu',
+    'orderReviewed':'Reçu',
     'approve': 'Approver',
     'approved': 'Approuvé',
     'unApproved': 'Non Approuvé',

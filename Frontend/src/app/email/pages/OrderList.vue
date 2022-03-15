@@ -10,7 +10,7 @@
           xs="11"
         >
           <v-text-field
-            v-model="searchQuery"
+            v-model.lazy="searchQuery"
             append-icon="fa-regular fa-magnifying-glass"
             class="flex-grow-1 mr-md-2"
             outlined
@@ -169,6 +169,16 @@
         <div class="px-1 py-6 text-center">{{ $t('email.emptyList') }}</div>
       </template>
     </v-list>
+    <v-card-text v-if="orders.length === 0">
+      <v-row class="d-flex flex-column" dense align="center" justify="center">
+        <v-icon color="blue" size="128">
+          fa-solid fa-circle-exclamation
+        </v-icon>
+        <p>
+          {{ $t('email.empty') }}
+        </p>
+      </v-row>
+    </v-card-text>
   </v-card>
 </template>
 

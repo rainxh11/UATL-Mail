@@ -3,49 +3,49 @@ using System.Security.Claims;
 using Akavache;
 using Hangfire.Annotations;
 using Hangfire.Dashboard;
-using UATL.MailSystem.Models;
+using UATL.MailSystem.Common;
 
-namespace UATL.Mail.Models
+namespace UATL.Mail.Models;
+
+public class DashboardAuthFilter : IDashboardAsyncAuthorizationFilter
 {
-    public class DashboardAuthFilter : IDashboardAsyncAuthorizationFilter
+    public async Task<bool> AuthorizeAsync([NotNull] DashboardContext context)
     {
-        private async Task<Account?> GetAccountFromToken(string token)
-        {
-            try
-            {
-                var cached = await BlobCache.InMemory.GetObject<Account>(token);
+        var httpContext = context.GetHttpContext();
+        if (httpContext.User.IsInRole("Admin")) return true;
 
-                return cached;
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
+        if (httpContext.Request.Cookies.Any(x => x.Key == "T"))
+        {
+            var token = httpContext.Request.Cookies["T"];
+            var account = await GetAccountFromToken(token);
+            if (account == null)
+                return false;
+            return account.Role == AccountType.Admin;
         }
-        public async Task<bool> AuthorizeAsync([NotNull] DashboardContext context)
+
+        var identity = httpContext.User.Identity as ClaimsIdentity;
+
+        if (identity != null)
         {
-            var httpContext = context.GetHttpContext();
-            if (httpContext.User.IsInRole("Admin")) return true;
+            var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
 
-            if (httpContext.Request.Cookies.Any(x => x.Key == "T"))
-            {
-                var token = httpContext.Request.Cookies["T"];
-                var account = await GetAccountFromToken(token);
-                if (account == null)
-                    return false;
-                return account.Role == AccountType.Admin;
-            }
+            return role == AccountRole.Admin;
+        }
 
-            var identity = httpContext.User.Identity as ClaimsIdentity;
+        return false;
+    }
 
-            if (identity != null)
-            {
-                var role = identity.Claims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value;
+    private async Task<Account?> GetAccountFromToken(string token)
+    {
+        try
+        {
+            var cached = await BlobCache.InMemory.GetObject<Account>(token);
 
-                return role == AccountRole.Admin;
-            }
-
-            return false;
+            return cached;
+        }
+        catch (Exception ex)
+        {
+            return null;
         }
     }
 }

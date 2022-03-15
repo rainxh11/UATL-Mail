@@ -2,9 +2,10 @@
 using System.Text.RegularExpressions;
 using FluentValidation;
 using MongoDB.Bson;
-using UATL.MailSystem.Models.Models.Request;
+using UATL.MailSystem.Common.Models;
+using UATL.MailSystem.Common.Models.Request;
 
-namespace UATL.MailSystem.Models.Validations;
+namespace UATL.MailSystem.Common.Validations;
 
 public class SendMailRequestValidator : AbstractValidator<SendMailRequest>
 {
@@ -12,7 +13,7 @@ public class SendMailRequestValidator : AbstractValidator<SendMailRequest>
     {
         RuleFor(x => x).Custom((x, validationContext) =>
         {
-            if (x.Recipients.Count == 0 && x.Type == Models.MailType.Internal)
+            if (x.Recipients.Count == 0 && x.Type == MailType.Internal)
                 validationContext.AddFailure(nameof(x.Recipients), "Recipients cannot be empty if mail is internal.");
             if (x.Recipients.Any(r => !ObjectId.TryParse(r, out _)))
                 validationContext.AddFailure(nameof(x.Recipients), "Recipients contain invalid IDs");
@@ -38,5 +39,5 @@ public class SendMailRequestValidator : AbstractValidator<SendMailRequest>
                         validator.AddFailure(hashTag, "Not a valid HashTag!");
                 }
             });
-    } 
+    }
 }

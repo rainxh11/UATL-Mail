@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace UATL.MailSystem.Common.Response;
 
-namespace UATL.MailSystem.Models.Response
+public class ResultResponse<TData, T> : IResultResponse<TData, T>
 {
-
-    public class ResultResponse<TData, T> : IResultResponse<TData, T>
+    public ResultResponse(TData data, T results)
     {
-        public ResultResponse(TData data, T results)
-        {
-            Results = results;
-            Data = data;
-        }
-        public T Results { get; private set; }
-
-        public TData Data { get; private set; }
+        Results = results;
+        Data = data;
     }
+
+    public T Results { get; }
+
+    public TData Data { get; }
 }

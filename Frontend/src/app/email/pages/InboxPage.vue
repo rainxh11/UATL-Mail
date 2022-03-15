@@ -5,13 +5,14 @@
     :page-count="pageCount"
     type="mail"
     @refresh="getMails"
+    @search="searchMails"
   />
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
 import EmailList from '../components/EmailList'
-import { getAllMails, searchMails } from '@/api/mails'
+import { getAllMails, searchMails, markMailViewed } from '@/api/mails'
 import { Html5Entities } from 'html-entities'
 
 export default {
@@ -51,6 +52,32 @@ export default {
       } else {
         this.getMails({ page: 1, pageSize: 5 })
       }
+    },
+    markViewed(mail) {
+      if (!mail.Viewed) {
+        markMailViewed(mail.ID)
+          .catch(err => console.log(err))
+      }
+    },
+    searchMails(search, pagination) {
+      const { direction, internal } = this.$route.params
+      search = !search ? '' : search
+      this.loading = true
+      searchMails(search,{
+        page: pagination.page,
+        limit: pagination.pageSize,
+        direction: direction,
+        type: internal
+      }, this.getToken())
+        .then(res => {
+          this.mails = res.data.Data.map((x) => {
+            x.Body = Html5Entities.decode(x.Body)
+
+            return x
+          })
+          this.pageCount = res.data.PageCount
+        }).catch(err => this.showError(err))
+        .finally(() => this.loading = false)
     },
     getMails(pagination) {
       const { direction, internal } = this.$route.params

@@ -1,21 +1,9 @@
 <template>
-  <v-card v-if="emails.length === 0" class="pa-2 flex-row pa-md-4 flex-grow-1 align-center justify-center d-flex flex-column">
-    <v-card-text>
-      <v-row class="d-flex flex-column" dense align="center" justify="center">
-        <v-icon color="blue" size="128">
-          fa-solid fa-circle-exclamation
-        </v-icon>
-        <p>
-          {{ $t('email.empty') }}
-        </p>
-      </v-row>
-    </v-card-text>
-  </v-card>
-  <v-card v-else class="min-w-0">
+  <v-card class="min-w-0">
     <v-card-title class="d-flex align-center justify-center flex-row flex-grow-1">
       <v-row no-gutters dense>
         <v-col cols="1">
-          <v-checkbox :value="selectAll" :indeterminate="selectAlmostAll" @click.stop="onSelectAll(selectAll)"/>
+          <v-checkbox :value="selectAll" :indeterminate="selectAlmostAll" class="px-2" @click.stop="onSelectAll(selectAll)"/>
         </v-col>
         <v-col
           cols="12"
@@ -25,7 +13,7 @@
           xs="9"
         >
           <v-text-field
-            v-model="search"
+            v-model.lazy="searchQuery"
             append-icon="fa-regular fa-magnifying-glass"
             class="flex-grow-1 mr-md-2"
             outlined
@@ -39,8 +27,8 @@
           <v-btn
             v-show="selected.length === 0"
             icon
-            :loading="loading"
-            @click="$emit('refresh', { page: 1, pageSize: pageSize }); page = 1;"
+            :loading="isLoading"
+            @click="refresh"
           >
             <v-icon>fa-regular fa-refresh</v-icon>
           </v-btn>
@@ -58,12 +46,35 @@
             color="primary"
             :length="pageCount"
             :total-visible="maxPages"
-            @input="$emit('refresh', { page: page, pageSize: pageSize })"
+            @input="refresh"
           ></v-pagination>
+          
+        </v-col>
+      </v-row>     
+    </v-card-title>
+    <v-card-title>
+      <v-row no-gutters dense> 
+        <v-col
+          cols="12"
+          lg="10"
+          md="0"
+          sm="0"
+          xs="0"
+        />
+        <v-col cols="12" lg="2" md="12" sm="12">
+          <v-select
+            v-model="pageSize"
+            dense
+            outlined
+            :label="$t('$vuetify.dataTable.itemsPerPageText')"
+            :items="pageSizes"
+            @change="page = 1; refresh(); "
+          />               
         </v-col>
       </v-row>
     </v-card-title>
     <v-divider/>
+
     <v-list
       v-for="group in $enumerable(emails).GroupBy(x => new Date(x.SentOn ? x.SentOn : x.CreatedOn).toString('yyyy/MM/dd'), x => x).ToArray()"
       :key="group"
@@ -86,14 +97,15 @@
           <v-list-item
             :key="item.ID"
             :class="{
-              'grey lighten-5': item.read && !$vuetify.theme.dark,
-              'v-list-item--active primary--text': selected.indexOf(item.ID) !== -1
+              'grey lighten-5': item.Viewed && !$vuetify.theme.dark,
+              'v-list-item--active success--text': !item.Viewed && type !== 'draft' && selected.indexOf(item.ID) === -1,
+              'v-list-item--active primary--text': selected.indexOf(item.ID) !== -1         
             }"
             link
             :to="`/mailbox/mail/${item.ID}`"
           >
             <v-list-item-action class="d-flex flex-row align-center">
-              <v-checkbox v-model="selected" :value="item.ID"></v-checkbox>
+              <v-checkbox v-model="selected" :value="item.ID" @click.prevent></v-checkbox>
 
               <v-btn v-if="type !== 'draft'" icon class="ml-1" @click.prevent="toggleStarred(item.ID)">
                 <v-icon v-if="!isStarred(item.ID)" color="grey lighten-1">
@@ -111,7 +123,13 @@
             <v-list-item-avatar v-if="item.To" class="d-flex flex-row">
               <v-img :src="avatar(item.To.ID)" lazy-src="/images/avatars/generic.jpg"/>
             </v-list-item-avatar>
-            <v-list-item-content class="pa-2" @click="$router.push(`/mailbox/${type}/${item.id}`)">
+            <v-list-item-content 
+              :class="{ 
+                'pa-2 black--text': !$vuetify.theme.dark, 
+                'pa-2 white--text': $vuetify.theme.dark
+              }" 
+              @click="$router.push(`/mailbox/${type}/${item.id}`)"
+            >
               <v-list-item-title>{{ getTitle(item) }}</v-list-item-title>
               <v-list-item-title v-text="item.Subject"></v-list-item-title>
               <v-list-item-subtitle v-show="type === 'draft'" class="font-weight-bold">
@@ -164,6 +182,25 @@
               </v-list-item-subtitle>
             </v-list-item-content>
 
+            <v-list-item-action v-if="item.Approved">
+              <v-chip
+                outlined
+                color="success"
+              >
+                {{ $t('email.approved') }}
+                <v-icon small class="px-1">fa-check</v-icon>
+              </v-chip>
+            </v-list-item-action>
+            <v-list-item-action v-if="item.Reviewed && !item.Approved">
+              <v-chip
+                outlined
+                color="primary"
+              >
+                {{ $t('email.orderReviewed') }}
+                <v-icon small class="px-1">fa-check</v-icon>
+              </v-chip>
+            </v-list-item-action>
+
             <v-list-item-action>
               <v-list-item-action-text>
                 <v-tooltip bottom>
@@ -189,7 +226,16 @@
         </template>
       </perfect-scrollbar>
     </v-list>
-
+    <v-card-text v-if="emails.length === 0">
+      <v-row class="d-flex flex-column" dense align="center" justify="center">
+        <v-icon color="blue" size="128">
+          fa-solid fa-circle-exclamation
+        </v-icon>
+        <p>
+          {{ $t('email.empty') }}
+        </p>
+      </v-row>
+    </v-card-text>
     <v-overlay :value="isLoading" absolute>
       <v-progress-circular indeterminate size="32"></v-progress-circular>
     </v-overlay>
@@ -212,6 +258,7 @@ import { getStarred, addStarred, deleteStarred } from '@/api/mails'
 import seedColor from 'seed-color'
 import isDarkColor from 'is-dark-color'
 import { getMimeIcon } from '@/plugins/mimeToIcon'
+import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators'
 
 export default {
   props: {
@@ -246,6 +293,7 @@ export default {
     pageSizes: {
       type: Array,
       default: () => [
+        5,
         10,
         20,
         50,
@@ -275,15 +323,15 @@ export default {
         title: 'Starred',
         key: 'starred'
       }],
-      search: null,
+      search: '',
+      searchQuery: '',
       starred: []
     }
   },
-  computed: {
-  },
   watch: {
-    search (val) {
-
+    searchQuery(val) {
+      if (!val) val = ''
+      this.search = val.trim()
     },
     selected(val) {
       // check selectAll intermediate state
@@ -299,6 +347,20 @@ export default {
       })
     }
   },
+  subscriptions() {
+    return {
+      searchObservable: this.$watchAsObservable('search')
+        .pipe(debounceTime(1000), distinctUntilChanged())
+        .subscribe(val => {
+          if (!val.newValue) val.newValue = ''
+          if (val.newValue.length > 0) {
+            this.$emit('search', val.newValue, { page: this.page, pageSize: this.pageSize })
+          } else {
+            this.$emit('refresh', { page: this.page, pageSize: this.pageSize })
+          }
+        })
+    }
+  },
   async created() {
     this.$mailHub.on('refresh_account', (x) => {
       this.getStarred()
@@ -312,9 +374,18 @@ export default {
   },
   beforeDestroy() {
     this.$mailHub.off('refresh_account')
+    this.$observables.searchObservable.unsubscribe()
   },
   methods: {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
+    refresh() {
+      this.search = this.search ? '' : this.search
+      if (this.search.length > 0) {
+        this.$emit('search', this.search, { page: this.page, pageSize: this.pageSize })
+      } else {
+        this.$emit('refresh', { page: this.page, pageSize: this.pageSize })
+      }
+    },
     async getStarred() {
       try {
         const result = await getStarred(false)

@@ -5,13 +5,14 @@
     :page-count="pageCount"
     type="mail"
     @refresh="getStarred"
+    @search="searchStarred"
   />
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
 import EmailList from '../components/EmailList'
-import { getStarredFull } from '@/api/mails'
+import { getStarredFull, searchStarredFull } from '@/api/mails'
 import { Html5Entities } from 'html-entities'
 
 export default {
@@ -51,6 +52,22 @@ export default {
       } else {
         this.getStarred({ page: 1, pageSize: 5 })
       }
+    },
+    searchStarred(search, pagination) {
+      this.loading = true
+      searchStarredFull(search, {
+        page: pagination.page,
+        limit: pagination.pageSize
+      }, this.getToken())
+        .then(res => {
+          this.mails = res.data.Data.map((x) => {
+            x.Body = Html5Entities.decode(x.Body)
+
+            return x
+          })
+          this.pageCount = res.data.PageCount
+        }).catch(err => this.showError(err))
+        .finally(() => this.loading = false)
     },
     getStarred(pagination) {
       this.loading = true

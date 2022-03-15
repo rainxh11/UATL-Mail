@@ -49,7 +49,7 @@
     </v-list>
     <div class="overline pa-1 mt-2">{{ $t('email.labels') }}</div>
     <v-virtual-scroll 
-      class="mt-2 pa-0"
+      class="mt-0 pa-0"
       item-height="30"
       :items="labels"
       height="300"
@@ -69,14 +69,8 @@
             <v-list-item-title>{{ item.label }}</v-list-item-title>
           </v-list-item-content>
 
-          <v-list-item-action v-if="item.count > 0">
-            <v-badge
-              inline
-              :content="item.count"
-              :color="item.color"
-              class="font-weight-bold"
-            >
-            </v-badge>
+          <v-list-item-action>
+            <v-list-item-action-text class="font-weight-bold text-body-1">{{ item.count | formatNumber }}</v-list-item-action-text>
           </v-list-item-action>
         </v-list-item>
 
@@ -182,12 +176,13 @@ export default {
       getTags()
         .then(res => {
           this.labels = this.$enumerable(res.data)
-            .OrderBy(x => x)
+            .OrderByDescending(x => x.Count)
             .Select(x => {
               return {
-                label: x,
-                color: seedColor(x).toHex(),
-                link: `/mailbox/tagged${x}`
+                label: x.Tag,
+                count: x.Count,
+                color: seedColor(x.Tag).toHex(),
+                link: `/mailbox/tagged${x.Tag}`
               }
             })
             .ToArray()

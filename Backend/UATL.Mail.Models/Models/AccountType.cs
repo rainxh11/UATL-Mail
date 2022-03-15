@@ -1,9 +1,8 @@
-﻿namespace UATL.MailSystem.Models
+﻿namespace UATL.MailSystem.Common;
+
+public enum AccountType
 {
-    public enum AccountType
-    {
-        Admin,
-        User,
-        OrderOffice
-    }
+    Admin,
+    User,
+    OrderOffice
 }

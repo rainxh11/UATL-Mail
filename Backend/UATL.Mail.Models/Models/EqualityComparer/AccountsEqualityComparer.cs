@@ -1,25 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Invio.Hashing;
+﻿using System.Collections.Generic;
 using System.Text.Json;
+using Invio.Hashing;
 
-namespace UATL.MailSystem.Models.EqualityComparer
+namespace UATL.MailSystem.Common.EqualityComparer;
+
+public class AccountsEqualityComparer : IEqualityComparer<List<Account>>
 {
-
-    public class AccountsEqualityComparer : IEqualityComparer<List<Account>>
+    public bool Equals(List<Account> x, List<Account> y)
     {
-        public bool Equals(List<Account> x, List<Account> y)
-        {
-            return JsonSerializer.Serialize(x) == JsonSerializer.Serialize(y);
-        }
+        return JsonSerializer.Serialize(x) == JsonSerializer.Serialize(y);
+    }
 
-        public int GetHashCode(List<Account> obj)
-        {
-            unchecked 
-            {
-                return Invio.Hashing.HashCode.From(obj);
-            }
-        }
+    public int GetHashCode(List<Account> obj)
+    {
+        return HashCode.From(obj);
     }
 }

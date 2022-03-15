@@ -1,11 +1,11 @@
-﻿namespace UATL.MailSystem.Models.Response
+﻿namespace UATL.MailSystem.Common.Response;
+
+public class MessageResponse<T>
 {
-    public class MessageResponse<T>
+    public MessageResponse(T message)
     {
-        public MessageResponse(T message)
-        {
-            Message = message;
-        }
-        public T Message { get; private set; }
+        Message = message;
     }
+
+    public T Message { get; }
 }

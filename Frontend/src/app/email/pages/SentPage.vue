@@ -5,6 +5,7 @@
     :page-count="pageCount"
     type="mail"
     @refresh="getMails"
+    @search="searchMails"
   />
 </template>
 
@@ -47,6 +48,26 @@ export default {
     ...mapActions('app', ['showSuccess', 'showError']),
     refresh() {
       this.getMails({ page: 1, pageSize: 5 })
+    },
+    searchMails(search, pagination) {
+      const { direction, internal } = this.$route.params
+
+      this.loading = true
+      searchMails(search, {
+        page: pagination.page,
+        limit: pagination.pageSize,
+        direction: direction,
+        type: internal
+      }, this.getToken())
+        .then(res => {
+          this.mails = res.data.Data.map((x) => {
+            x.Body = Html5Entities.decode(x.Body)
+
+            return x
+          })
+          this.pageCount = res.data.PageCount
+        }).catch(err => this.showError(err))
+        .finally(() => this.loading = false)
     },
     getMails(pagination) {
       const { direction, internal } = this.$route.params

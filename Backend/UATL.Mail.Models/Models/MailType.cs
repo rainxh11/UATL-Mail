@@ -1,8 +1,7 @@
-﻿namespace UATL.MailSystem.Models.Models
+﻿namespace UATL.MailSystem.Common.Models;
+
+public enum MailType
 {
-    public enum MailType
-    {
-        Internal,
-        External
-    }
+    Internal,
+    External
 }

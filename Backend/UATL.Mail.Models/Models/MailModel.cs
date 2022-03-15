@@ -1,91 +1,69 @@
-﻿using MongoDB.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Entities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace UATL.MailSystem.Models.Models
+namespace UATL.MailSystem.Common.Models;
+
+[Collection("Mail")]
+public class MailModel : Draft
 {
-
-    [Collection("Mail")]
-    public class MailModel : Draft
+    public MailModel()
     {
-        [IgnoreDefault]
-        [AsObjectId]
-        public string GroupId { get; set; } = null;
-        [IgnoreDefault]
-        public One<MailModel> ReplyTo { get; set; }
+        this.InitOneToMany(() => Attachments);
+    }
 
-        [IgnoreDefault]
-        public DateTime SentOn { get; set; }
-        public AccountBase To { get; set; }
-        bool IsEncrypted { get; set; } = false;
+    [IgnoreDefault] [AsObjectId] public string GroupId { get; set; } = null;
 
-        [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
-        [IgnoreDefault]
-        public List<MailFlag> Flags { get; set; } = new List<MailFlag>();
+    [IgnoreDefault] public One<MailModel> ReplyTo { get; set; }
 
-        [JsonIgnore]
-        [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
-        public MailType Type { get; set; } = MailType.Internal;
-        [JsonProperty("Type")]
-        public string TypeName
+    [IgnoreDefault] public DateTime SentOn { get; set; }
+
+    public AccountBase To { get; set; }
+    private bool IsEncrypted { get; set; } = false;
+
+    [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
+    [IgnoreDefault]
+    public List<MailFlag> Flags { get; set; } = new();
+
+    [JsonIgnore]
+    [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
+    public MailType Type { get; set; } = MailType.Internal;
+
+    [JsonProperty("Type")] public string TypeName => Type.ToString();
+
+    [IgnoreDefault] public DateTime ViewedOn { get; set; }
+
+    public bool Viewed { get; set; }
+
+    public bool Approved
+    {
+        get
         {
-            get => Type.ToString();
+            if (Type == MailType.External)
+                return Flags.Contains(MailFlag.Approved);
+            return false;
         }
+    }
 
-        [IgnoreDefault]
-        public DateTime ViewedOn { get; set; }
-        public bool Viewed { get; set; } = false;
-
-        public bool Approved
-        {
-            get
-            {
-                if (Type == MailType.External)
-                {
-                    return Flags.Contains(MailFlag.Approved);
-                }
-                else
-                {
-                    return false;
-                }
-            }
-        }
-
-        [IgnoreDefault] public AccountBase ApprovedBy { get; set; } = null;
+    [IgnoreDefault] public AccountBase ApprovedBy { get; set; } = null;
 
 
-        public bool Acknowledged
-        {
-            get => Flags.Contains(MailFlag.Acknowledged);
-        }
-        public bool RequireTask
-        {
-            get => Flags.Contains(MailFlag.RequireTask);
-        }
+    public bool Acknowledged => Flags.Contains(MailFlag.Acknowledged);
 
-        public bool Important
-        {
-            get => Flags.Contains(MailFlag.Important);
-        }
+    public bool RequireTask => Flags.Contains(MailFlag.RequireTask);
 
-        public bool Reviewed
-        {
-            get => Flags.Contains(MailFlag.Reviewed);
-        }
-        public void SetViewed()
-        {
-            this.Viewed = true;
-            this.ViewedOn = DateTime.Now;
-        }
+    public bool Important => Flags.Contains(MailFlag.Important);
 
-        public MailModel()
-        {
-            this.InitOneToMany(() => Attachments);
-        }
-        [BsonIgnore]
-        public IEnumerable<AccountBase>? Recipients { get; set; }
+    public bool Reviewed => Flags.Contains(MailFlag.Reviewed);
+
+    [BsonIgnore] public IEnumerable<AccountBase>? Recipients { get; set; }
+
+    public void SetViewed()
+    {
+        Viewed = true;
+        ViewedOn = DateTime.Now;
     }
 }

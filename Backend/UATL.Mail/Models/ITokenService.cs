@@ -1,12 +1,9 @@
-﻿
-using System.Security.Claims;
-using System.Security.Principal;
+﻿using System.Security.Principal;
 
-namespace UATL.MailSystem.Models
+namespace UATL.MailSystem.Common;
+
+public interface ITokenService
 {
-    public interface ITokenService
-    {
-        ValueTask<string> BuildToken(IConfiguration config, Account account);
-        string BuildTokenFromIdentity(IIdentity? identity);
-    }
+    ValueTask<string> BuildToken(IConfiguration config, Account account);
+    string BuildTokenFromIdentity(IIdentity? identity);
 }

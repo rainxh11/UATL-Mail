@@ -97,19 +97,19 @@ const getStarredFull = async (params, token) =>  {
 
 const searchStarredFull = async (search, params, token) =>  {
   const defaultParams = {
-    search: search,
     full: true,
     page: 1,
     limit: -1,
     sort: 'SentOn',
     desc: true
   }
-  return await axios.get('/mail/starred',
+  return await axios.get('/mail/starred/search',
     {
       ...headerAuth(token),
       params: {
         ...defaultParams,
-        ...params
+        ...params,
+        search: search ?? '|'
       }
     })
 }
@@ -154,6 +154,8 @@ const searchTaggedMails = async (tag, search, params, token) =>  {
 
 const getMailWithReplies = async(id) => await axios.get(`/mail/${id}/replies`)
 
+const markMailViewed = async(id) => await axios.patch('/mail/' + id + '/view')
+
 export {
   searchMails,
   sendMail,
@@ -170,5 +172,6 @@ export {
   searchTags,
   getTaggedMails,
   searchTaggedMails,
-  getMailWithReplies
+  getMailWithReplies,
+  markMailViewed
 }

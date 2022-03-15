@@ -1,14 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace UATL.MailSystem.Models.Models.Request
+namespace UATL.MailSystem.Common.Models.Request;
+
+public class SendDraftRequest
 {
-    public class SendDraftRequest
-    {
-        public List<string> Recipients { get; set; } = new List<string>();
+    public List<string> Recipients { get; set; } = new();
 
-        [JsonConverter(typeof(JsonStringEnumConverter))]
-        public List<MailFlag> Flags { get; set; } = new List<MailFlag>();
-
-    }
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public List<MailFlag> Flags { get; set; } = new();
 }

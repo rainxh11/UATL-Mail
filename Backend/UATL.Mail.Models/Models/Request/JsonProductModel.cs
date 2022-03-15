@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace UATL.MailSystem.Models.Request
+namespace UATL.MailSystem.Common.Request;
+
+public class JsonProductModel
 {
-    public class JsonProductModel
-    {
-        [JsonInclude]
-        public string ProductName { get; set; }
-        [JsonInclude]
-        public string Barcode { get; set; }
-    }
+    [JsonInclude] public string ProductName { get; set; }
+
+    [JsonInclude] public string Barcode { get; set; }
 }

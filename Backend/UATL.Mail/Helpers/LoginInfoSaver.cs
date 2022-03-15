@@ -1,41 +1,37 @@
-﻿using Ng.Services;
-using System.Linq;
-using System.Reactive.Linq;
-using System.Reactive.Threading.Tasks;
+﻿using System.Reactive.Linq;
 using Akavache;
 using Hangfire;
-using Newtonsoft.Json;
+using Ng.Services;
 using UATL.Mail.Models;
-using UATL.MailSystem.Models;
+using UATL.MailSystem.Common;
 
-namespace UATL.Mail.Helpers
+namespace UATL.Mail.Helpers;
+
+public class LoginInfoSaver
 {
-    public class LoginInfoSaver
+    private IBackgroundJobClient _bgJobs;
+    private readonly IUserAgentService _userAgentService;
+
+    public LoginInfoSaver(IUserAgentService userAgentService, IBackgroundJobClient bgJobs)
     {
-        private IUserAgentService _userAgentService;
-        private IBackgroundJobClient _bgJobs;
+        _userAgentService = userAgentService;
+        _bgJobs = bgJobs;
+    }
 
-        public LoginInfoSaver(IUserAgentService userAgentService, IBackgroundJobClient bgJobs)
+    public async Task AddLogin(HttpContext context, Account account)
+    {
+        try
         {
-            _userAgentService = userAgentService;
-            _bgJobs = bgJobs;
+            var userAgentString = context.Request.Headers["User-Agent"].ToString();
+            var userAgent = _userAgentService.Parse(userAgentString);
+            var accountLogin = new AccountLogin(account.ToBaseAccount(), userAgent, context);
+
+            await BlobCache.LocalMachine.InsertObject(accountLogin.Id, accountLogin,
+                DateTimeOffset.Now.AddMonths(12));
         }
-
-        public async Task AddLogin(HttpContext context, Account account)
+        catch (Exception ex)
         {
-            try
-            {
-                string userAgentString = context.Request.Headers["User-Agent"].ToString();
-                UserAgent userAgent = _userAgentService.Parse(userAgentString);
-                var accountLogin = new AccountLogin(account.ToBaseAccount(), userAgent, context);
-
-                await BlobCache.LocalMachine.InsertObject(accountLogin.Id, accountLogin,
-                    DateTimeOffset.Now.AddMonths(12));
-            }
-            catch(Exception ex)
-            {
-                var x = "";
-            }
-        } 
+            var x = "";
+        }
     }
 }

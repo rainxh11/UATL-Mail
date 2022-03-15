@@ -5,13 +5,14 @@
     :page-count="pageCount"
     type="draft"
     @refresh="getDrafts"
+    @search="searchDrafts"
   />
 </template>
 
 <script>
 import EmailList from '../components/EmailList'
 import { mapActions, mapGetters } from 'vuex'
-import { getAllDrafts } from '@/api/drafts'
+import { getAllDrafts, searchDrafts } from '@/api/drafts'
 import { Html5Entities } from 'html-entities'
 
 export default {
@@ -46,6 +47,20 @@ export default {
   methods: {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
     ...mapActions('app', ['showSuccess', 'showError']),
+    searchDrafts(search, pagination) {
+      this.loading = true
+      searchDrafts(search, { page: pagination.page, limit: pagination.pageSize } , this.getToken())
+        .then((res) => {
+          this.drafts = res.data.Data.map((x) => {
+            x.Body = Html5Entities.decode(x.Body)
+
+            return x
+          })
+          this.pageCount = res.data.PageCount
+        })
+        .catch((err) => this.showError(err))
+        .finally(() => this.loading = false)
+    },
     getDrafts(pagination) {
       this.loading = true
       getAllDrafts({ page: pagination.page, limit: pagination.pageSize } , this.getToken())

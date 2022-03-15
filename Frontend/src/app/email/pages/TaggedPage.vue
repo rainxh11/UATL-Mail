@@ -5,6 +5,7 @@
     :page-count="pageCount"
     type="mail"
     @refresh="getMails"
+    @search="searchMails"
   />
 </template>
 
@@ -53,6 +54,24 @@ export default {
       if (this.$route.hash) {
         this.getMails({ page: 1, pageSize: 5 })
       }
+    },
+    searchMails(search, pagination) {
+      const tag = this.$route.hash
+
+      this.loading = true
+      searchTaggedMails(tag, search, {
+        page: pagination.page,
+        limit: pagination.pageSize
+      }, this.getToken())
+        .then(res => {
+          this.mails = res.data.Data.map((x) => {
+            x.Body = Html5Entities.decode(x.Body)
+
+            return x
+          })
+          this.pageCount = res.data.PageCount
+        }).catch(err => this.showError(err))
+        .finally(() => this.loading = false)
     },
     getMails(pagination) {
       const tag = this.$route.hash

@@ -1,14 +1,10 @@
-﻿using UATL.MailSystem.Models;
-using System.Security.Principal;
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 
-namespace UATL.MailSystem.Models
+namespace UATL.MailSystem.Common;
+
+public interface IIdentityService
 {
-    public interface IIdentityService
-    {
-        Task<Account?> GetAccountFromToken(string token);
-        Task<Account?> GetCurrentAccount(HttpContext httpContext);
-        Task<Account?> GetCurrentHubClient(HubCallerContext httpContext);
-
-    }
+    Task<Account?> GetAccountFromToken(string token);
+    Task<Account?> GetCurrentAccount(HttpContext httpContext);
+    Task<Account?> GetCurrentHubClient(HubCallerContext httpContext);
 }

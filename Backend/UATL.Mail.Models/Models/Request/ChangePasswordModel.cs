@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace UATL.MailSystem.Common.Request;
 
-namespace UATL.MailSystem.Models.Request
+public class ChangePasswordModel
 {
-    public class ChangePasswordModel
-    {
-        public string OldPassword { get; set; }
-        public string NewPassword { get; set; }
-        public string ConfirmPassword { get; set; }
-    }
+    public string OldPassword { get; set; }
+    public string NewPassword { get; set; }
+    public string ConfirmPassword { get; set; }
 }

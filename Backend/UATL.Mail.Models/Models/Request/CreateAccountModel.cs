@@ -1,10 +1,9 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace UATL.MailSystem.Models.Request
+namespace UATL.MailSystem.Common.Request;
+
+public class CreateAccountModel : SignupModel
 {
-    public class CreateAccountModel : SignupModel
-    {
-        [JsonConverter(typeof(JsonStringEnumConverter))]
-        public AccountType Role { get; set; }
-    }
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public AccountType Role { get; set; }
 }

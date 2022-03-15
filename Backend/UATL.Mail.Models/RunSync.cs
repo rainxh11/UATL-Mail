@@ -1,47 +1,34 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace UATL.MailSystem
+namespace UATL.MailSystem;
+
+public static class Run
 {
+    private static readonly TaskFactory factory =
+        new(
+            CancellationToken.None,
+            TaskCreationOptions.None,
+            TaskContinuationOptions.None,
+            TaskScheduler.Default);
 
-    public static class Run
+    private static bool IsDotNetFx =>
+        RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework", StringComparison.OrdinalIgnoreCase);
+
+    public static TResult Sync<TResult>(Func<Task<TResult>> func)
     {
-        private static bool IsDotNetFx =>
-            RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework", StringComparison.OrdinalIgnoreCase);
+        if (IsDotNetFx)
+            return factory.StartNew(func).Unwrap().GetAwaiter().GetResult();
+        return func().GetAwaiter().GetResult();
+    }
 
-        private static readonly TaskFactory factory =
-            new TaskFactory(
-                CancellationToken.None,
-                TaskCreationOptions.None,
-                TaskContinuationOptions.None,
-                TaskScheduler.Default);
-
-        public static TResult Sync<TResult>(Func<Task<TResult>> func)
-        {
-            if (IsDotNetFx)
-            {
-                return factory.StartNew(func).Unwrap().GetAwaiter().GetResult();
-            }
-            else
-            {
-                return func().GetAwaiter().GetResult();
-            }
-        }
-
-        public static void Sync(Func<Task> func)
-        {
-            if (IsDotNetFx)
-            {
-                factory.StartNew(func).Unwrap().GetAwaiter().GetResult();
-            }
-            else
-            {
-                func().GetAwaiter().GetResult();
-            }
-        }
+    public static void Sync(Func<Task> func)
+    {
+        if (IsDotNetFx)
+            factory.StartNew(func).Unwrap().GetAwaiter().GetResult();
+        else
+            func().GetAwaiter().GetResult();
     }
 }

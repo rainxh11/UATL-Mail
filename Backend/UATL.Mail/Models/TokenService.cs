@@ -1,72 +1,72 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using UATL.MailSystem.Models;
-using Jetsons.JetPack;
-using Akavache;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Reactive.Linq;
+using System.Security.Claims;
 using System.Security.Principal;
+using System.Text;
+using Akavache;
+using Jetsons.JetPack;
+using Microsoft.IdentityModel.Tokens;
 
-namespace UATL.MailSystem.Models
+namespace UATL.MailSystem.Common;
+
+public class TokenService : ITokenService
 {
-    public class TokenService : ITokenService
+    private readonly IConfiguration _configuration;
+
+    public TokenService(IConfiguration configuration)
     {
-        private IConfiguration _configuration;
-        public TokenService(IConfiguration configuration)
+        _configuration = configuration;
+    }
+
+    public async ValueTask<string> BuildToken(IConfiguration config, Account account)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha512Signature);
+
+        var claims = new[]
         {
-            _configuration = configuration;
-        }
-        public async ValueTask<string> BuildToken(IConfiguration config, Account account)
+            new Claim(ClaimTypes.NameIdentifier, account.ID),
+            new Claim(ClaimTypes.Role, account.Role.ToString()),
+            new Claim(ClaimTypes.Email, account.UserName),
+            new Claim(ClaimTypes.Hash, account.PasswordHash)
+        };
+        var tokenDescriptor = new SecurityTokenDescriptor
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
+            Subject = new ClaimsIdentity(claims),
+            Expires = DateTime.Now.AddHours(config["Jwt:ExpireAfter"].ToInt()),
+            SigningCredentials = credentials
+        };
+        var token = tokenHandler.CreateToken(tokenDescriptor);
 
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha512Signature);
+        var tokenString = tokenHandler.WriteToken(token);
+        await BlobCache.LocalMachine.InsertObject(tokenString, account,
+            DateTime.Now.AddHours(config["Jwt:ExpireAfter"].ToInt()));
 
-            var claims = new[]
-{
-                new Claim(ClaimTypes.NameIdentifier, account.ID),
-                new Claim(ClaimTypes.Role, account.Role.ToString()),
-                new Claim(ClaimTypes.Email, account.UserName),
-                new Claim(ClaimTypes.Hash, account.PasswordHash),
-            };
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddHours(config["Jwt:ExpireAfter"].ToInt()),
-                SigningCredentials = credentials
-            };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
+        var tokens = await BlobCache.LocalMachine.GetAllKeys();
 
-            var tokenString = tokenHandler.WriteToken(token);
-            await BlobCache.LocalMachine.InsertObject<Account>(tokenString, account, DateTime.Now.AddHours(config["Jwt:ExpireAfter"].ToInt()));
+        return tokenString;
+    }
 
-            var tokens = await BlobCache.LocalMachine.GetAllKeys();
+    public string BuildTokenFromIdentity(IIdentity? identity)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
 
-            return tokenString;
-        }
-        public string BuildTokenFromIdentity(IIdentity? identity)
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha512Signature);
+
+        var tokenDescriptor = new SecurityTokenDescriptor
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
+            Subject = new ClaimsIdentity(identity),
+            //Expires = DateTime.Now.AddHours(config["Jwt:ExpireAfter"].ToInt()),
+            Expires = DateTime.Now.AddHours(_configuration["Jwt:ExpireAfter"].ToInt()),
+            SigningCredentials = credentials
+        };
+        var token = tokenHandler.CreateToken(tokenDescriptor);
 
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha512Signature);
+        var tokenString = tokenHandler.WriteToken(token);
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(identity),
-                //Expires = DateTime.Now.AddHours(config["Jwt:ExpireAfter"].ToInt()),
-                Expires = DateTime.Now.AddHours(_configuration["Jwt:ExpireAfter"].ToInt()),
-                SigningCredentials = credentials
-            };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-
-            var tokenString = tokenHandler.WriteToken(token);
-
-            return tokenString;
-        }
-
-
+        return tokenString;
     }
 }

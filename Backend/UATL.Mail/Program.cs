@@ -1,57 +1,34 @@
-using UATL.MailSystem.Models.Request;
-using UATL.MailSystem.Models.Validations;
-using FluentValidation;
 using FluentValidation.AspNetCore;
+using Hangfire;
+using Hangfire.Mongo;
+using Hangfire.Mongo.Migration.Strategies;
+using Hangfire.Mongo.Migration.Strategies.Backup;
+using Jetsons.JetPack;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.Extensions.Configuration;
-using UATL.MailSystem.Services;
-using UATL.MailSystem.Helpers;
 using Microsoft.OpenApi.Models;
-using UATL.MailSystem.Models;
-using UATL.MailSystem;
+using Newtonsoft.Json;
+using Ng.Services;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
-using Serilog.AspNetCore;
-using Microsoft.AspNetCore.Http.Features;
-using Newtonsoft.Json;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
-using Newtonsoft.Json.Serialization;
-using Jetsons.JetPack;
-using Microsoft.AspNetCore.SignalR;
-using UATL.Mail.Hubs;
-using Serilog.Enrichers;
-using Serilog.Enrichers.AspNetCore;
-using Hangfire.AspNetCore;
-using Hangfire;
-using Hangfire.Mongo;
-using MongoDB.Entities;
-using Hangfire.Mongo.Migration.Strategies;
-using Hangfire.Mongo.Migration.Strategies.Backup;
-using UATL.Mail.Services;
-using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
-using System.Reactive.Concurrency;
-using System.Security.Authentication;
 using System.Security.Claims;
-using System.Security.Cryptography.X509Certificates;
-using FluentEmail;
-using FluentEmail.Smtp;
-using Hangfire.Dashboard;
-using Hangfire.Storage.SQLite;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
+using System.Text;
 using UATL.Mail;
 using UATL.Mail.Helpers;
+using UATL.Mail.Hubs;
 using UATL.Mail.Models;
-using Ng.Services;
-
+using UATL.Mail.Services;
+using UATL.MailSystem.Common;
+using UATL.MailSystem.Common.Validations;
+using UATL.MailSystem.Helpers;
+using UATL.MailSystem.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,26 +45,26 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.WithDemystifiedStackTraces()
     .Enrich.WithRequestUserId()
     .WriteTo.Seq(builder.Configuration["SeqUrl"])
-    .WriteTo.Console(theme: Serilog.Sinks.SystemConsole.Themes.SystemConsoleTheme.Colored, restrictedToMinimumLevel: LogEventLevel.Information)
+    .WriteTo.Console(theme: SystemConsoleTheme.Colored, restrictedToMinimumLevel: LogEventLevel.Information)
     .WriteTo.File(AppContext.BaseDirectory + @"\Log\[VERBOSE]_UATLMail_Log_.log",
-                rollingInterval: RollingInterval.Day,
-                rollOnFileSizeLimit: true,
-                retainedFileCountLimit: 365,
-                shared: true,
-                restrictedToMinimumLevel: LogEventLevel.Verbose)
-            .WriteTo.File(AppContext.BaseDirectory + @"\Log\[ERROR]_UATLMail_Log_.log",
-                rollingInterval: RollingInterval.Day,
-                rollOnFileSizeLimit: true,
-                retainedFileCountLimit: 365,
-                shared: true,
-                restrictedToMinimumLevel: LogEventLevel.Error)
+        rollingInterval: RollingInterval.Day,
+        rollOnFileSizeLimit: true,
+        retainedFileCountLimit: 365,
+        shared: true,
+        restrictedToMinimumLevel: LogEventLevel.Verbose)
+    .WriteTo.File(AppContext.BaseDirectory + @"\Log\[ERROR]_UATLMail_Log_.log",
+        rollingInterval: RollingInterval.Day,
+        rollOnFileSizeLimit: true,
+        retainedFileCountLimit: 365,
+        shared: true,
+        restrictedToMinimumLevel: LogEventLevel.Error)
     .WriteTo.File(AppContext.BaseDirectory + @"\Log\[INFO]_UATLMail_Log_.log",
-                rollingInterval: RollingInterval.Day,
-                rollOnFileSizeLimit: true,
-                retainedFileCountLimit: 365,
-                shared: true,
-                restrictedToMinimumLevel: LogEventLevel.Information)
-            .CreateLogger();
+        rollingInterval: RollingInterval.Day,
+        rollOnFileSizeLimit: true,
+        retainedFileCountLimit: 365,
+        shared: true,
+        restrictedToMinimumLevel: LogEventLevel.Information)
+    .CreateLogger();
 
 builder.Host.UseSerilog();
 
@@ -102,17 +79,18 @@ builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
-    .UseMongoStorage(mongoConnectionString.Replace("UATL-Mail", "UATL-BackgroundService"), mongoDbName.Replace("UATL-Mail", "UATL-BackgroundService"), new MongoStorageOptions
-    {
-        MigrationOptions = new MongoMigrationOptions
+    .UseMongoStorage(mongoConnectionString.Replace("UATL-Mail", "UATL-BackgroundService"),
+        mongoDbName.Replace("UATL-Mail", "UATL-BackgroundService"), new MongoStorageOptions
         {
-            MigrationStrategy = new MigrateMongoMigrationStrategy(),
-            BackupStrategy = new CollectionMongoBackupStrategy()
-        },
-        Prefix = "uatl.backgroundjobs",
-        CheckConnection = true,
-    }));
-    //.UseSQLiteStorage());
+            MigrationOptions = new MongoMigrationOptions
+            {
+                MigrationStrategy = new MigrateMongoMigrationStrategy(),
+                BackupStrategy = new CollectionMongoBackupStrategy()
+            },
+            Prefix = "uatl.backgroundjobs",
+            CheckConnection = true
+        }));
+//.UseSQLiteStorage());
 
 
 builder.Services.AddHangfireServer(serverOptions =>
@@ -124,7 +102,7 @@ builder.Services.AddHangfireServer(serverOptions =>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters()
+        options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateAudience = false,
             ValidateIssuer = false,
@@ -143,17 +121,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
                 var path = context.HttpContext.Request.Path;
                 if (!string.IsNullOrEmpty(accessToken) &&
-                    (path.StartsWithSegments("/hubs")))
-                {
+                    path.StartsWithSegments("/hubs"))
                     context.Token = accessToken;
-                }
 
                 return Task.CompletedTask;
             }
         };
     });
-
-
 
 
 builder.Services.AddAuthorization(options =>
@@ -166,7 +140,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 //---------- JSON Serializer ---------------//
-builder.Services.AddControllers(/*options => options.Filters.Add(new ValidationFilter())*/).AddNewtonsoftJson(o =>
+builder.Services.AddControllers( /*options => options.Filters.Add(new ValidationFilter())*/).AddNewtonsoftJson(o =>
 {
     o.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
     o.SerializerSettings.Formatting = Formatting.Indented;
@@ -177,7 +151,7 @@ builder.Services.AddControllers(/*options => options.Filters.Add(new ValidationF
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(setup =>
 {
-    var jwtSecurityScheme = new OpenApiSecurityScheme()
+    var jwtSecurityScheme = new OpenApiSecurityScheme
     {
         BearerFormat = "JWT",
         Description = "Past JWT Bearer Token",
@@ -185,7 +159,7 @@ builder.Services.AddSwaggerGen(setup =>
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
-        Reference = new OpenApiReference()
+        Reference = new OpenApiReference
         {
             Id = JwtBearerDefaults.AuthenticationScheme,
             Type = ReferenceType.SecurityScheme
@@ -198,12 +172,13 @@ builder.Services.AddSwaggerGen(setup =>
             new OpenApiSecurityScheme
             {
                 Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
-            }
-        , Array.Empty<string>() }
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
     });
 });
 builder.Services.AddSwaggerGenNewtonsoftSupport();
@@ -296,15 +271,18 @@ builder.WebHost
     {
         o.ListenAnyIP(builder.Configuration["Port"].ToInt(), listenOptions =>
         {
-            /*listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
-            listenOptions.UseHttps(cnxAdapter =>
+            if (builder.Environment.IsProduction())
             {
-                /*cnxAdapter.SslProtocols = SslProtocols.Tls13;
+                listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+                /*listenOptions.UseHttps(cnxAdapter =>
+                {
+                    /*cnxAdapter.SslProtocols = SslProtocols.Tls13;
 
-                var certPath = Path.Combine(AppContext.BaseDirectory, builder.Configuration["Https:CertPemFile"]);
-                var password = builder.Configuration["Https:Password"];
-                cnxAdapter.ServerCertificate = X509Certificate2.CreateFromPemFile(certPath);
-            });*/
+                    var certPath = Path.Combine(AppContext.BaseDirectory, builder.Configuration["Https:CertPemFile"]);
+                    var password = builder.Configuration["Https:Password"];
+                    cnxAdapter.ServerCertificate = X509Certificate2.CreateFromPemFile(certPath);
+                });*/
+            }
         });
         o.Limits.MaxRequestBodySize = int.MaxValue;
     })
@@ -317,14 +295,20 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    //app.UseHttpsRedirection();
-    //app.UseHsts();
+    app.UseDeveloperExceptionPage();
+
 }
 
+if (app.Environment.IsProduction())
+{
+    /*app.UseHttpsRedirection();
+    app.UseHsts();*/
+}
 
 
 app.UseCors(config => config
@@ -333,13 +317,12 @@ app.UseCors(config => config
     //.AllowAnyOrigin()
     .WithOrigins(builder.Configuration["CorsHosts"].Split(";"))
     .AllowCredentials()
-    );
+);
 
 app
     .UseMiddleware<TokenInjectionMiddleware>()
     .UseMiddleware<BasicAuthMiddleware>();
 app.UseAuthentication();
-app.UseDeveloperExceptionPage();
 
 app.UseHttpLogging();
 app.MapControllers();
@@ -364,23 +347,21 @@ app.UseEndpoints(endpoint =>
 });
 
 
-app.UseHangfireDashboard("/backgroundjobs", new DashboardOptions()
+app.UseHangfireDashboard("/backgroundjobs", new DashboardOptions
 {
     DashboardTitle = "UATL Mail Server - Background Jobs Dashboard",
-    IsReadOnlyFunc = ctx => true,    
-    AsyncAuthorization = new []
+    IsReadOnlyFunc = ctx => true,
+    AsyncAuthorization = new[]
     {
         new DashboardAuthFilter()
     },
     AppPath = "/"
 });
 
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsProduction())
 {
     app.UseSpaStaticFiles();
-    app.UseSpa(config =>
-    {
-    });
+    app.UseSpa(config => { });
 }
 
 
