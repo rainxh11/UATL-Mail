@@ -23,7 +23,8 @@ export default {
     return {
       mails: [],
       loading: false,
-      pageCount: 1
+      pageCount: 1,
+      pageSize: 5
     }
   },
   async created() {
@@ -41,6 +42,8 @@ export default {
     this.$mailHub.off('received_mail')
   },
   mounted() {
+    if (this.$storage.has('mailList_pageSize'))
+      this.pageSize = parseInt(this.$storage.get('mailList_pageSize'))
     this.refresh()
   },
   methods: {
@@ -50,7 +53,7 @@ export default {
       if (this.$route.hash) {
         console.log('')
       } else {
-        this.getMails({ page: 1, pageSize: 5 })
+        this.getMails({ page: 1, pageSize: this.pageSize })
       }
     },
     markViewed(mail) {

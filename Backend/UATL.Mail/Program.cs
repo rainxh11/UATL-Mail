@@ -30,7 +30,13 @@ using UATL.MailSystem.Common.Validations;
 using UATL.MailSystem.Helpers;
 using UATL.MailSystem.Services;
 
-var builder = WebApplication.CreateBuilder(args);
+var webApplicationOptions = new WebApplicationOptions()
+{
+    ContentRootPath = AppContext.BaseDirectory,
+    Args = args,
+    ApplicationName = System.Diagnostics.Process.GetCurrentProcess().ProcessName
+};
+var builder = WebApplication.CreateBuilder(webApplicationOptions);
 
 //---------- Logging ---------------//
 Log.Logger = new LoggerConfiguration()
@@ -203,7 +209,8 @@ builder.Services
 
 builder.Services
     .AddScoped<TokenInjectionMiddleware>()
-    .AddScoped<BasicAuthMiddleware>();
+    .AddScoped<TokenFromCookiesMiddleware>()
+    .AddScoped<AttachmentBasicAuthMiddleware>();
 
 //---------- Attachments Limits ---------------//
 builder.Services.Configure<FormOptions>(x =>
@@ -288,6 +295,12 @@ builder.WebHost
     })
     .UseUrls();
 
+
+//-----------------------------------------------------------//
+builder.Host.UseWindowsService();
+builder.Host.UseSystemd();
+builder.Host.UseSerilog();
+
 var app = builder.Build();
 //---------------------------------------------------------------------------------------------------------//
 //---------------------------------------------------------------------------------------------------------//
@@ -296,13 +309,9 @@ var app = builder.Build();
 app.UseSerilogRequestLogging();
 
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    app.UseDeveloperExceptionPage();
-
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseDeveloperExceptionPage();
 
 if (app.Environment.IsProduction())
 {
@@ -321,7 +330,9 @@ app.UseCors(config => config
 
 app
     .UseMiddleware<TokenInjectionMiddleware>()
-    .UseMiddleware<BasicAuthMiddleware>();
+    .UseMiddleware<TokenFromCookiesMiddleware>()
+    .UseMiddleware<AttachmentBasicAuthMiddleware>();
+
 app.UseAuthentication();
 
 app.UseHttpLogging();

@@ -21,6 +21,7 @@ public class DatabaseHelper
 
         await DB.InitAsync(dbName, clientSettings);
         await CreateIndices();
+        await CreateDefaultAdminAccount();
     }
 
     public static void InitCache()
@@ -33,6 +34,23 @@ public class DatabaseHelper
         Registrations.Start("UATL-Mail");
     }
 
+    private static async Task CreateDefaultAdminAccount()
+    {
+        try
+        {
+            var adminExist = await DB.Find<Account>().Match(x => x.UserName == "admin").ExecuteAnyAsync();
+            if (!adminExist)
+            {
+                var account = new Account("Default Administrator", "admin", "adminadmin", "Default Administrator");
+                account.Role = AccountType.Admin;
+                await account.InsertAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
     private static async Task CreateIndices()
     {
         var draftIndex = DB.Index<Draft>()

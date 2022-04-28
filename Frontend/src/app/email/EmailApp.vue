@@ -5,7 +5,7 @@
       :app="$vuetify.breakpoint.mdAndDown"
       :permanent="$vuetify.breakpoint.lgAndUp"
       floating
-      class="elevation-1 rounded flex-shrink-0 pa-2 position-sticky"
+      class="elevation-1 rounded flex-shrink-0 pa-2"
       :class="[$vuetify.rtl ? 'ml-3' : 'mr-3']"
       width="350"
     >

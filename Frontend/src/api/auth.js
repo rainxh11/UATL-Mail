@@ -24,7 +24,7 @@ const getMyInfo = async (token) => {
   return await axios.get('/account/me', headerAuth(token) )  }
 
 const signUp = async (name, username, password, confirmPassword) => {
-  return await axios.post('/account/signup', { name:name, username: username, password: password, passwordConfirm: confirmPassword }) }
+  return await axios.post('/account/auth/signup', { name:name, username: username, password: password, passwordConfirm: confirmPassword }) }
 
 export {
   signIn, getMyInfo, signUp, signOut

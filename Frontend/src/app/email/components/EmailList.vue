@@ -73,7 +73,6 @@
         </v-col>
       </v-row>
     </v-card-title>
-    <v-divider/>
 
     <v-list
       v-for="group in $enumerable(emails).GroupBy(x => new Date(x.SentOn ? x.SentOn : x.CreatedOn).toString('yyyy/MM/dd'), x => x).ToArray()"
@@ -92,13 +91,12 @@
               </span>
             </v-list-item-action-text>
           </v-list-item-action></v-subheader>
-        <v-divider/>
         <template v-for="(item, index) in group.values()">
           <v-list-item
             :key="item.ID"
             :class="{
               'grey lighten-5': item.Viewed && !$vuetify.theme.dark,
-              'v-list-item--active success--text': !item.Viewed && type !== 'draft' && selected.indexOf(item.ID) === -1,
+              'v-list-item--active success--text': !isSent(item) && !item.Viewed && type !== 'draft' && selected.indexOf(item.ID) === -1,
               'v-list-item--active primary--text': selected.indexOf(item.ID) !== -1         
             }"
             link
@@ -153,13 +151,13 @@
                   <v-icon small>fa-solid fa-paperclip</v-icon>
                   {{ `${item.Attachments.length} ${$t('email.attachments')}: ` }}
                   <v-chip
-                    v-for="file in $enumerable(item.Attachments).Take(10).ToArray()"
+                    v-for="file in $enumerable(item.Attachments).Where(x => x.Name).Take(10).ToArray()"
                     :key="file"
                     small
                     label
                     class="font-italic"
                   >
-                    <v-icon small :color="getFileIcon(file).color">{{ getFileIcon(file).icon }}</v-icon>
+                    <v-icon small :color="getFileIcon(file).color" class="px-1">{{ getFileIcon(file).icon }}</v-icon>
                     {{ file.Name.substr(0,5) + '...'+ file.Name.substr(-5) }} <b>({{ file.FileSize | formatByte }})</b>
                   </v-chip>
                   <v-chip v-if="item.Attachments.length > 10" small>...</v-chip>
@@ -200,8 +198,7 @@
                 <v-icon small class="px-1">fa-check</v-icon>
               </v-chip>
             </v-list-item-action>
-
-            <v-list-item-action>
+            <v-list-item-action>     
               <v-list-item-action-text>
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
@@ -212,6 +209,10 @@
                   </template>
                   <span >{{ type === 'mail' ? item.SentOn : item.CreatedOn | formatDate('HH:mm | DD MMMM YYYY') }}</span>
                 </v-tooltip>
+              </v-list-item-action-text>
+              <v-list-item-action-text v-if="item.Viewed && isSent(item)" class="text-lg-body-2">
+                <v-icon small class="px-1">fa-eye</v-icon>
+                {{ $t('email.viewedByReceiver') }}
               </v-list-item-action-text>
             </v-list-item-action>
           </v-list-item>
@@ -306,7 +307,7 @@ export default {
     return {
       value:null,
       page: 1,
-      pageSize: 5,
+      pageSize : 5,
       selectAll: false,
       selectAlmostAll: false,
       selected: [],
@@ -329,6 +330,9 @@ export default {
     }
   },
   watch: {
+    pageSize(val) {
+      this.$storage.set('mailList_pageSize', parseInt(val))
+    },
     searchQuery(val) {
       if (!val) val = ''
       this.search = val.trim()
@@ -362,6 +366,9 @@ export default {
     }
   },
   async created() {
+    if (this.$storage.has('mailList_pageSize'))
+      this.pageSize = parseInt(this.$storage.get('mailList_pageSize'))
+        
     this.$mailHub.on('refresh_account', (x) => {
       this.getStarred()
     })
@@ -470,6 +477,11 @@ export default {
     getFileIcon(file) {
       const icon =  getMimeIcon(file.Extension)
       return icon
+    },
+    isSent(item) {
+      const user = this.getUserInfo()
+      if (item.From.ID === user.ID) return true
+      return false
     }
   }
 }

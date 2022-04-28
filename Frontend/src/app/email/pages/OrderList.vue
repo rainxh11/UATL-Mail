@@ -14,6 +14,7 @@
             append-icon="fa-regular fa-magnifying-glass"
             class="flex-grow-1 mr-md-2"
             outlined
+            focusable
             dense
             hide-details
             clearable

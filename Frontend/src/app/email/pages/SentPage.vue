@@ -23,7 +23,8 @@ export default {
     return {
       mails: [],
       loading: false,
-      pageCount: 1
+      pageCount: 1,
+      pageSize: 5
     }
   },
   async created() {
@@ -41,13 +42,15 @@ export default {
     this.$mailHub.off('sent_mail')
   },
   mounted() {
+    if (this.$storage.has('mailList_pageSize'))
+      this.pageSize = parseInt(this.$storage.get('mailList_pageSize'))
     this.refresh()
   },
   methods: {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
     ...mapActions('app', ['showSuccess', 'showError']),
     refresh() {
-      this.getMails({ page: 1, pageSize: 5 })
+      this.getMails({ page: 1, pageSize: this.pageSize })
     },
     searchMails(search, pagination) {
       const { direction, internal } = this.$route.params

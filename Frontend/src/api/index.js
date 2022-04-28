@@ -8,7 +8,6 @@ const authHeader = `Bearer ${store.getters['auth/getToken']}`
 
 axios.defaults.headers.common['Authorization'] = authHeader
 
-console.log(axios)
 export default axios.create({
   baseURL: baseURL,
   Authorization: authHeader

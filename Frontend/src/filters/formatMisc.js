@@ -8,7 +8,8 @@ Vue.filter('formatByte', (value) => {
 })
 
 Vue.filter('highlight', (words, query) => {
-  const result = words.replaceAll(query, '<span class=\'highlight\'>' + query + '</span>')
+  const regex = new RegExp(query, 'ig')
+  const result = words.replaceAll(regex, '<span class=\'highlight\'>' + query + '</span>')
   return result ? result : words
 })
 

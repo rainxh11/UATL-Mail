@@ -4,8 +4,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using MongoDB.Bson;
+using MongoDB.Driver;
 using MongoDB.Entities;
 using System.Linq.Expressions;
+using System.Net;
+using System.Net.Sockets;
 using System.Reactive.Linq;
 using UATL.Mail.Helpers;
 using UATL.Mail.Hubs;
@@ -208,7 +211,12 @@ public class AccountController : ControllerBase
                 .ExecuteAsync();
 
 
-            return Ok(new ResultResponse<IEnumerable<Account>, long>(accounts.Results, accounts.TotalCount));
+            return Ok(new PagedResultResponse<IEnumerable<Account>>(
+                accounts.Results,
+                accounts.TotalCount,
+                accounts.PageCount,
+                limit,
+                page));
         }
         catch (Exception ex)
         {
@@ -218,6 +226,45 @@ public class AccountController : ControllerBase
         }
     }
 
+    [AllowAnonymous]
+    [HttpGet]
+    [Route("search")]
+    public async Task<IActionResult> SearchAccounts(string search = "", int page = 1, int limit = 10, string? sort = "CreatedOn",
+        bool desc = true)
+    {
+        try
+        {
+            var searchRegex = $"/{search}/ig";
+            var searchQuery = DB.Fluent<Account>()
+                .Match(acc => acc.Regex(x => x.UserName, searchRegex) |
+                              acc.Regex(x => x.Name, searchRegex) |
+                              acc.Regex(x => x.Description, searchRegex) |
+                              acc.Regex(x => x.CreatedBy.Name, searchRegex) |
+                              acc.Regex(x => x.CreatedBy.UserName, searchRegex) |
+                              acc.Regex(x => x.CreatedBy.Description, searchRegex));
+
+            var accounts = await DB.PagedSearch<Account>()
+                .WithFluent(searchQuery)
+                .Sort(s => desc ? s.Descending(sort) : s.Ascending(sort))
+                .PageNumber(page)
+                .PageSize(limit < 0 ? int.MaxValue : limit)
+                .ExecuteAsync();
+
+
+            return Ok(new PagedResultResponse<IEnumerable<Account>>(
+                accounts.Results,
+                accounts.TotalCount,
+                accounts.PageCount,
+                limit,
+                page));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+
+            return BadRequest(ex.Message);
+        }
+    }
     //--------------------------------------------------------------------------------------------------------------//
     [AllowAnonymous]
     [HttpPatch]
@@ -242,6 +289,17 @@ public class AccountController : ControllerBase
     }
 
     //--------------------------------------------------------------------------------------------------------------//
+    private bool IPIsLocal(IPAddress host)
+    {
+        try
+        {
+            IPAddress[] localIPs = Dns.GetHostAddresses(Dns.GetHostName());
+            if (IPAddress.IsLoopback(host)) return true;
+            return localIPs.Any(ip => host.Equals(ip));
+        }
+        catch { }
+        return false;
+    }
     [AllowAnonymous]
     [HttpPost]
     [Route("login")]
@@ -258,6 +316,16 @@ public class AccountController : ControllerBase
                 if (!account.Enabled)
                     return BadRequest(
                         $"Account '{account.UserName}' is disabled, please contact system administrator!");
+
+                if (account.UserName == "admin" && model.Password == "adminadmin")
+                {
+                    if (HttpContext.Connection.RemoteIpAddress.AddressFamily != AddressFamily.InterNetwork &&
+                        HttpContext.Connection.RemoteIpAddress.AddressFamily != AddressFamily.InterNetworkV6)
+                        return Unauthorized(new
+                        { Message = "Default Administrator Account can only be accessed from a Local IP!" });
+                }
+
+
                 account.LastLogin = DateTime.Now;
                 await account.SaveAsync(transaction.Session, ct);
                 await transaction.CommitAsync();
@@ -266,6 +334,7 @@ public class AccountController : ControllerBase
                 //_backgroundJobs.Enqueue(() => _notificationSerivce.SendEmail("rainxh11@gmail.com", "UATL MAIL Test",$"Account {account.Name} Logged in.", ct));
 
                 await _loginSaver.AddLogin(HttpContext, account).ConfigureAwait(false);
+
                 return Ok(new ResultResponse<Account, string>(account, token));
             }
 
@@ -330,14 +399,16 @@ public class AccountController : ControllerBase
     [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User},{AccountRole.OrderOffice}")]
     [HttpGet]
     [Route("{id}/avatar")]
-    public async Task<IActionResult> GetAvatar(string id, CancellationToken ct)
+    public async Task<IActionResult> GetAvatar([FromServices] IWebHostEnvironment webHost, string id, CancellationToken ct)
     {
         try
         {
             var account = await DB.Find<Account>().MatchID(id).ExecuteSingleAsync(ct);
             if (account.Avatar == null)
-                return Redirect(HttpContext.Request.Headers.Referer.First() + "images/avatars/generic.jpg");
-
+            {
+                var origin = webHost.IsProduction() ? "/" : HttpContext.Request.Headers.Referer.First();
+                return Redirect(origin + "images/avatars/generic.jpg");
+            }
 
             var avatar = await DB.Find<Avatar>().MatchID(account.Avatar.ID).ExecuteFirstAsync(ct);
             if (avatar == null)

@@ -31,6 +31,7 @@ export default {
     'OrderOffice': 'Bureau d\'Ordre'
   },
   'common': {
+    'download': 'Télécharger',
     'requestCancelled':'Annulé par l\'utilisateur',
     'years': ' Ans',
     'months': ' Mois',
@@ -72,7 +73,7 @@ export default {
     'debt': 'Dette',
     'totalPrice': 'Montant Totale',
     'tasks': 'Tâches',
-    'confirm': 'Confirmer'
+    'confirm': 'Confirmer'    
   },
   'chat': {
     'online': 'Utilisateurs en ligne ({count})',
@@ -91,8 +92,18 @@ export default {
       'sender': 'Expéditeur',
       'destination': 'Vers',
       'status': 'Etat',
-      'subject': 'Sujet'
+      'subject': 'Sujet',
+      'createdOn': 'Crée le',
+      'lastLogin': 'Dernière connexion',
+      'role': 'Rôle',
+      'enabled': 'Etat de compte',
+      'description': 'Description',
+      'name': 'Nom de Compte',
+      'fileName': 'Nom de fichier',
+      'fileSize': 'Taille',
+      'uploadedBy': 'Uploadé par'
     },
+    'viewedByReceiver': 'Vu par le récepteur',
     'markReceived':'Marquer comme reçu',
     'orderReceived':'Reçu',
     'orderReviewed':'Reçu',

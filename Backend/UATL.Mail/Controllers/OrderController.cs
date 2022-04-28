@@ -66,24 +66,24 @@ public class OrderController : ControllerBase
                 var sortDef = new SortDefinitionBuilder<MailModel>();
                 var total = await DB.Fluent<MailModel>()
                     .Match(x => x.Type == MailType.External)
-                    .Group(x => x.GroupId, z => new {GroupId = z.Key})
+                    .Group(x => x.GroupId, z => new { GroupId = z.Key })
                     .Count()
                     .FirstOrDefaultAsync();
-                totalCount = total.Count;
+                totalCount = total == null ? 0 : total.Count;
 
                 var count = await DB.Fluent<MailModel>()
                     .Match(x => x.Type == MailType.External)
                     .Sort(desc ? sortDef.Descending(sort) : sortDef.Ascending(sort))
                     .Skip(skip)
                     .Limit(limit)
-                    .Group(x => x.GroupId, z => new {GroupId = z.Key})
+                    .Group(x => x.GroupId, z => new { GroupId = z.Key })
                     //.ToListAsync();
                     .Count()
                     .FirstOrDefaultAsync();
 
-                if (count.Count < limit)
+                if (totalCount < limit)
                 {
-                    var resultCount = count.Count <= 0 ? 1 : count.Count.ToInt();
+                    var resultCount = totalCount <= 0 ? 1 : totalCount.ToInt();
                     limit = Scale(limit, resultCount, limit, 0, limit / resultCount * limit);
                 }
             }
@@ -91,7 +91,7 @@ public class OrderController : ControllerBase
 
             var mails = await DB.PagedSearch<MailModel>()
                 .Match(x => x.Type == MailType.External)
-                .ProjectExcluding(x => new {x.Body, x.Attachments})
+                .ProjectExcluding(x => new { x.Body, x.Attachments })
                 .Sort(s => desc ? s.Descending(sort) : s.Ascending(sort))
                 .PageNumber(page)
                 .PageSize(limit < 0 ? int.MaxValue : limit)
@@ -142,13 +142,20 @@ public class OrderController : ControllerBase
     {
         try
         {
-            sort = FirstCharToUpper(sort.Replace("-", "").Trim());
-
-            var pipeline = DB.FluentTextSearch<MailModel>(Search.Full, search);
+            var searchRegex = $"/{search}/ig";
+            var searchQuery = DB.Fluent<MailModel>()
+                .Match(x => x.Type == MailType.External)
+                .Match(acc => acc.Regex(x => x.Subject, searchRegex) |
+                              acc.Regex(x => x.From.Name, searchRegex) |
+                              acc.Regex(x => x.From.Description, searchRegex) |
+                              acc.Regex(x => x.From.UserName, searchRegex) |
+                              acc.Regex(x => x.To.UserName, searchRegex) |
+                              acc.Regex(x => x.To.Name, searchRegex) |
+                              acc.Regex(x => x.To.Description, searchRegex));
 
             var mails = await DB.PagedSearch<MailModel>()
-                .WithFluent(pipeline.Match(x => x.Type == MailType.External))
-                .ProjectExcluding(x => new {x.Body, x.Attachments})
+                .WithFluent(searchQuery)
+                .ProjectExcluding(x => new { x.Body, x.Attachments })
                 .Sort(s => desc ? s.Descending(sort) : s.Ascending(sort))
                 .PageNumber(page)
                 .PageSize(limit < 0 ? int.MaxValue : limit)

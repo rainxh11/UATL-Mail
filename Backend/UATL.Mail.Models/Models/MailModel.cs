@@ -1,21 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using MongoDB.Bson.Serialization.Attributes;
+﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Entities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System;
+using System.Collections.Generic;
 
 namespace UATL.MailSystem.Common.Models;
 
 [Collection("Mail")]
 public class MailModel : Draft
 {
-    public MailModel()
+    /*public MailModel()
     {
         this.InitOneToMany(() => Attachments);
-    }
 
-    [IgnoreDefault] [AsObjectId] public string GroupId { get; set; } = null;
+    }*/
+    [IgnoreDefault][AsObjectId] public string GroupId { get; set; } = null;
 
     [IgnoreDefault] public One<MailModel> ReplyTo { get; set; }
 

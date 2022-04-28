@@ -1,14 +1,26 @@
-﻿using System;
+﻿using MongoDB.Entities;
+using System;
 using System.IO;
-using MongoDB.Entities;
 
 namespace UATL.MailSystem.Common.Models;
 
 public class Attachment : FileEntity, ICreatedOn, IModifiedOn
 {
     public string Name { get; set; }
-
-    public string Extension => Path.GetExtension(Name).TrimStart('.');
+    public string Extension
+    {
+        get
+        {
+            try
+            {
+                return Path.GetExtension(Name).TrimStart('.');
+            }
+            catch
+            {
+                return "";
+            }
+        }
+    }
 
     public string ContentType { get; set; }
     public AccountBase UploadedBy { get; set; }

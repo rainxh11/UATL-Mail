@@ -23,7 +23,8 @@ export default {
     return {
       mails: [],
       loading: false,
-      pageCount: 1
+      pageCount: 1,
+      pageSize: 5
     }
   },
   async created() {
@@ -41,6 +42,8 @@ export default {
     this.$mailHub.off('refresh_account')
   },
   mounted() {
+    if (this.$storage.has('mailList_pageSize'))
+      this.pageSize = parseInt(this.$storage.get('mailList_pageSize'))
     this.refresh()
   },
   methods: {
@@ -50,7 +53,7 @@ export default {
       if (this.$route.hash) {
         console.log('')
       } else {
-        this.getStarred({ page: 1, pageSize: 5 })
+        this.getStarred({ page: 1, pageSize: this.pageSize })
       }
     },
     searchStarred(search, pagination) {
@@ -81,6 +84,7 @@ export default {
 
             return x
           })
+          console.log(res.data, 'data')
           this.pageCount = res.data.PageCount
         }).catch(err => this.showError(err))
         .finally(() => this.loading = false)

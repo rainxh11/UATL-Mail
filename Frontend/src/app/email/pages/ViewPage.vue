@@ -24,7 +24,7 @@
     <body-content
       class="px-4"
       :body="mail.Body"
-      :files="mail.Attachments"
+      :files="mail.Attachments.filter(x => x.Name)"
       :hash-tags="mail.HashTags"
       files-height="500"
     />
@@ -85,7 +85,7 @@
             <body-content
               class="px-4"
               :body="item.Body"
-              :files="item.Attachments"
+              :files="item.Attachments.filter(x => x.Name)"
               :hash-tags="item.HashTags"
             />          
           </v-expansion-panel-content>

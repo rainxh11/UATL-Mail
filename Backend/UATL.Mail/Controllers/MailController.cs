@@ -222,7 +222,7 @@ public class MailController : ControllerBase
                 if (exist)
                 {
                     var attachement = await query.ExecuteFirstAsync(ct);
-                    await mail.Attachments.AddAsync(attachement, transaction.Session, ct);
+                    mail.Attachments.Add(attachement);
                 }
                 else
                 {
@@ -240,32 +240,27 @@ public class MailController : ControllerBase
                     }
 
                     var uploaded = await DB.Find<Attachment>(transaction.Session).OneAsync(attachement.ID);
-                    await mail.Attachments.AddAsync(uploaded, transaction.Session, ct);
+                    mail.Attachments.Add(uploaded);
                 }
             }
 
             await mail.SaveAsync(transaction.Session);
             mail = await DB.Find<MailModel>(transaction.Session).OneAsync(mail.ID, ct);
 
-            if (files.Count > 0)
-            {
-                var attachments = await mail.Attachments.ChildrenFluent(transaction.Session).ToListAsync(ct);
-
-                foreach (var sent in mails.Where(x => x.ID != mail.ID))
+            mails = mails
+                .Where(x => x.ID != mail.ID)
+                .Select(x =>
                 {
-                    await sent.SaveAsync(transaction.Session, ct);
-                    await sent.Attachments.AddAsync(attachments, transaction.Session, ct);
-                }
-            }
-            else
+                    x.Attachments = mail.Attachments;
+                    return x;
+                }).ToList();
+            ;
+            if (mails.Count(x => x.ID != mail.ID) > 0)
             {
-                if (mails.Count(x => x.ID != mail.ID) > 0)
-                {
-                    var bulkWrite = await DB.InsertAsync(mails.Where(x => x.ID != mail.ID), transaction.Session, ct);
+                var bulkWrite = await DB.InsertAsync(mails.Where(x => x.ID != mail.ID), transaction.Session, ct);
 
-                    if (!bulkWrite.IsAcknowledged)
-                        return BadRequest();
-                }
+                if (!bulkWrite.IsAcknowledged)
+                    return BadRequest();
             }
 
             await transaction.CommitAsync();
@@ -347,25 +342,25 @@ public class MailController : ControllerBase
         try
         {
             var account = await _identityService.GetCurrentAccount(HttpContext);
-            page = page < 1 ? 0 : page - 1;
 
             if (full)
             {
-                var starredQuery = account.Starred;
+                var starred = account.Starred.Select(x => x.ID);
 
-                var starred = starredQuery
-                    .AsQueryable()
-                    .OrderBy(sort)
-                    .Skip(limit * page)
-                    .Take(limit)
-                    .ToList();
+                var pageStarred = await DB.PagedSearch<MailModel>()
+                    .Match(x => x.In(m => m.ID, starred))
+                    .Sort(x => desc ? x.Descending(sort) : x.Ascending(sort))
+                    .PageNumber(page)
+                    .PageSize(limit)
+                    .ExecuteAsync();
 
                 //return Ok(account.Starred);
-                return Ok(new PagedResultResponse<IEnumerable<MailModel>>(starred,
-                    starredQuery.Count(),
-                    starredQuery.Count() % limit,
+                return Ok(new PagedResultResponse<IEnumerable<MailModel>>(
+                    pageStarred.Results,
+                    pageStarred.TotalCount,
+                    pageStarred.PageCount,
                     limit,
-                    page + 1));
+                    page));
             }
 
             return Ok(account.Starred.Select(x => x.ID));
@@ -545,7 +540,11 @@ public class MailController : ControllerBase
 
             await transaction.CommitAsync();
 
-            return Ok(new { Mail = mail, Replies = replies.OrderByDescending(x => x.SentOn) });
+            return Ok(new
+            {
+                Mail = mail,
+                Replies = replies.OrderByDescending(x => x.SentOn)
+            });
         }
         catch (Exception ex)
         {

@@ -156,7 +156,7 @@ public class DraftController : ControllerBase
                 if (exist)
                 {
                     var attachement = await query.ExecuteFirstAsync(ct);
-                    await draft.Attachments.AddAsync(attachement, transaction.Session, ct);
+                    draft.Attachments.Add(attachement);
                 }
                 else
                 {
@@ -174,7 +174,7 @@ public class DraftController : ControllerBase
                     }
 
                     var uploaded = await DB.Find<Attachment>(transaction.Session).OneAsync(attachement.ID);
-                    await draft.Attachments.AddAsync(uploaded, transaction.Session, ct);
+                    draft.Attachments.Add(uploaded);
                 }
             }
 
@@ -198,7 +198,7 @@ public class DraftController : ControllerBase
     [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
     [HttpPost]
     [Route("{id}/attachement")]
-    public async Task<IActionResult> UploadAttachements(string id, [FromForm] IFormFileCollection files,
+    public async Task<IActionResult> UploadAttachments(string id, [FromForm] IFormFileCollection files,
         CancellationToken ct)
     {
         var transaction = DB.Transaction();
@@ -217,7 +217,7 @@ public class DraftController : ControllerBase
                 if (exist)
                 {
                     var attachement = await query.ExecuteFirstAsync();
-                    await draft.Attachments.AddAsync(attachement, transaction.Session, ct);
+                    draft.Attachments.Add(attachement);
                 }
                 else
                 {
@@ -235,7 +235,7 @@ public class DraftController : ControllerBase
                     }
 
                     var uploaded = await DB.Find<Attachment>(transaction.Session).OneAsync(attachement.ID);
-                    await draft.Attachments.AddAsync(uploaded, transaction.Session, ct);
+                    draft.Attachments.Add(uploaded);
                 }
             }
 

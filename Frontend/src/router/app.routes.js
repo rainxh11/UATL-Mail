@@ -4,7 +4,7 @@ export default [
   {
     path: '/mailbox',
     name: 'mail-box',
-    component: () => import(/* webpackChunkName: "landing-home" */ '@/app/email/EmailApp'),
+    component: () => import(/* webpackChunkName: "mail-box" */ '@/app/email/EmailApp'),
     children: [
       ...MailRoutes
     ]  
@@ -12,13 +12,13 @@ export default [
   {
     path: '/files',
     name: 'files-viewer',
-    component: () => import(/* webpackChunkName: "landing-home" */ '../layouts/ErrorLayout'),
+    component: () => import(/* webpackChunkName: "files-viewer" */ '@/app/email/pages/AttachmentList'),
     children: []  
   },
   {
     path: '/setting/users',
     name: 'user-list',
-    component: () => import(/* webpackChunkName: "landing-home" */ '@/app/user/UserList'),
+    component: () => import(/* webpackChunkName: "user-list" */ '@/app/user/UserList'),
     children: []  
   }
 ]

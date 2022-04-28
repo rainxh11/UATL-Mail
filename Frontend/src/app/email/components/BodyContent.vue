@@ -16,20 +16,37 @@
     <v-divider/>
 
     <viewer>
-      <v-tooltip v-for="(src, index) in images" :key="src" bottom>
-        <template v-slot:activator="{ on, attrs }">
-          <img
-            v-bind="attrs"
-            height="200"
-            width="200"
-            :src="src.url"
-            class="cursor-pointer column-flex"
-            v-on="on"
-            @click="show(index)"
-          />
-        </template>
-        <span>{{ src.name }}</span>
-      </v-tooltip>
+      <v-row no-gutters>
+        <v-col v-for="(src, index) in images" :key="src" >
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on, attrs }">
+              <v-img
+                v-bind="attrs"
+                max-height="200"
+                max-width="200"
+                :src="src.url"
+                class="cursor-pointer column-flex"
+                v-on="on"
+                @click="show(index)"
+              >
+                <template v-slot:placeholder>
+                  <v-row
+                    class="fill-height ma-0"
+                    align="center"
+                    justify="center"
+                  >
+                    <v-progress-circular
+                      indeterminate
+                      color="primary"
+                    ></v-progress-circular>
+                  </v-row>
+                </template>
+              </v-img>
+            </template>
+            <span>{{ src.name }}</span>
+          </v-tooltip>
+        </v-col> 
+      </v-row> 
     </viewer>
     <v-container v-if="files.length > 0">
       <v-subheader class="text-h6">{{ $t('email.attachments') }}</v-subheader>
@@ -39,7 +56,7 @@
           :key="item.ID"
         >
           <v-list-item-icon> 
-            <v-icon small :color="getIcon(item).color">{{ getIcon(item).icon }}</v-icon>
+            <v-icon small :color="getIcon(item).color" class="px-1">{{ getIcon(item).icon }}</v-icon>
           </v-list-item-icon>
           <v-list-item-action v-if="getIcon(item).type === 'audio'">
             <v-btn icon color="primary" @click="playAudio(item)">
@@ -97,7 +114,7 @@ export default {
     },
     filesHeight: {
       type: Number,
-      default: 300
+      default: parseInt(300)
     }
   },
   data() {
@@ -113,6 +130,7 @@ export default {
       return this.$enumerable(this.files)
         .Where(x => x.ContentType.includes('image'))
         .Select(x => {
+          console.log(x, 'image')
           return { 
             url: `${this.$apiHost}/api/v1/attachment/${x.ID}`,
             name: x.Name
@@ -127,6 +145,7 @@ export default {
   methods: {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
     show(index) {
+      console.log('images',this.images)
       this.$viewerApi({
         images: this.images,
         options: {
@@ -164,7 +183,6 @@ export default {
     },
     getIcon(file) {
       const icon = getMimeIcon(file.Extension)
-      //return icon ? { icon: 'fa-file', color: 'orange' } : icon
       return icon
     },
     playAudio(file) {

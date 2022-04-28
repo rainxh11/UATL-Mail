@@ -6,7 +6,7 @@ export default [
   {
     path: 'tagged',
     name: 'apps-email-tagged',
-    component: () => import(/* webpackChunkName: "apps-email-inbox" */ '@/app/email/pages/TaggedPage.vue')
+    component: () => import(/* webpackChunkName: "apps-email-tagged" */ '@/app/email/pages/TaggedPage.vue')
   },
   {
     path: 'inbox-:direction(received)/:internal(.*)',
@@ -41,7 +41,7 @@ export default [
   {
     path: ':type(mail|draft)/:id',
     name: 'apps-email-inbox',
-    component: () => import(/* webpackChunkName: "apps-email-inbox" */ '@/app/email/pages/ViewPage.vue')
+    component: () => import(/* webpackChunkName: "apps-email-view" */ '@/app/email/pages/ViewPage.vue')
   },
   {
     path: 'inbox',

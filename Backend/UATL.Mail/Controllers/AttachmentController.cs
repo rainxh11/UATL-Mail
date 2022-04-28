@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using MongoDB.Driver;
 using MongoDB.Entities;
 using UATL.Mail.Hubs;
 using UATL.MailSystem.Common;
 using UATL.MailSystem.Common.Models;
+using UATL.MailSystem.Common.Response;
 
 namespace UATL.Mail.Controllers;
 
@@ -31,7 +34,7 @@ public class AttachmentController : ControllerBase
         _mailHub = mailHub;
     }
 
-    //[Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
+    [Authorize(Roles = $"{AccountRole.Admin},{AccountRole.User}")]
     [HttpGet]
     [Route("{id}")]
     public async Task<IActionResult> DownloadAttachment(string id, CancellationToken ct)
@@ -42,10 +45,11 @@ public class AttachmentController : ControllerBase
             if (account == null)
             {
                 HttpContext.Response.Headers.Add("WWW-Authenticate", "Basic realm=\"\"");
-                await HttpContext.Response.CompleteAsync();
+                return Unauthorized();
             }
 
-            var allowed = await HaveAccessToFile(id, account, ct);
+
+            var allowed = await HaveAccessToFile(id, account, ct, true);
 
             if (!allowed)
                 return Unauthorized();
@@ -72,12 +76,94 @@ public class AttachmentController : ControllerBase
             return BadRequest();
         }
     }
+    //----------------------------------------------------------------------------------------------------------///
+    [Authorize(Roles = $"{AccountRole.Admin}")]
+    [HttpGet]
+    [Route("")]
+    public async Task<IActionResult> GetAttachments(CancellationToken ct, int page = 1, int limit = 10, string? sort = "CreatedOn", bool desc = true)
+    {
+        var transaction = DB.Transaction();
+        try
+        {
+            var account = await _identityService.GetCurrentAccount(HttpContext);
+            if (account == null)
+            {
+                HttpContext.Response.Headers.Add("WWW-Authenticate", "Basic realm=\"\"");
+                return Unauthorized();
+            }
+
+            var files = await DB.PagedSearch<Attachment>(transaction.Session)
+                .Sort(s => desc ? s.Descending(sort) : s.Ascending(sort))
+                .PageNumber(page)
+                .PageSize(limit)
+                .ExecuteAsync(ct);
+
+            return Ok(new PagedResultResponse<IEnumerable<Attachment>>(
+                files.Results,
+                files.TotalCount,
+                files.PageCount,
+                limit,
+                page));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+            return BadRequest();
+        }
+    }
+    [Authorize(Roles = $"{AccountRole.Admin}")]
+    [HttpGet]
+    [Route("search")]
+    public async Task<IActionResult> SearchAttachments(CancellationToken ct, string? search = "", int page = 1, int limit = 10, string? sort = "CreatedOn", bool desc = true)
+    {
+        var transaction = DB.Transaction();
+        try
+        {
+            var account = await _identityService.GetCurrentAccount(HttpContext);
+            if (account == null)
+            {
+                HttpContext.Response.Headers.Add("WWW-Authenticate", "Basic realm=\"\"");
+                return Unauthorized();
+            }
+
+            var searchQuery = DB.Fluent<Attachment>(session: transaction.Session)
+                .Match(att => att.Regex(x => x.Name, search) |
+                              att.Regex(x => x.UploadedBy.UserName, search) |
+                              att.Regex(x => x.UploadedBy.Name, search) |
+                              att.Regex(x => x.UploadedBy.Description, search) |
+                              att.Regex(x => x.ID, search) |
+                              att.Regex(x => x.MD5, search) |
+                              att.Regex(x => x.ContentType, search));
+
+            var files = await DB.PagedSearch<Attachment>(transaction.Session)
+                .WithFluent(searchQuery)
+                .Sort(s => desc ? s.Descending(sort) : s.Ascending(sort))
+                .PageNumber(page)
+                .PageSize(limit)
+                .ExecuteAsync(ct);
+
+            return Ok(new PagedResultResponse<IEnumerable<Attachment>>(
+                files.Results,
+                files.TotalCount,
+                files.PageCount,
+                limit,
+                page));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+            return BadRequest();
+        }
+    }
 
     ///---------------------------------------------------------------------------------------------------------///
-    private async Task<bool> HaveAccessToFile(string id, Account account, CancellationToken ct)
+    private async Task<bool> HaveAccessToFile(string id, Account account, CancellationToken ct, bool allowAdminFullAccess = false)
     {
         if (account.Role == AccountType.OrderOffice)
             return false;
+        if (allowAdminFullAccess && account.Role == AccountType.Admin)
+            return true;
+
         var transaction = DB.Transaction();
         try
         {
@@ -92,7 +178,7 @@ public class AttachmentController : ControllerBase
                               (filter.Eq(x => x.From.ID, account.ID) | filter.Eq(x => x.To.ID, account.ID)), ct);
 
             var attachments = DB.Find<Attachment>(transaction.Session)
-                .ManyAsync(filter => filter.Eq(x => x.UploadedBy.ID, account.ID));
+                .ManyAsync(filter => filter.Eq(x => x.UploadedBy.ID, account.ID), ct);
 
             await Task.WhenAll(drafts, mails, attachments);
             await transaction.CommitAsync(ct);

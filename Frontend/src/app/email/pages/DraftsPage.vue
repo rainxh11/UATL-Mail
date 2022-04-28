@@ -23,7 +23,8 @@ export default {
     return {
       drafts:[],
       loading: false,
-      pageCount: 1
+      pageCount: 1,
+      pageSize: 5
     }
   },
   async created() {
@@ -42,7 +43,9 @@ export default {
     this.$mailHub.off('refresh_draft')
   },
   mounted() {
-    this.getDrafts({ page: 1, pageSize: 5 })
+    if (this.$storage.has('mailList_pageSize'))
+      this.pageSize = parseInt(this.$storage.get('mailList_pageSize'))
+    this.getDrafts({ page: 1, pageSize: this.pageSize })
   },
   methods: {
     ...mapGetters('auth', ['getToken', 'getUserInfo']),
